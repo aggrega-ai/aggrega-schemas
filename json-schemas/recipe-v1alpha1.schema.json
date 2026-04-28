@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/recipe-v1alpha1.schema.json",
+  "title": "Aggrega Infrastructure Base (Recipe)",
+  "description": "Ops-authored pointer and mapping layer connecting Dev intent to a specific infrastructure execution engine. Strictly 1:1 with a physical provider and catalog component.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "aggrega.ai/v1alpha1"
+    },
+    "kind": {
+      "type": "string",
+      "const": "Recipe"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-zA-Z0-9-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][a-zA-Z0-9-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+          "description": "Strict Semantic Versioning of the implementation recipe (e.g., 2.1.0)."
+        },
+        "description": {
+          "type": "string",
+          "description": "A concise, one-sentence summary of what the entity does."
+        },
+        "maintainers": {
+          "type": "array",
+          "description": "List of maintainers who own this entity.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "email": { "type": "string" },
+              "url": { "type": "string" }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          }
+        },
+        "license": {
+          "type": "string",
+          "description": "Legal compliance license (e.g., Apache-2.0)."
+        },
+        "repository": {
+          "type": "string",
+          "description": "The URL to the Git repository where the source files live."
+        },
+        "home": {
+          "type": "string",
+          "description": "The URL of this entity's home page, wiki, or documentation."
+        },
+        "keywords": {
+          "type": "array",
+          "description": "A list of descriptive keywords for UI discoverability.",
+          "items": { "type": "string" }
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "Indicates whether this entity is deprecated and should no longer be used."
+        }
+      },
+      "additionalProperties": false
+    },
+    "spec": {
+      "type": "object",
+      "required": [
+        "provider",
+        "implements",
+        "locals"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": { "provider": { "const": "eval" } }
+          },
+          "then": {
+            "properties": {
+              "source": false,
+              "valuesMapping": false,
+              "valuesMappingFile": false,
+              "valuesMappingJsonnet": false,
+              "workload": false,
+              "workloadFrom": false,
+              "artifacts": false,
+              "artifactsFrom": false
+            },
+            "description": "The eval provider executes formatting in-memory. Fetching a 'source', a 'workload', 'artifacts', or utilizing base mapping fields is mathematically banned."
+          },
+          "else": {
+            "description": "Non-eval providers use the three-input-kinds model. At least one input kind must be present: sourced (source + values overlay), synthesized (workload / workloadFrom), or artifacts (artifacts / artifactsFrom). Deeper pairing rules (valuesMapping ⇔ source, workload requires provider workloadSchema) are enforced at Recipe load time in Go.",
+            "anyOf": [
+              { "required": ["source"] },
+              { "required": ["valuesMapping"] },
+              { "required": ["valuesMappingFile"] },
+              { "required": ["valuesMappingJsonnet"] },
+              { "required": ["workload"] },
+              { "required": ["workloadFrom"] },
+              { "required": ["artifacts"] },
+              { "required": ["artifactsFrom"] }
+            ],
+            "not": {
+              "description": "workload and workloadFrom are mutually exclusive (002- §2.3 rule 3).",
+              "allOf": [
+                { "required": ["workload"] },
+                { "required": ["workloadFrom"] }
+              ]
+            }
+          }
+        }
+      ],
+      "properties": {
+        "provider": {
+          "type": "string",
+          "description": "The explicit execution engine this recipe targets (e.g., 'helm', 'terraform', 'compose', 'eval')."
+        },
+        "implements": {
+          "type": "string",
+          "description": "API Contract mapping this recipe to a catalog component URI. Supports exact version ('core/api-server:1.0.0'), major-compatible range ('core/api-server:^1.0.0'), or unversioned ('core/api-server'). Validated for Interface Parity by the compiler using most-specific-match precedence."
+        },
+        "source": {
+          "description": "The location of the infrastructure code. Accepts a Universal URI string or an open structured object validated dynamically by the Wasm Provider plugin.",
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Universal URI string (e.g., './src', 'git::https://...', 'oci://...'). Used for local paths, OCI artifacts, and Git repositories."
+            },
+            {
+              "type": "object",
+              "description": "Open Structured Object. The exact required keys (e.g., 'registry', 'chart' for Helm, or 'workspace' for Terraform) are dictated and validated dynamically at compile-time by the Provider's Wasm socket.",
+              "additionalProperties": true
+            }
+          ]
+        },
+        "locals": {
+          "type": "object",
+          "description": "The Private Ops State. Internal computation results available only within this Recipe's templates (valuesMapping, provides, pipeline[].with). Used to export physical realities (e.g., target containers, JSON paths) for downstream Wasm plugins. Never exposed to callers — use provides for the public API.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "provides": {
+          "type": "object",
+          "description": "The Public Developer API. Contractual output variables available for downstream Caller inject resolution. The compiler evaluates provides templates in Pass 1 (self-contained, any order). Callers resolve inject keys against these values in Pass 2.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "valuesMapping": {
+          "type": "string",
+          "description": "Inline Go template string mapping Aggrega context (.values, .secrets, .infra) to the provider's expected format. Mutually exclusive with valuesMappingFile."
+        },
+        "valuesMappingFile": {
+          "type": "string",
+          "description": "File path inside the recipe package pointing to a single Go template mapping file (e.g., './mappings/vars.yaml'). Mutually exclusive with valuesMapping and valuesMappingJsonnet."
+        },
+        "valuesMappingJsonnet": {
+          "type": "string",
+          "description": "File path inside the recipe package pointing to a Jsonnet mapping file (e.g., './mappings/vars.jsonnet'). The compiler evaluates the Jsonnet program with the full Aggrega context (.values, .infra, .context) injected as external variables via std.extVar(). The Jsonnet output must be a single JSON object mapping to the provider's expected format. Mutually exclusive with valuesMapping and valuesMappingFile. Recommended for complex mappings where Go template logic becomes unwieldy."
+        },
+        "workload": {
+          "type": "string",
+          "description": "Inline Go template string whose output is a YAML document parsed as 'aggrega.ai/v1alpha1 Workload' (synthesized mode). The compiler evaluates the template during Phase B.2, parses the result against workload-v1alpha1.schema.json, then hands the parsed Workload to the provider Engine for translation into provider-native manifests (e.g., K8s Deployment + Services + PVCs for the helm provider; compose services + networks for the compose provider). Mutually exclusive with workloadFrom. The target Provider entity MUST declare workloadSchema (enforced at Recipe load in Go)."
+        },
+        "workloadFrom": {
+          "type": "string",
+          "description": "File path inside the recipe package pointing to a Workload YAML template (e.g., './workload.yaml'), resolved relative to the Recipe directory. The file is Go-templated against the full pillar context before parsing. Mutually exclusive with workload."
+        },
+        "artifacts": {
+          "type": "object",
+          "description": "Inline map of output filename to Go template string. Each template is evaluated during Phase B.3 against the full pillar context (including .workload and .source when present) and the output YAML is emitted as <filename> in the boundary's output directory. Map keys become output filenames verbatim. Collisions across artifact entries, source output, workload synthesis, or artifactsFrom basenames are load-time or render-time errors (002- §5.3).",
+          "additionalProperties": { "type": "string" }
+        },
+        "artifactsFrom": {
+          "type": "array",
+          "description": "List of relative paths to YAML files containing Go-templated provider-native manifests. Each file is Go-templated against the full pillar context (.workload / .source available). The output filename is the basename of the input path; basename collisions are load-time errors.",
+          "items": { "type": "string" }
+        },
+        "pipeline": {
+          "type": "array",
+          "description": "Sequential list of Wasm plugins to execute for stateful AST mutation directly on the base infrastructure.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "plugin",
+              "function"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_]+$",
+                "description": "A unique programmatic identifier for this step, allowing downstream plugins to reference its outputs."
+              },
+              "plugin": {
+                "type": "string",
+                "description": "The Universal URI of the executable Go plugin."
+              },
+              "function": {
+                "type": "string",
+                "description": "The exported Wasm function to invoke."
+              },
+              "with": {
+                "type": "string",
+                "description": "Inline Go template evaluating to a JSON/YAML map that strictly satisfies this plugin's explicit input schema."
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,383 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/ir-v1alpha1.schema.json",
+  "title": "Aggrega Target-Agnostic Graph (IR)",
+  "description": "The flattened, fully resolved 1-dimensional graph emitted by the Topology Builder.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "aggrega.ai/v1alpha1"
+    },
+    "kind": {
+      "type": "string",
+      "const": "IR"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "aggregate_name"
+      ],
+      "properties": {
+        "aggregate_name": {
+          "type": "string",
+          "description": "The Aggregate's metadata.name. Follows IR snake_case convention."
+        }
+      },
+      "additionalProperties": false
+    },
+    "spec": {
+      "type": "object",
+      "required": [
+        "nodes",
+        "edges",
+        "feature_markers",
+        "values_mapping",
+        "infra_mapping",
+        "feature_values_mapping",
+        "secrets",
+        "provenance"
+      ],
+      "properties": {
+        "nodes": {
+          "type": "object",
+          "description": "Dictionary of all application nodes, keyed by their absolute ID. Purely topological.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_.-]+$": {
+              "type": "object",
+              "required": [
+                "labels",
+                "component",
+                "resolved_version"
+              ],
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "Optional developer-authored documentation describing this component instance's role in the application. Passed through from the Aggregate for augmenting rendering and linting diagnostics."
+                },
+                "labels": {
+                  "type": "object",
+                  "description": "The entity's duck-typing and ontology labels.",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "component": {
+                  "type": "string",
+                  "description": "The name of the underlying Component."
+                },
+                "resolved_version": {
+                  "type": "string",
+                  "description": "The exact Semantic Version of the Component resolved during compilation."
+                },
+                "sync_wave": {
+                  "type": "string",
+                  "description": "The temporal execution stage mapped from the Release (e.g., '0', '1'). Passed to rendering plugins to generate GitOps sequencing annotations."
+                },
+                "boundary_path": {
+                  "type": "string",
+                  "description": "The physical spatial hierarchy mapped from the Release boundaries (e.g., 'aws-prod/eks-main/payments'). Allows rendering plugins to generate boundary-aware unique identifiers."
+                },
+                "subsystem_path": {
+                  "type": "string",
+                  "description": "The logical spatial hierarchy mapped from the Aggregate subsystems (e.g., 'finance-module/ledger-api'). Allows rendering plugins to generate logical metadata tags."
+                },
+                "catalog_metadata": {
+                  "type": "object",
+                  "description": "The Enterprise Metadata Suite explicitly extracted from the Catalog entity, exposing lifecycle and ownership data to Wasm linters.",
+                  "properties": {
+                    "maintainers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": { "type": "string" },
+                          "email": { "type": "string" },
+                          "url": { "type": "string" }
+                        }
+                      }
+                    },
+                    "license": { "type": "string" },
+                    "repository": { "type": "string" },
+                    "home": { "type": "string" },
+                    "keywords": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    },
+                    "deprecated": { "type": "boolean" }
+                  },
+                  "additionalProperties": false
+                },
+                "catalog_annotations": {
+                  "type": "object",
+                  "description": "Immutable, intrinsic component characteristics authored by the Platform Architect in Domain 2.",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "release_annotations": {
+                  "type": "object",
+                  "description": "Physical topology strings and Ops realities cascading from boundaries in the Release.",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "aggregate_annotations": {
+                  "type": "object",
+                  "description": "Cognitive metadata, developer intent, and FinOps cascading from subsystems in the Aggregate.",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "edges": {
+          "type": "array",
+          "description": "Explicit logical network paths and dependencies between nodes.",
+          "items": {
+            "type": "object",
+            "required": [
+              "source",
+              "target"
+            ],
+            "properties": {
+              "source": { "type": "string" },
+              "target": { "type": "string" },
+              "socket": {
+                "type": "string",
+                "description": "The usesSchema category this edge belongs to (e.g., 'databases', 'tools')."
+              },
+              "alias": {
+                "type": "string",
+                "description": "The developer-defined alias for this connection (e.g., 'primary_db')."
+              },
+              "origin_feature": {
+                "type": "string",
+                "description": "If this edge was autonomously declared by a Feature (including credential Features labeled feature.aggrega.ai/kind: secret), this identifies the Feature instance name. Allows Wasm plugins to isolate their own topology."
+              },
+              "inject": {
+                "type": "object",
+                "description": "Agnostic injection routing. Maps local variables to Target provides keys.",
+                "properties": {
+                  "env": { "type": "object", "additionalProperties": { "type": "string" } },
+                  "file": { "type": "object", "additionalProperties": { "type": "string" } },
+                  "arg": { "type": "object", "additionalProperties": { "type": "string" } }
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "additionalProperties": { "type": "string" }
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "feature_markers": {
+          "type": "array",
+          "description": "Explicit canonical strings (e.g., semantic_routing, data_masking) derived from annotations, utilized for downstream Feature Negotiation.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "values_mapping": {
+          "type": "object",
+          "description": "The single source of truth for opaque pass-through cognitive payloads, mapped by node ID.",
+          "additionalProperties": true
+        },
+        "infra_mapping": {
+          "type": "object",
+          "description": "The physical sizing payload injected from the Release, mapped by node ID.",
+          "additionalProperties": true
+        },
+        "feature_values_mapping": {
+          "type": "object",
+          "description": "Normalized map of Node IDs to their attached Feature configurations.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_.-]+$": {
+              "type": "object",
+              "patternProperties": {
+                "^[a-zA-Z0-9_-]+$": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "resolved_version"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "description": "The URI of the Catalog Feature."
+                    },
+                    "resolved_version": {
+                      "type": "string",
+                      "description": "The exact Semantic Version of the Feature resolved during compilation."
+                    },
+                    "values": {
+                      "type": "object",
+                      "description": "The operational configuration payload for the feature.",
+                      "additionalProperties": true
+                    },
+                    "infra": {
+                      "type": "object",
+                      "description": "Physical sizing overrides targeting this feature.",
+                      "additionalProperties": true
+                    },
+                    "inject": {
+                      "type": "object",
+                      "description": "Agnostic injection routing. Maps local variables to Target provides keys.",
+                      "properties": {
+                        "env": { "type": "object", "additionalProperties": { "type": "string" } },
+                        "file": { "type": "object", "additionalProperties": { "type": "string" } },
+                        "arg": { "type": "object", "additionalProperties": { "type": "string" } }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "additionalProperties": { "type": "string" }
+                      }
+                    },
+                    "secrets": {
+                      "type": "object",
+                      "description": "Credentials scoped explicitly to this Feature.",
+                      "patternProperties": {
+                        "^[a-zA-Z0-9_-]+$": {
+                          "type": "object",
+                          "required": [
+                            "type",
+                            "resolved_version"
+                          ],
+                          "properties": {
+                            "type": { "type": "string", "description": "The URI of the SecretStore interface." },
+                            "resolved_version": { "type": "string", "description": "The exact Semantic Version of the SecretStore resolved during compilation." },
+                            "values": { "type": "object", "additionalProperties": true },
+                            "inject": {
+                              "type": "object",
+                              "description": "Agnostic injection routing. Maps local variables to Target provides keys.",
+                              "properties": {
+                                "env": { "type": "object", "additionalProperties": { "type": "string" } },
+                                "file": { "type": "object", "additionalProperties": { "type": "string" } },
+                                "arg": { "type": "object", "additionalProperties": { "type": "string" } }
+                              },
+                              "additionalProperties": {
+                                "type": "object",
+                                "additionalProperties": { "type": "string" }
+                              }
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "secrets": {
+          "type": "object",
+          "description": "Validated credential requests mapped by component node ID, cleanly separated from the standard payload.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_.-]+$": {
+              "type": "object",
+              "patternProperties": {
+                "^[a-zA-Z0-9_-]+$": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "resolved_version"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "description": "The URI of the SecretStore interface to use."
+                    },
+                    "resolved_version": {
+                      "type": "string",
+                      "description": "The exact Semantic Version of the SecretStore resolved during compilation."
+                    },
+                    "values": {
+                      "type": "object",
+                      "description": "Configuration validated by the SecretStore's cueSchema (e.g., path, key).",
+                      "additionalProperties": true
+                    },
+                    "inject": {
+                      "type": "object",
+                      "description": "Agnostic injection routing. Maps local variables to Target provides keys.",
+                      "properties": {
+                        "env": { "type": "object", "additionalProperties": { "type": "string" } },
+                        "file": { "type": "object", "additionalProperties": { "type": "string" } },
+                        "arg": { "type": "object", "additionalProperties": { "type": "string" } }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "additionalProperties": { "type": "string" }
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "provenance": {
+          "type": "object",
+          "description": "Traceability metadata for diagnostics and auditing.",
+          "required": [
+            "schema_version",
+            "compiler_version",
+            "aggregate_version",
+            "manifest_version",
+            "release_version",
+            "source_identifiers"
+          ],
+          "properties": {
+            "schema_version": {
+              "type": "string"
+            },
+            "compiler_version": { 
+              "type": "string",
+              "description": "Mandatory compliance stamp. Identifies the specific Go compiler binary used to generate this graph." 
+            },
+            "aggregate_version": {
+              "type": "string",
+              "description": "The exact semantic version of the root Aggregate intent used during compilation."
+            },
+            "manifest_version": {
+              "type": "string",
+              "description": "The exact semantic version of the Manifest lockfile used during compilation."
+            },
+            "release_version": {
+              "type": "string",
+              "description": "The exact semantic version of the Release routing file used during compilation."
+            },
+            "source_identifiers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

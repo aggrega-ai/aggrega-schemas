@@ -1,0 +1,359 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/workload-v1alpha1.schema.json",
+  "title": "Aggrega Workload",
+  "description": "Platform-owned abstract workload specification. A Recipe using synthesized mode declares exactly one Workload via the workload: or workloadFrom: keyword. The target provider Engine translates the Workload into provider-native manifests (K8s Deployment/StatefulSet/Services/PVCs for helm; compose services + volumes + networks for compose; etc.). The Workload kind is NOT a catalog entity — it lives in the aggrega-cli binary (embedded CUE at pkg/schemas/cue/workload.cue) alongside the JSON schema published here.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "containers"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "aggrega.ai/v1alpha1"
+    },
+    "kind": {
+      "type": "string",
+      "const": "Workload"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "labels": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Author-declared labels. Merged with aggrega.ai/* provenance labels at emission (author values preserved; aggrega keys overwrite on collision)."
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Author-declared annotations on the workload. Translated to pod template annotations for helm, compose labels for compose."
+        }
+      }
+    },
+    "replicas": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 1,
+      "description": "Number of replicas. Default 1. Compose ignores values > 1 unless the target compose spec supports scaling."
+    },
+    "initContainers": {
+      "type": "array",
+      "description": "Ordered list of containers that run to completion before the main containers start.",
+      "items": { "$ref": "#/$defs/container" }
+    },
+    "containers": {
+      "type": "object",
+      "description": "Ordered map of container name → container spec. At least one entry required. YAML author order is preserved by the Go parser.",
+      "minProperties": 1,
+      "additionalProperties": { "$ref": "#/$defs/container" }
+    },
+    "volumes": {
+      "type": "object",
+      "description": "Ordered map of volume name → volume spec. Each volume spec declares exactly one of: ephemeral, configmap, secret, persistent, persistentTemplate.",
+      "additionalProperties": { "$ref": "#/$defs/volume" }
+    },
+    "services": {
+      "type": "object",
+      "description": "Ordered map of service name → service spec. Each becomes a separate K8s Service (helm) or port-publishing rule on the compose service (compose). Service names are suffixed by aggrega instance_id for K8s resource-name uniqueness.",
+      "additionalProperties": { "$ref": "#/$defs/service" }
+    },
+    "scheduling": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "K8s-native scheduling constraints. Translated directly for helm; ignored (with warning) for compose except where compose has analogs.",
+      "properties": {
+        "nodeSelector": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "affinity": { "type": "object", "additionalProperties": true },
+        "tolerations": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+        "topologySpreadConstraints": { "type": "array", "items": { "type": "object", "additionalProperties": true } }
+      }
+    },
+    "podSecurityContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runAsUser": { "type": "integer" },
+        "runAsGroup": { "type": "integer" },
+        "fsGroup": { "type": "integer" },
+        "supplementalGroups": { "type": "array", "items": { "type": "integer" } }
+      }
+    },
+    "serviceAccount": {
+      "type": "string",
+      "description": "Name of the ServiceAccount this workload runs under. Actual RBAC (ServiceAccount/Role/RoleBinding resources) should be emitted via Features or artifacts, not via this field."
+    }
+  },
+  "$defs": {
+    "container": {
+      "type": "object",
+      "required": ["image"],
+      "additionalProperties": false,
+      "properties": {
+        "image": {
+          "type": "string",
+          "description": "Container image reference (e.g., 'nginx:1.27-alpine', 'ghcr.io/example/app:v1.2.3')."
+        },
+        "command": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Override the image's entrypoint. K8s: .command. Compose: entrypoint."
+        },
+        "args": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Arguments passed to command (or image entrypoint if command is absent). K8s: .args. Compose: command."
+        },
+        "variables": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Environment variables as string key-value pairs. K8s: spec.template.spec.containers[].env[]. Compose: services.<name>.environment."
+        },
+        "secrets": {
+          "type": "object",
+          "description": "Ordered map of env-or-file name → { from, as, path? }. Each entry references a slot declared in the Component's secretsSchema. The 'as' field selects the delivery mechanism, which must be allowlisted in the slot's inject: array. Blackbox slots (inject: []) MAY NOT appear here.",
+          "additionalProperties": { "$ref": "#/$defs/containerSecret" }
+        },
+        "ports": {
+          "type": "object",
+          "description": "Named container ports. Port names referenced by services.*.ports and by probe http intent (port resolution). K8s: containerPort. Compose: expose/ports.",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          }
+        },
+        "resources": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "requests": { "$ref": "#/$defs/resourceList" },
+            "limits": { "$ref": "#/$defs/resourceList" }
+          }
+        },
+        "health": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Probe intents (http/tcp/exec). Translated to K8s httpGet/tcpSocket/exec for helm; CMD-SHELL healthchecks for compose (degraded — warning emitted).",
+          "properties": {
+            "ready": { "$ref": "#/$defs/probe" },
+            "live": { "$ref": "#/$defs/probe" },
+            "startup": { "$ref": "#/$defs/probe" }
+          }
+        },
+        "volumeMounts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "path"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string", "description": "Must match a key in top-level volumes: map." },
+              "path": { "type": "string", "description": "Mount point inside the container." },
+              "readonly": { "type": "boolean", "default": false }
+            }
+          }
+        },
+        "restartPolicy": {
+          "type": "string",
+          "enum": ["Always", "OnFailure", "Never"]
+        },
+        "lifecycle": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "postStart": { "$ref": "#/$defs/lifecycleHook" },
+            "preStop": { "$ref": "#/$defs/lifecycleHook" }
+          }
+        },
+        "securityContext": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "runAsUser": { "type": "integer" },
+            "runAsGroup": { "type": "integer" },
+            "runAsNonRoot": { "type": "boolean" },
+            "readOnlyRootFilesystem": { "type": "boolean" },
+            "allowPrivilegeEscalation": { "type": "boolean" },
+            "capabilities": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "add": { "type": "array", "items": { "type": "string" } },
+                "drop": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "containerSecret": {
+      "type": "object",
+      "required": ["from", "as"],
+      "additionalProperties": false,
+      "properties": {
+        "from": { "type": "string", "description": "Name of a slot declared in the Component's secretsSchema." },
+        "as": { "type": "string", "enum": ["env", "file"], "description": "Delivery mechanism. Must be allowlisted in the slot's inject: array." },
+        "path": { "type": "string", "description": "File path inside the container (required when as: file)." }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "as": { "const": "file" } }, "required": ["as"] },
+          "then": { "required": ["path"] }
+        }
+      ]
+    },
+    "resourceList": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cpu": { "type": "string", "description": "K8s quantity (e.g., '100m', '0.5', '2'). Compose translates to cpus fractional." },
+        "memory": { "type": "string", "description": "K8s quantity (e.g., '128Mi', '1Gi'). Compose translates to mem_limit bytes." }
+      }
+    },
+    "probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "oneOf": [
+        { "required": ["http"] },
+        { "required": ["tcp"] },
+        { "required": ["exec"] }
+      ],
+      "properties": {
+        "http": {
+          "type": "string",
+          "description": "HTTP GET probe. Path is probed against the first container port (alphabetical by name) unless explicit port is supplied via namespaced form (deferred — single-string form is the current contract)."
+        },
+        "tcp": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "TCP socket probe on the given container port number."
+        },
+        "exec": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "Exec probe — the command to run inside the container."
+        },
+        "timeoutSeconds": { "type": "integer", "minimum": 1 },
+        "initialDelaySeconds": { "type": "integer", "minimum": 0 },
+        "periodSeconds": { "type": "integer", "minimum": 1 },
+        "failureThreshold": { "type": "integer", "minimum": 1 },
+        "successThreshold": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "lifecycleHook": {
+      "type": "object",
+      "additionalProperties": false,
+      "oneOf": [
+        { "required": ["exec"] },
+        { "required": ["httpGet"] }
+      ],
+      "properties": {
+        "exec": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "httpGet": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "K8s-native httpGet shape (path, port, scheme, host, httpHeaders). Passed through to helm; compose translates to HEALTHCHECK-equivalent where possible."
+        }
+      }
+    },
+    "volume": {
+      "type": "object",
+      "additionalProperties": false,
+      "oneOf": [
+        { "required": ["ephemeral"] },
+        { "required": ["configmap"] },
+        { "required": ["secret"] },
+        { "required": ["persistent"] },
+        { "required": ["persistentTemplate"] }
+      ],
+      "properties": {
+        "ephemeral": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "sizeLimit": { "type": "string", "description": "K8s quantity (e.g., '1Gi'). K8s: emptyDir.sizeLimit. Compose: tmpfs (size approximation; warning emitted)." }
+          }
+        },
+        "configmap": {
+          "type": "object",
+          "required": ["source"],
+          "additionalProperties": false,
+          "properties": {
+            "source": { "type": "string", "description": "Name of the ConfigMap (must be emitted by this Recipe via artifacts:, or by an attached Feature — cross-Recipe refs are forbidden per self-containment §4.4)." },
+            "items": {
+              "type": "array",
+              "items": { "type": "object", "additionalProperties": true },
+              "description": "Optional key-to-path selection."
+            }
+          }
+        },
+        "secret": {
+          "type": "object",
+          "required": ["source"],
+          "additionalProperties": false,
+          "properties": {
+            "source": { "type": "string" },
+            "items": {
+              "type": "array",
+              "items": { "type": "object", "additionalProperties": true }
+            }
+          }
+        },
+        "persistent": {
+          "type": "object",
+          "required": ["size"],
+          "additionalProperties": false,
+          "properties": {
+            "size": { "type": "string", "description": "K8s quantity (e.g., '10Gi')." },
+            "class": { "type": "string", "description": "StorageClassName. Optional." }
+          }
+        },
+        "persistentTemplate": {
+          "type": "object",
+          "required": ["size"],
+          "additionalProperties": false,
+          "description": "Per-replica PVC. Helm emits StatefulSet.volumeClaimTemplates; compose degrades to a single named volume with a warning comment.",
+          "properties": {
+            "size": { "type": "string" },
+            "class": { "type": "string" }
+          }
+        }
+      }
+    },
+    "service": {
+      "type": "object",
+      "required": ["type", "ports"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["ClusterIP", "NodePort", "LoadBalancer", "Headless"],
+          "description": "Service type. Headless → K8s Service with clusterIP: None; compose treats ClusterIP as internal-only and LoadBalancer/NodePort as port-publishing."
+        },
+        "ports": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "description": "Map of service port name → container port number. Port names must match keys in containers.<any>.ports."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,318 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://aggrega.ai/schemas/internal/template-context-v1alpha1.schema.json",
+    "title": "Aggrega Internal Template Context",
+    "description": "The runtime view assembled by the Go compiler and injected into Recipe and FeatureRecipe Go templates during Step 5. For credential FeatureRecipes (implementing Features labeled feature.aggrega.ai/kind: secret), the compiler additionally populates .secret_name and .inject with the secret-specific context. This is NOT persisted to disk; it exists only in compiler memory during rendering. This schema documents the contract between the compiler and Ops template authors.\n\nPhase B sub-pass availability:\n  Pass 1 (provides): partial pillars (self-ref banned).\n  Phase B.0 (locals + source eval): all pillars; .source and .workload absent.\n  Phase B.1 (valuesMapping): all pillars + .source; .workload absent.\n  Phase B.2 (workload eval): all pillars + .source; .workload being evaluated (absent from self-reference).\n  Phase B.3 (artifacts): all pillars + .source + .workload (fullest context).",
+    "type": "object",
+    "required": [
+      "context",
+      "values",
+      "infra",
+      "locals"
+    ],
+    "properties": {
+      "context": {
+        "type": "object",
+        "description": "The compiler-assembled execution context providing identity, topology, and delivery data.",
+        "required": [
+          "instance_id",
+          "inject",
+          "uses"
+        ],
+        "properties": {
+          "instance_id": {
+            "type": "string",
+            "description": "The absolute flattened ID of the current node (e.g., 'backend' or 'data-layer.main-db'). Deterministic and stable across compilations for the same Aggregate."
+          },
+          "labels": {
+            "type": "object",
+            "description": "The duck-typing and ontology labels of the current node, including any mutations applied by mutator.wasm in Step 2.",
+            "additionalProperties": { "type": "string" }
+          },
+          "annotations": {
+            "type": "object",
+            "description": "The three cascading annotation buckets for the current node, segregated by origin.",
+            "properties": {
+              "release": {
+                "type": "object",
+                "description": "Physical topology strings cascading from Release boundaries.",
+                "additionalProperties": { "type": "string" }
+              },
+              "catalog": {
+                "type": "object",
+                "description": "Immutable intrinsic traits authored by the Platform Architect in Domain 2.",
+                "additionalProperties": { "type": "string" }
+              },
+              "aggregate": {
+                "type": "object",
+                "description": "Cognitive metadata cascading from Aggregate subsystems.",
+                "additionalProperties": { "type": "string" }
+              }
+            },
+            "additionalProperties": false
+          },
+          "inject": {
+            "type": "object",
+            "description": "The pre-hydrated and intercepted delivery pipe. Starts as a compiler-generated map resolving Developer inject keys to Target provides values. Mutated in-place by Phase A injectMapping deep-merges. By the time the Base Recipe renders in Phase B, this contains the fully resolved physical strings.",
+            "properties": {
+              "env": {
+                "type": "object",
+                "description": "Environment variable delivery. Keys are the Developer's local variable names, values are the resolved target strings.",
+                "additionalProperties": { "type": "string" }
+              },
+              "file": {
+                "type": "object",
+                "description": "File mount delivery. Keys are local file paths, values are the resolved target strings.",
+                "additionalProperties": { "type": "string" }
+              },
+              "arg": {
+                "type": "object",
+                "description": "Command-line argument delivery. Keys are flag prefixes, values are the resolved target strings.",
+                "additionalProperties": { "type": "string" }
+              },
+              "all": {
+                "type": "object",
+                "description": "Pre-calculated flat merge of env + file + arg + custom mechanisms. Populated after Pass 2b and recalculated after Phase A. Templates use {{ toJson .context.inject.all }} for universal serialization.",
+                "additionalProperties": { "type": "string" }
+              }
+            },
+            "additionalProperties": {
+              "type": "object",
+              "description": "Custom injection paradigms (e.g., 'ssm_param'). Open-ended per the inject schema's additionalProperties.",
+              "additionalProperties": { "type": "string" }
+            }
+          },
+          "uses": {
+            "type": "object",
+            "description": "The enriched topological edge map. Keyed by the Developer's alias (e.g., 'my_db', 'my_api'). Each entry is a compiler-assembled view of the target node's identity, resolved provides, injection mapping, and cascaded annotations. This is NOT the raw IR edge — it is an enriched projection built by the compiler specifically for template consumption.",
+            "additionalProperties": {
+              "$ref": "#/$defs/enriched_edge"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "values": {
+        "type": "object",
+        "description": "The opaque cognitive payload for this node, already validated by CUE in Step 1. Passed through untouched.",
+        "additionalProperties": true
+      },
+      "infra": {
+        "type": "object",
+        "description": "The physical sizing payload injected from the Release for this node. Bypasses the Developer entirely.",
+        "additionalProperties": true
+      },
+      "locals": {
+        "type": "object",
+        "description": "The Recipe's own private state (e.g., primary_compute, volumes_path). Available for self-referencing within valuesMapping, provides templates, and for downstream Wasm plugins via pipeline[].with blocks. Never exposed to callers.",
+        "additionalProperties": { "type": "string" }
+      },
+      "provides": {
+        "type": "object",
+        "description": "The Recipe's public API contract. Populated from Pass 1 evaluation. Available in Phase B valuesMapping for self-reference (e.g., {{ .provides.host }}). NOT available within the provides template itself (Pass 1 self-containment invariant). Callers resolve inject keys against these values.",
+        "additionalProperties": { "type": "string" }
+      },
+      "features": {
+        "type": "object",
+        "description": "The attached features for this node, keyed by instance name. Available for Base Recipes to conditionally adapt rendering based on attached capabilities.",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "description": "The Catalog Feature URI." },
+            "values": { "type": "object", "additionalProperties": true },
+            "infra": { "type": "object", "additionalProperties": true }
+          },
+          "additionalProperties": false
+        }
+      },
+      "secrets": {
+        "type": "object",
+        "description": "The attached credential Features for this node, keyed by instance name.",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "description": "The Catalog credential Feature URI (labeled feature.aggrega.ai/kind: secret)." },
+            "values": { "type": "object", "additionalProperties": true }
+          },
+          "additionalProperties": false
+        }
+      },
+      "metadata": {
+        "type": "object",
+        "description": "Release and compilation metadata providing global identity for deterministic naming. Available in all template blocks (valuesMapping, injectMapping, pipeline with).",
+        "properties": {
+          "release_name": {
+            "type": "string",
+            "description": "The name of the Release driving this deployment (e.g., 'prod-billing'). Used by Ops to construct globally unique cloud resource names (S3 buckets, IAM roles). Combined with .context.instance_id to guarantee uniqueness across environments."
+          },
+          "release_version": {
+            "type": "string",
+            "description": "The semantic version of the Release."
+          },
+          "environment": {
+            "type": "string",
+            "description": "The environment string from the Release metadata (e.g., 'production', 'local')."
+          },
+          "aggregate_name": {
+            "type": "string",
+            "description": "The name of the root Aggregate being compiled."
+          }
+        },
+        "additionalProperties": false
+      },
+      "secret_name": {
+        "type": "string",
+        "description": "Only populated when rendering a credential FeatureRecipe. Contains the logical secret key name from the Component's secretsSchema or the Developer's secrets: block (e.g., 'admin_password', 'db_credentials'). Used to construct deterministic physical secret names (e.g., '{{ .context.instance_id }}-{{ .secret_name }}')."      },
+      "inject": {
+        "description": "Only populated when rendering a credential FeatureRecipe. Contains the secret-specific inject block from the Developer's secrets entry (e.g., { env: { OPENAI_API_KEY: 'api_token' } }). Distinct from .context.inject which is the base component's pre-hydrated delivery pipe from uses edges. Evaluates to null/absent for non-credential FeatureRecipes and base Recipes.",
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "object",
+            "description": "Secret-specific environment variable delivery.",
+            "additionalProperties": { "type": "string" }
+          },
+          "file": {
+            "type": "object",
+            "description": "Secret-specific file mount delivery.",
+            "additionalProperties": { "type": "string" }
+          },
+          "arg": {
+            "type": "object",
+            "description": "Secret-specific argument delivery.",
+            "additionalProperties": { "type": "string" }
+          },
+          "all": {
+            "type": "object",
+            "description": "Compiler-generated convenience merge of all secret inject paradigms.",
+            "additionalProperties": { "type": "string" }
+          }
+        },
+        "additionalProperties": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "inject_raw": {
+        "description": "The immutable, unmutated Developer intent for the inject block. Evaluates to null if the Developer omitted the inject block entirely. Used by Ops for logical checks (e.g., {{ if not .inject_raw }}) to detect omission before Phase A mutations.",
+        "oneOf": [
+          { "type": "object", "additionalProperties": true },
+          { "type": "null" }
+        ]
+      },
+      "steps": {
+        "type": "object",
+        "description": "Pipeline inter-step communication. Only available inside Wasm pipeline 'with:' blocks. Each key is a pipeline step ID, containing the outputs exported by that step.",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "outputs": {
+              "type": "object",
+              "additionalProperties": { "type": "string" }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "source": {
+        "description": "Resolved source field content. Populated at Phase B.0 from the Recipe's source: field after Go-template evaluation. Available in Phase B.1+ (valuesMapping, workload, artifacts). Evaluates to null when the Recipe has no source:. String form = URI path; object form = structured source (e.g., OCI descriptor with resolved version).",
+        "oneOf": [
+          { "type": "string" },
+          { "type": "object", "additionalProperties": true },
+          { "type": "null" }
+        ]
+      },
+      "workload": {
+        "description": "Parsed Workload spec for this node. Populated at Phase B.2 from the Recipe's workload: / workloadFrom: field after Go-template evaluation + Workload JSON-schema validation (against workload-v1alpha1.schema.json). Available in Phase B.3+ (artifacts) so artifacts can reference workload fields without duplication (e.g., a ServiceMonitor reading .workload.services.metrics.ports.prom). Evaluates to null when the Recipe has no workload: or workloadFrom:. Template attempts to dereference .workload.* on a null value fail with a clear error at template eval time.",
+        "oneOf": [
+          { "$ref": "workload-v1alpha1.schema.json" },
+          { "type": "null" }
+        ]
+      }
+    },
+    "additionalProperties": false,
+    "$defs": {
+      "enriched_edge": {
+        "type": "object",
+        "description": "A single enriched topological edge assembled by the compiler. Contains the target's resolved identity, provides, and cascaded annotations.",
+        "required": [
+          "target",
+          "socket",
+          "provides",
+          "inject"
+        ],
+        "properties": {
+          "target": {
+            "type": "string",
+            "description": "The absolute flattened ID of the target node (e.g., 'data-layer.main-db')."
+          },
+          "socket": {
+            "type": "string",
+            "description": "The usesSchema category this edge belongs to (e.g., 'databases', 'apis')."
+          },
+          "provides": {
+            "type": "object",
+            "description": "The target node's fully resolved provides dictionary. Evaluated in Pass 1 of Step 5 before inject pre-hydration.",
+            "additionalProperties": { "type": "string" }
+          },
+          "inject": {
+            "type": "object",
+            "description": "The Developer's original inject mapping for this edge (keys = local variable names, values = target provides keys). This is the RAW mapping, not the resolved values.",
+            "properties": {
+              "env": { "type": "object", "additionalProperties": { "type": "string" } },
+              "file": { "type": "object", "additionalProperties": { "type": "string" } },
+              "arg": { "type": "object", "additionalProperties": { "type": "string" } }
+            },
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": { "type": "string" }
+            }
+          },
+          "labels": {
+            "type": "object",
+            "description": "The target node's duck-typing and ontology labels (post-mutation from Step 2).",
+            "additionalProperties": { "type": "string" }
+          },
+          "annotations": {
+            "type": "object",
+            "description": "The target node's three cascading annotation buckets.",
+            "properties": {
+              "release": {
+                "type": "object",
+                "description": "Physical topology strings from the target node's Release boundaries.",
+                "additionalProperties": { "type": "string" }
+              },
+              "catalog": {
+                "type": "object",
+                "description": "Immutable traits from the target node's Catalog entity.",
+                "additionalProperties": { "type": "string" }
+              },
+              "aggregate": {
+                "type": "object",
+                "description": "Cognitive metadata from the target node's Aggregate subsystems.",
+                "additionalProperties": { "type": "string" }
+              }
+            },
+            "additionalProperties": false
+          },
+          "component": {
+            "type": "string",
+            "description": "The target node's Catalog component type URI (e.g., 'core/postgres')."
+          },
+          "resolved_version": {
+            "type": "string",
+            "description": "The target node's resolved SemVer."
+          },
+          "boundary_path": {
+            "type": "string",
+            "description": "The target node's physical spatial hierarchy from the Release (e.g., 'aws-eks-cluster/backend-ns')."
+          },
+          "origin_feature": {
+            "type": "string",
+            "description": "If this edge was autonomously declared by a Feature (including credential Features labeled feature.aggrega.ai/kind: secret), the Feature instance name. Null/absent for Developer-declared edges."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }

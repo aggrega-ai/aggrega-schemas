@@ -1,0 +1,405 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/aggregate-v1alpha1.schema.json",
+  "title": "Aggrega Developer Intent (Aggregate)",
+  "description": "The recursive, parameterized AI architecture. Acts as both the root application and reusable module.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "aggrega.ai/v1alpha1"
+    },
+    "kind": {
+      "type": "string",
+      "const": "Aggregate"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-zA-Z0-9-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][a-zA-Z0-9-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+          "description": "Strict Semantic Versioning of the aggregate module."
+        },
+        "description": {
+          "type": "string"
+        },
+        "maintainers": {
+          "type": "array",
+          "description": "List of maintainers who own this entity.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "email": { "type": "string" },
+              "url": { "type": "string" }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          }
+        },
+        "license": {
+          "type": "string",
+          "description": "Legal compliance license (e.g., Apache-2.0)."
+        },
+        "repository": {
+          "type": "string",
+          "description": "The URL to the Git repository where the source files live."
+        },
+        "home": {
+          "type": "string",
+          "description": "The URL of this entity's home page, wiki, or documentation."
+        },
+        "keywords": {
+          "type": "array",
+          "description": "A list of descriptive keywords for UI discoverability.",
+          "items": { "type": "string" }
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "Indicates whether this entity is deprecated and should no longer be used."
+        },
+        "labels": {
+          "type": "object",
+          "description": "Module-level duck-typing labels for catalog discovery, policy evaluation, and Studio/IDE filtering. These labels describe the Aggregate's identity as a reusable module (e.g., aggregate.aggrega.ai/tier: infrastructure, aggregate.aggrega.ai/compliance: pci-dss). They do NOT cascade to child component nodes — component labels come exclusively from the Component catalog entity in Domain 2.",
+          "additionalProperties": {
+             "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "spec": {
+      "type": "object",
+      "properties": {
+        "parameters": {
+          "type": "object",
+          "description": "Global environment contract. External variables (structured nested maps) injected to make this Aggregate reusable.",
+          "additionalProperties": true
+        },
+        "aggregates": {
+          "type": "object",
+          "description": "Nested aggregates acting as imported modules.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "type": "object",
+              "required": ["type"],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "The abstract Aggregate requested (e.g., namespace/name:version, ./local/path). Resolved via the Three-Tier Entity Resolution Model (local path → workspace dir → registry)."
+                },
+                "parameters": {
+                  "type": "object",
+                  "description": "Parameters passed down to fulfill the nested aggregate's contract.",
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "exportedComponents": {
+          "type": "object",
+          "description": "The Public API Interface. Maps an exposed public name to an internal component ID. Parent Aggregates importing this module reference components by these public names.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "subsystems": {
+          "type": "object",
+          "description": "Logical groupings of developer intent.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "$ref": "#/$defs/subsystem"
+            }
+          },
+          "additionalProperties": false
+        },
+        "components": {
+          "type": "object",
+          "description": "The map of logical atomic components that make up this aggregate.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "$ref": "#/$defs/component_instance"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "inject_delivery": {
+      "description": "A single delivery mechanism supporting compact (map) or verbose (array) syntax. Compact form semantics depend on placement: in uses[].inject, values are target provides key references; in component.inject, values are literal strings. Verbose form uses explicit 'from' (provides reference) or 'value' (literal) keywords to remove ambiguity.",
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "Compact form: keys are local identifiers (env var names, file paths, arg flags). In uses[].inject context, values are target provides key references. In component.inject context, values are literal strings.",
+          "additionalProperties": { "type": "string" }
+        },
+        {
+          "type": "array",
+          "description": "Verbose form: array of objects with 'in' (local identifier) plus exactly one of 'from' (provides key reference) or 'value' (literal string). 'from' resolves against the target's provides (in uses[].inject) or the component's own provides (in component.inject). 'value' is a literal string, optionally containing Go template expressions evaluated in Step 5 Pass 2a.",
+          "items": {
+            "type": "object",
+            "required": ["in"],
+            "oneOf": [
+              { "required": ["from"] },
+              { "required": ["value"] }
+            ],
+            "properties": {
+              "in": { "type": "string", "description": "The local identifier to inject into. Semantics determined by the parent mechanism (env → variable name, file → mount path, arg → flag prefix, custom → mechanism-specific key)." },
+              "from": { "type": "string", "description": "A provides key to resolve. In uses[].inject, resolves against the target node's provides. In component.inject, resolves against the component's own provides." },
+              "value": { "type": "string", "description": "A literal string value. Supports Go template expressions (e.g., '{{ .values.app_token }}', '{{ .infra.namespace }}') evaluated during Step 5 Pass 2a with access to .values, .infra, .context.instance_id, .context.labels, .context.annotations.*, and .metadata.*." }
+            },
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "inject_block": {
+      "type": "object",
+      "description": "Agnostic injection routing. Maps local variables to Target provides keys. Each delivery mechanism (env, file, arg, or custom) supports two equivalent syntaxes: a compact map form ({LOCAL: 'provides_key'}) or a verbose array form ([{in: 'LOCAL', from: 'provides_key'}]). The compiler normalizes both to map form during Step 2.",
+      "properties": {
+        "env": { "$ref": "#/$defs/inject_delivery" },
+        "file": { "$ref": "#/$defs/inject_delivery" },
+        "arg": { "$ref": "#/$defs/inject_delivery" }
+      },
+      "additionalProperties": { "$ref": "#/$defs/inject_delivery" }
+    },
+    "uses_block": {
+      "type": "object",
+      "description": "The Structural Topology - Developer Owned. Declares logical network edges and dependencies.",
+      "patternProperties": {
+        "^[a-zA-Z0-9_-]+$": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            {
+              "type": "object",
+              "patternProperties": {
+                "^[a-zA-Z0-9_-]+$": {
+                  "type": "object",
+                  "required": ["target"],
+                  "properties": {
+                    "target": { "type": "string" },
+                    "inject": { "$ref": "#/$defs/inject_block" }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "subsystem": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Optional documentation describing this subsystem's purpose and the logical grouping it represents."
+        },
+        "annotations": {
+          "type": "object",
+          "description": "Logical annotations cascading down to the .context.annotations.aggregate bucket.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "features": {
+          "type": "object",
+          "description": "Cross-cutting features attached to all components in this subsystem. Same schema as component-level features (type, values, uses, inject). Flattened into each component during Step 3 Graph Finalization, positioned after component-level features in execution order.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "type": "object",
+              "required": ["type"],
+              "properties": {
+                "type": { "type": "string" },
+                "description": {
+                  "type": "string",
+                  "description": "Optional documentation explaining why this cross-cutting feature is applied to the subsystem."
+                },
+                "values": {
+                  "type": "object",
+                  "description": "Developer-provided configuration for the Feature.",
+                  "additionalProperties": true
+                },
+                "uses": { "$ref": "#/$defs/uses_block" },
+                "inject": { "$ref": "#/$defs/inject_block" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "subsystems": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "$ref": "#/$defs/subsystem"
+            }
+          },
+          "additionalProperties": false
+        },
+        "components": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "$ref": "#/$defs/component_instance"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "component_instance": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The abstract Component requested (e.g., core/api-server:1.0.0). Resolved via the Three-Tier Entity Resolution Model (local path → workspace dir → registry)."
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional documentation describing this component instance's role in the application. Passed through to the IR graph for augmenting rendering."
+        },
+        "values": {
+          "type": "object",
+          "description": "Opaque cognitive properties passed to the Component, validated by its schema.",
+          "additionalProperties": true
+        },
+        "uses": {
+          "$ref": "#/$defs/uses_block"
+        },
+        "inject": {
+          "$ref": "#/$defs/inject_block",
+          "description": "Component-level self-inject. Injects the component's own values (via 'value:' or compact literal) or own provides keys (via 'from:') directly into the delivery pipe (.context.inject). Only allowed if the Component catalog entity declares 'spec.inject' with the corresponding mechanisms. Compact form values are always literals in this context. The compiler validates that no inject key collides with keys declared in uses[].inject — collisions cause ErrInjectKeyCollision fatal halt."
+        },
+        "features": {
+          "type": "object",
+          "description": "Operational and security features attached to this component.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "type": "object",
+              "required": ["type"],
+              "properties": {
+                "type": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Optional documentation explaining why this feature is attached to the component."
+                },
+                "values": {
+                  "type": "object",
+                  "description": "Developer-provided configuration for the Feature, validated by its cueSchema.",
+                  "additionalProperties": true
+                },
+                "uses": {
+                  "$ref": "#/$defs/uses_block"
+                },
+                "inject": {
+                  "$ref": "#/$defs/inject_block"
+                },
+                "secrets": {
+                  "type": "object",
+                  "description": "Credential Features mapped to this feature's operational requirements. Only Features labeled feature.aggrega.ai/kind: secret.",
+                  "patternProperties": {
+                    "^[a-zA-Z0-9_-]+$": {
+                      "type": "object",
+                      "required": ["type"],
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "description": "The URI of the credential Feature interface (must carry label feature.aggrega.ai/kind: secret)."
+                        },
+                        "description": {
+                          "type": "string",
+                          "description": "Optional documentation explaining what this credential is for."
+                        },
+                        "values": {
+                          "type": "object",
+                          "description": "Vault query configuration validated by the credential Feature's cueSchema.",
+                          "additionalProperties": true
+                        },
+                        "uses": {
+                          "$ref": "#/$defs/uses_block"
+                        },
+                        "inject": {
+                          "$ref": "#/$defs/inject_block"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "secrets": {
+          "type": "object",
+          "description": "Credential Features mapped to this component. Only Features labeled feature.aggrega.ai/kind: secret are accepted here. The compiler enforces this partition: non-credential Features placed in secrets: cause a Fatal Halt.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "type": "object",
+              "required": ["type"],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "The URI of the credential Feature interface (must carry label feature.aggrega.ai/kind: secret)."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Optional documentation explaining what this credential is for and how it is consumed."
+                },
+                "values": {
+                  "type": "object",
+                  "description": "Vault query configuration validated by the credential Feature's cueSchema (e.g., path, key).",
+                  "additionalProperties": true
+                },
+                "uses": {
+                  "$ref": "#/$defs/uses_block"
+                },
+                "inject": {
+                  "$ref": "#/$defs/inject_block"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

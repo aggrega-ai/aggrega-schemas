@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/component-v1alpha1.schema.json",
+  "title": "Aggrega Catalog (Component)",
+  "description": "The abstract definition of an atomic building block.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "aggrega.ai/v1alpha1"
+    },
+    "kind": {
+      "type": "string",
+      "const": "Component"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "labels"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-zA-Z0-9-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][a-zA-Z0-9-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+          "description": "Strict Semantic Versioning of the interface (e.g., 1.0.0)."
+        },
+        "description": {
+          "type": "string",
+          "description": "A concise, one-sentence summary of what the entity does."
+        },
+        "maintainers": {
+          "type": "array",
+          "description": "List of maintainers who own this entity.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "email": { "type": "string" },
+              "url": { "type": "string" }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          }
+        },
+        "license": {
+          "type": "string",
+          "description": "Legal compliance license (e.g., Apache-2.0)."
+        },
+        "repository": {
+          "type": "string",
+          "description": "The URL to the Git repository where the source files live."
+        },
+        "home": {
+          "type": "string",
+          "description": "The URL of this entity's home page, wiki, or documentation."
+        },
+        "keywords": {
+          "type": "array",
+          "description": "A list of descriptive keywords for UI discoverability.",
+          "items": { "type": "string" }
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "Indicates whether this entity is deprecated and should no longer be used."
+        },
+        "labels": {
+          "type": "object",
+          "description": "Duck-typing labels to declare characteristics. Must include the reserved 'component.aggrega.ai/type' key.",
+          "required": [
+            "component.aggrega.ai/type"
+          ],
+          "properties": {
+            "component.aggrega.ai/type": {
+              "type": "string",
+              "description": "The foundational 7-Type Cloud-Native Ontology mapping.",
+              "enum": [
+                "server",
+                "worker",
+                "task",
+                "function",
+                "stateful-server",
+                "resource",
+                "messaging"
+              ]
+            }
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "annotations": {
+          "type": "object",
+          "description": "Immutable, intrinsic component characteristics authored by the Platform Architect in Domain 2. Cascades down to the .context.annotations.catalog bucket.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "spec": {
+      "type": "object",
+      "description": "Validation and schema definitions governing the developer's opaque values payload.",
+      "properties": {
+        "extends": {
+          "type": "string",
+          "description": "URI of a base Component to inherit YAML metadata from and auto-unify CUE schemas with."
+        },
+        "secretsSchema": {
+          "type": "object",
+          "description": "Declarative credential slot definitions. Parallel to usesSchema. The compiler generates CUE validation rules from this schema.",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "required": {
+                "type": "boolean",
+                "default": false,
+                "description": "When true, developer must provide this secret."
+              },
+              "inject": {
+                "type": "array",
+                "items": { "type": "string", "enum": ["env", "file", "arg"] },
+                "description": "Allowed inject mechanisms. Empty array = blackbox (Recipe controls delivery)."
+              },
+              "description": {
+                "type": "string",
+                "description": "Human documentation for this secret slot."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "requiredFeatures": {
+          "type": "array",
+          "description": "A list of Feature types that must be attached to this component instance in the Aggregate.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "inject": {
+          "type": "array",
+          "description": "Allowlisted self-inject delivery mechanisms (e.g., ['env', 'file', 'arg']). When present, developers may use the inject: block at the component level in the Aggregate to inject their own values or provides keys directly into the delivery pipe. If omitted, component-level self-inject is forbidden (Black-Box pattern — the Recipe handles all internal wiring). Same semantics as usesSchema[].inject but governs the component's own values rather than cross-component topology.",
+          "items": { "type": "string" }
+        },
+        "usesSchema": {
+          "type": "object",
+          "description": "Native YAML schema defining the topology. The Go CLI natively reads this to validate selectors and allowed inject paradigms.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "type": "object",
+              "required": ["selector"],
+              "properties": {
+                "selector": { 
+                  "type": "string",
+                  "description": "Kubernetes-style selector evaluated natively by the Go compiler in Step 4 to guarantee Cross-Node Type Safety before Wasm execution."
+                },
+                "inject": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "Allowlisted delivery contracts (e.g., ['env', 'file']). If omitted, delivery dictation is banned (Black-Box pattern)."
+                },
+                "required": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "When true, developer must declare at least one dependency in this socket."
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "cueSchema": {
+          "type": "string",
+          "description": "Evaluated strictly. Must define what is used in values, infra, and provides. Pillars not defined are assumed empty by the compiler (e.g., if infra is not used, the compiler assumes infra: {}). The compiler dynamically generates a strict baseUsesCueSchema from the usesSchema and unifies it with this payload (baseUsesCueSchema & userCueSchema). IMPORTANT: The 'provides' pillar defined inside this CUE string is the authoritative source of output keys for Early Inject Key Validation. During Step 1, the compiler parses the CUE to extract the set of provides keys and validates that every 'from' key in Developer inject blocks references a key that exists in this set. This validation occurs at the CUE level, not the JSON Schema level."
+        },
+        "cueSchemaRef": {
+          "type": "string",
+          "description": "URI or relative file path referencing an external .cue file that contains the validation logic."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

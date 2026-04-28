@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/manifest-v1alpha1.schema.json",
+  "title": "Aggrega Dependency Lockfile (Manifest)",
+  "description": "A single, global lockfile that maps abstract Developer Interfaces to concrete Ops Implementations via O(1) dictionary lookups based strictly on Instance Names.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "aggrega.ai/v1alpha1"
+    },
+    "kind": {
+      "type": "string",
+      "const": "Manifest"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-zA-Z0-9-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][a-zA-Z0-9-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+          "description": "Strict Semantic Versioning of the manifest lockfile (e.g., 1.0.0)."
+        },
+        "description": {
+          "type": "string",
+          "description": "A concise, one-sentence summary of what the entity does."
+        },
+        "maintainers": {
+          "type": "array",
+          "description": "List of maintainers who own this entity.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "email": { "type": "string" },
+              "url": { "type": "string" }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          }
+        },
+        "license": {
+          "type": "string",
+          "description": "Legal compliance license (e.g., Apache-2.0)."
+        },
+        "repository": {
+          "type": "string",
+          "description": "The URL to the Git repository where the source files live."
+        },
+        "home": {
+          "type": "string",
+          "description": "The URL of this entity's home page, wiki, or documentation."
+        },
+        "keywords": {
+          "type": "array",
+          "description": "A list of descriptive keywords for UI discoverability.",
+          "items": { "type": "string" }
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "Indicates whether this entity is deprecated and should no longer be used."
+        }
+      },
+      "additionalProperties": false
+    },
+    "defs": {
+      "type": "array",
+      "description": "Optional block for standard YAML anchors (& and *) to keep the Manifest DRY while maintaining a flat O(1) dictionary for the compiler.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "spec": {
+      "type": "object",
+      "required": ["mappings"],
+      "properties": {
+        "extends": {
+          "type": "string",
+          "description": "URI of a base Manifest to inherit mappings from. Child mappings safely overwrite the base to support frictionless local dev loops."
+        },
+        "mappings": {
+          "type": "object",
+          "description": "Maps abstract interfaces to concrete implementations, grouped by provider. Each provider section contains components, features, and secrets sub-sections with two-tier resolution: 'type' for bulk DRY mapping by component/feature/secret type, 'name' for granular overrides by instance name. Resolution order: name wins over type. Versioned type keys win over unversioned. After resolution, every entity must have a mapping or the compiler halts.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "type": "object",
+              "description": "Provider-scoped mapping section (e.g., 'helm', 'terraform', 'compose').",
+              "properties": {
+                "components": {
+                  "$ref": "#/$defs/mapping_tier"
+                },
+                "features": {
+                  "$ref": "#/$defs/mapping_tier",
+                  "description": "Maps Feature types to FeatureRecipe URIs. Includes both operational Features and credential Features (labeled feature.aggrega.ai/kind: secret) — there is no separate secrets sub-section."
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "mapping_tier": {
+      "type": "object",
+      "description": "Two-tier resolution: 'type' maps by catalog type (DRY bulk), 'name' maps by instance name (granular override). Both are optional but at least one must be present. Name wins over type during resolution. Versioned type keys win over unversioned.",
+      "properties": {
+        "type": {
+          "type": "object",
+          "description": "Maps catalog type URIs to Recipe URIs. Supports versioned keys ('core/api-server:1.0.0') for exact match, range keys ('core/api-server:^1.0.0') for major-compatible match, or unversioned keys ('core/api-server') for any-version match.",
+          "additionalProperties": { "type": "string" }
+        },
+        "name": {
+          "type": "object",
+          "description": "Maps specific instance names to Recipe URIs. Takes precedence over type-based mapping.",
+          "additionalProperties": { "type": "string" }
+        },
+        "annotations": {
+          "type": "object",
+          "description": "Annotation-driven Feature shortcuts. Maps annotation keys to Feature types for compact Release authoring. The Feature type referenced by 'feature' MUST also appear in the 'type' section (that is where the FeatureRecipe version binding lives).",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "feature": {
+                "type": "string",
+                "description": "Feature type to expand into. Must exist in features.type."
+              },
+              "infra": {
+                "type": "object",
+                "description": "CUE schema for annotation value → infra field mapping (ops-facing).",
+                "additionalProperties": true
+              },
+              "values": {
+                "type": "object",
+                "description": "CUE schema for annotation value → values field mapping (dev-facing).",
+                "additionalProperties": true
+              }
+            },
+            "required": ["feature"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

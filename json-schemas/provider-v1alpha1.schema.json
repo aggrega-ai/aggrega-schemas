@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/provider-v1alpha1.schema.json",
+  "title": "Aggrega Core (Provider)",
+  "description": "Global plugin registrar mapping a rendering engine name to an executable.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "aggrega.ai/v1alpha1"
+    },
+    "kind": {
+      "type": "string",
+      "const": "Provider"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-zA-Z0-9-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][a-zA-Z0-9-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+          "description": "Strict Semantic Versioning of the Provider registrar (e.g., 1.0.0)."
+        },
+        "description": {
+          "type": "string",
+          "description": "A concise, one-sentence summary of what the entity does."
+        },
+        "maintainers": {
+          "type": "array",
+          "description": "List of maintainers who own this entity.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "email": { "type": "string" },
+              "url": { "type": "string" }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          }
+        },
+        "license": {
+          "type": "string",
+          "description": "Legal compliance license (e.g., Apache-2.0)."
+        },
+        "repository": {
+          "type": "string",
+          "description": "The URL to the Git repository where the source files live."
+        },
+        "home": {
+          "type": "string",
+          "description": "The URL of this entity's home page, wiki, or documentation."
+        },
+        "keywords": {
+          "type": "array",
+          "description": "A list of descriptive keywords for UI discoverability.",
+          "items": { "type": "string" }
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "Indicates whether this entity is deprecated and should no longer be used."
+        }
+      },
+      "additionalProperties": false
+    },
+    "spec": {
+      "type": "object",
+      "required": [
+        "plugin"
+      ],
+      "properties": {
+        "plugin": {
+          "type": "string",
+          "description": "URI to the Wasm rendering socket capable of rendering this format (e.g., 'hub.aggrega.ai/providers/helm-renderer:1.0.0')."
+        },
+        "baseSchema": {
+          "type": "string",
+          "description": "CUE schema defining the keys this provider understands in generative (sourceless) mode. When a Recipe omits the source field, the compiler validates the valuesMapping output against this schema. The IDE/LSP reads it for autocomplete. If absent, the provider does not support generative mode — all Recipes must have a source. Example: 'image: string, replicas?: int & >0 | *1, ports?: [...string]'."
+        },
+        "workloadSchema": {
+          "type": "string",
+          "description": "CUE schema documenting how this provider translates the aggrega.ai/v1alpha1 Workload kind into provider-native manifests. When present, the provider supports Recipes that declare workload: or workloadFrom: (synthesized mode) — the compiler synthesizes provider-native manifests via a Go Engine, informed by this schema as documentation/contract. When absent, the provider does NOT support Workload synthesis; any Recipe for this provider that uses workload: or workloadFrom: is rejected at Recipe load time with a clear error. Example (helm provider): 'Each Workload produces: 1 Deployment (or StatefulSet if any volumes.*.persistentTemplate is used) + 1..N Services (one per workload.services entry) + 1..N PVCs...'."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

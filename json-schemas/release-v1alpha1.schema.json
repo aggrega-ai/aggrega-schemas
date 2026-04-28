@@ -1,0 +1,308 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/release-v1alpha1.schema.json",
+  "title": "Aggrega Release",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "aggrega.ai/v1alpha1"
+    },
+    "kind": {
+      "type": "string",
+      "const": "Release"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["name", "environment", "version"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "environment": { "type": "string" },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-zA-Z0-9-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][a-zA-Z0-9-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+          "description": "Strict Semantic Versioning of the release (e.g., 1.0.0)."
+        },
+        "description": {
+          "type": "string",
+          "description": "A concise, one-sentence summary of what the entity does."
+        },
+        "maintainers": {
+          "type": "array",
+          "description": "List of maintainers who own this entity.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "email": { "type": "string" },
+              "url": { "type": "string" }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          }
+        },
+        "license": {
+          "type": "string",
+          "description": "Legal compliance license (e.g., Apache-2.0)."
+        },
+        "repository": {
+          "type": "string",
+          "description": "The URL to the Git repository where the source files live."
+        },
+        "home": {
+          "type": "string",
+          "description": "The URL of this entity's home page, wiki, or documentation."
+        },
+        "keywords": {
+          "type": "array",
+          "description": "A list of descriptive keywords for UI discoverability.",
+          "items": { "type": "string" }
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "Indicates whether this entity is deprecated and should no longer be used."
+        }
+      },
+      "additionalProperties": false
+    },
+    "spec": {
+      "type": "object",
+      "required": ["boundaries"],
+      "allOf": [
+        {
+          "if": {
+            "required": ["extends"]
+          },
+          "then": {
+            "properties": {
+              "aggregate": false
+            }
+          },
+          "else": {
+            "required": ["aggregate", "manifest"]
+          }
+        }
+      ],
+      "properties": {
+        "aggregate": { 
+          "type": "string",
+          "description": "Pointer to the Aggregate (Developer Intent) this release deploys." 
+        },
+        "manifest": {
+          "type": "string",
+          "description": "Pointer to the Manifest dependency lockfile resolving the abstract interfaces."
+        },
+        "extends": { 
+          "type": "string",
+          "description": "Enables base-layer inheritance for frictionless local Dev Loops vs Prod deployments."
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Environment-specific variable fulfillment contract. Structured nested maps.",
+          "additionalProperties": true
+        },
+        "parametersFrom": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Imports external structured parameter files for GitOps workflows."
+        },
+        "syncWaves": {
+          "type": "object",
+          "description": "Defines temporal DAG execution order. Keys are integer wave stages (as strings). Values are arrays of component instance IDs deployed in that stage. Lower waves deploy first. Example: { '0': ['core-vpc', 'postgres-db'], '1': ['db-migration-task'], '2': ['web-server'] }.",
+          "patternProperties": {
+            "^[0-9]+$": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Component instance IDs to deploy in this wave."
+            }
+          },
+          "additionalProperties": false
+        },
+        "boundaries": {
+          "type": "object",
+          "description": "The root logical boxes into which the Aggregate's components are routed.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "$ref": "#/$defs/boundary"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "boundary_component": {
+      "type": "object",
+      "description": "A component instance routed into a boundary, with optional physical sizing and feature attachments.",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Optional documentation describing this component's deployment context in this boundary."
+        },
+        "subDirectory": {
+          "type": "string",
+          "description": "Component-level sub-path override appended to the parent boundary's directory. If omitted on both boundary and component, defaults to '{{ .provider }}'. Set to '.' or '' to disable sub-directory generation."
+        },
+        "annotations": {
+          "type": "object",
+          "description": "Component-specific Ops annotations that override boundary-level annotations for this component. Deep-merged over boundary annotations (component wins on key collision). Used for per-component provider well-known annotation overrides (e.g., aggrega.ai/chart-name). The provider is responsible for validating consistency when grouping components (e.g., helm-chart provider rejects components with different aggrega.ai/namespace values in the same chart).",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "infra": {
+          "type": "object",
+          "description": "Physical sizing strictly local to this component (e.g., replicas, disk IOPS).",
+          "additionalProperties": true
+        },
+        "features": {
+          "type": "object",
+          "description": "Features attached to this component via the Release. For features also declared in the Aggregate, only infra is provided (values come from the Aggregate). For Release-only features (Ops-injected), type is required. The Release MUST NOT provide values for features — this is the Developer's domain.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "The URI of the Feature. Required for Release-only features (Ops-injected). Must match the Aggregate's type if both declare it."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Optional documentation explaining why Ops attached this feature at this boundary level."
+                },
+                "infra": {
+                  "type": "object",
+                  "description": "Operational sizing for this specific feature (e.g., target_var, sidecar_cpu, namespace_annotation).",
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "secrets": {
+          "type": "object",
+          "description": "Credential Features (labeled feature.aggrega.ai/kind: secret) attached via the Release. Only infra is allowed (no values — credential values come from the Aggregate).",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "The URI of the credential Feature. Required for Release-only secrets (Ops-injected). Must match the Aggregate's type if both declare it."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Optional documentation explaining why Ops attached this credential at this boundary level."
+                },
+                "infra": {
+                  "type": "object",
+                  "description": "Operational sizing for this credential feature (e.g., specific AWS Vault ARN, region).",
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "aggregate_routing": {
+      "type": "object",
+      "description": "Routes a nested Aggregate sub-module's internal components into this boundary. Mirrors the boundary's component/aggregate structure for recursive composition.",
+      "properties": {
+        "components": {
+          "type": "object",
+          "description": "Component instances within the nested aggregate to route into this boundary.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "$ref": "#/$defs/boundary_component"
+            }
+          },
+          "additionalProperties": false
+        },
+        "aggregates": {
+          "type": "object",
+          "description": "Further nested aggregates within this sub-aggregate (for deeply nested module composition).",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "$ref": "#/$defs/aggregate_routing"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "boundary": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Optional documentation describing this boundary's purpose and physical target (e.g., 'Primary production EKS cluster in us-east-1, PCI-DSS compliant')."
+        },
+        "directory": {
+          "type": "string",
+          "description": "Physical output path for GitOps artifact generation. Supports Go template variables ({{ .provider }}, {{ .boundary_name }}, {{ .parameters.X }}). Combined with subDirectory via filepath.Join to produce the final artifact path."
+        },
+        "subDirectory": {
+          "type": "string",
+          "description": "Boundary-level sub-path appended to directory. If omitted on both boundary and component, defaults to '{{ .provider }}' for CI/CD auto-partitioning. Set to '.' or '' to disable."
+        },
+        "annotations": {
+          "type": "object",
+          "description": "Boundary-wide Ops annotations cascading down to the .context.annotations.release bucket.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "features": {
+          "type": "object",
+          "description": "Boundary-wide features applied to all nested components (e.g., default security mesh)."
+        },
+        "secrets": {
+          "type": "object",
+          "description": "Boundary-wide secrets accessible by all nested components."
+        },
+        "boundaries": {
+          "type": "object",
+          "description": "Nested logical boundaries (e.g., namespaces within a cluster).",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "$ref": "#/$defs/boundary"
+            }
+          },
+          "additionalProperties": false
+        },
+        "components": {
+          "type": "object",
+          "description": "Which components from the Aggregate are placed in this boundary.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "$ref": "#/$defs/boundary_component"
+            }
+          },
+          "additionalProperties": false
+        },
+        "aggregates": {
+          "type": "object",
+          "description": "Routes nested Aggregate sub-module components into this boundary. Keys are aggregate instance names matching the Aggregate's spec.aggregates map. All aggregate instances must be placed in exactly one boundary if boundaries are defined.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "$ref": "#/$defs/aggregate_routing"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

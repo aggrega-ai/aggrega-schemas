@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/featurerecipe-v1alpha1.schema.json",
+  "title": "Aggrega Infrastructure Base (FeatureRecipe)",
+  "description": "Ops-authored definitions mapping Dev abstract features to concrete, versioned Go plugin pipelines. Strictly 1:1 with a physical provider and catalog feature.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "aggrega.ai/v1alpha1"
+    },
+    "kind": {
+      "type": "string",
+      "const": "FeatureRecipe"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-zA-Z0-9-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][a-zA-Z0-9-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+          "description": "Strict Semantic Versioning of the feature plugin pipeline (e.g., 1.2.5)."
+        },
+        "description": {
+          "type": "string",
+          "description": "A concise, one-sentence summary of what the entity does."
+        },
+        "maintainers": {
+          "type": "array",
+          "description": "List of maintainers who own this entity.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "email": { "type": "string" },
+              "url": { "type": "string" }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          }
+        },
+        "license": {
+          "type": "string",
+          "description": "Legal compliance license (e.g., Apache-2.0)."
+        },
+        "repository": {
+          "type": "string",
+          "description": "The URL to the Git repository where the source files live."
+        },
+        "home": {
+          "type": "string",
+          "description": "The URL of this entity's home page, wiki, or documentation."
+        },
+        "keywords": {
+          "type": "array",
+          "description": "A list of descriptive keywords for UI discoverability.",
+          "items": { "type": "string" }
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "Indicates whether this entity is deprecated and should no longer be used."
+        }
+      },
+      "additionalProperties": false
+    },
+    "spec": {
+      "type": "object",
+      "required": [
+        "provider",
+        "implements"
+      ],
+      "properties": {
+        "provider": {
+          "type": "string",
+          "description": "The explicit execution engine this recipe targets (e.g., 'helm', 'terraform', 'compose')."
+        },
+        "implements": {
+          "type": "string",
+          "description": "API Contract mapping this recipe to a catalog Feature URI (including credential Features labeled feature.aggrega.ai/kind: secret). Supports exact version, major-compatible range (^), or unversioned matching. Validated for Interface Parity by the compiler."
+        },
+        "locals": {
+          "type": "object",
+          "description": "The Private Ops State. Internal computation results available only within this FeatureRecipe's templates. Used to export physical realities (e.g., target containers, JSON paths) for downstream Wasm plugins. Never exposed to callers — use provides for the public API.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "provides": {
+          "type": "object",
+          "description": "The Public Developer API. Contractual output variables available for downstream Caller inject resolution.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "source": {
+          "description": "Optional path to infrastructure code. Accepts a Universal URI string or an open structured object. If provided alongside valuesMapping, the compiler renders it and appends the objects to the base AST before Wasm plugins execute.",
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Universal URI string (e.g., './src', 'git::https://...', 'oci://...'). Used for local paths, OCI artifacts, and Git repositories."
+            },
+            {
+              "type": "object",
+              "description": "Open Structured Object. The exact required keys (e.g., 'registry', 'chart' for Helm) are dictated and validated dynamically at compile-time by the Provider's Wasm socket.",
+              "additionalProperties": true
+            }
+          ]
+        },
+        "valuesMapping": {
+          "type": "string",
+          "description": "Optional inline Go template evaluated strictly to feed variables into the external 'source' template. Mutually exclusive with valuesMappingFile and valuesMappingJsonnet."
+        },
+        "valuesMappingFile": {
+          "type": "string",
+          "description": "File path inside the recipe package pointing to a single Go template mapping file (e.g., './mappings/vars.yaml'). Mutually exclusive with valuesMapping and valuesMappingJsonnet."
+        },
+        "valuesMappingJsonnet": {
+          "type": "string",
+          "description": "File path inside the recipe package pointing to a Jsonnet mapping file (e.g., './mappings/vars.jsonnet'). The compiler evaluates the Jsonnet program with the full Aggrega context (.values, .infra, .context) injected as external variables via std.extVar(). The Jsonnet output must be a single JSON object mapping to the provider's expected format. Mutually exclusive with valuesMapping and valuesMappingFile. Recommended for complex mappings where Go template logic becomes unwieldy."
+        },
+        "injectMapping": {
+          "type": "string",
+          "description": "Optional inline Go template evaluated during the Pre-Render Interception phase. Outputs a JSON/YAML dictionary that the Go compiler natively deep-merges over the Caller's '.context.inject' memory pipe. Used for Wasm-free Caller-Side mutation of environment variables and delivery contracts."
+        },
+        "pipeline": {
+          "type": "array",
+          "description": "Sequential list of Wasm plugins to execute for stateful AST mutation.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "plugin",
+              "function"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_]+$",
+                "description": "A unique programmatic identifier for this step, allowing downstream plugins to reference its outputs."
+              },
+              "plugin": {
+                "type": "string",
+                "description": "The Universal URI of the executable Go plugin."
+              },
+              "function": {
+                "type": "string",
+                "description": "The exported Wasm function to invoke."
+              },
+              "with": {
+                "type": "string",
+                "description": "Inline Go template evaluating to a JSON/YAML map that strictly satisfies this plugin's explicit input schema."
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
