@@ -256,8 +256,8 @@
                             "resolved_version"
                           ],
                           "properties": {
-                            "type": { "type": "string", "description": "The URI of the SecretStore interface." },
-                            "resolved_version": { "type": "string", "description": "The exact Semantic Version of the SecretStore resolved during compilation." },
+                            "type": { "type": "string", "description": "The URI of the credential Feature interface." },
+                            "resolved_version": { "type": "string", "description": "The exact Semantic Version of the credential Feature resolved during compilation." },
                             "values": { "type": "object", "additionalProperties": true },
                             "inject": {
                               "type": "object",
@@ -303,15 +303,15 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "description": "The URI of the SecretStore interface to use."
+                      "description": "The URI of the credential Feature interface to use."
                     },
                     "resolved_version": {
                       "type": "string",
-                      "description": "The exact Semantic Version of the SecretStore resolved during compilation."
+                      "description": "The exact Semantic Version of the credential Feature resolved during compilation."
                     },
                     "values": {
                       "type": "object",
-                      "description": "Configuration validated by the SecretStore's cueSchema (e.g., path, key).",
+                      "description": "Configuration validated by the credential Feature's cueSchema (e.g., path, key).",
                       "additionalProperties": true
                     },
                     "inject": {
