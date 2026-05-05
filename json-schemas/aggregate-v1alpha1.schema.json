@@ -84,6 +84,13 @@
       },
       "additionalProperties": false
     },
+    "defs": {
+      "type": "array",
+      "description": "Optional block for standard YAML anchors (& and *) to keep the Aggregate DRY while maintaining a flat O(1) dictionary for the compiler. Mirrors the equivalent block on Manifest.",
+      "items": {
+        "type": "string"
+      }
+    },
     "spec": {
       "type": "object",
       "properties": {
