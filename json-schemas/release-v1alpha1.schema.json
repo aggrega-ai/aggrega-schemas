@@ -107,18 +107,6 @@
           "items": { "type": "string" },
           "description": "Imports external structured parameter files for GitOps workflows."
         },
-        "syncWaves": {
-          "type": "object",
-          "description": "Defines temporal DAG execution order. Keys are integer wave stages (as strings). Values are arrays of component instance IDs deployed in that stage. Lower waves deploy first. Example: { '0': ['core-vpc', 'postgres-db'], '1': ['db-migration-task'], '2': ['web-server'] }.",
-          "patternProperties": {
-            "^[0-9]+$": {
-              "type": "array",
-              "items": { "type": "string" },
-              "description": "Component instance IDs to deploy in this wave."
-            }
-          },
-          "additionalProperties": false
-        },
         "boundaries": {
           "type": "object",
           "description": "The root logical boxes into which the Aggregate's components are routed.",
@@ -255,6 +243,10 @@
         "subDirectory": {
           "type": "string",
           "description": "Boundary-level sub-path appended to directory. If omitted on both boundary and component, defaults to '{{ .provider }}' for CI/CD auto-partitioning. Set to '.' or '' to disable."
+        },
+        "syncWave": {
+          "type": "integer",
+          "description": "Optional per-boundary deployment wave (signed integer, default 0). Every component in this boundary inherits the boundary's wave value into its IR node. Negative values are permitted (run before everything else); larger values run after lower values. Maps to provider-native sequencing artifacts at render time (argocd.argoproj.io/sync-wave annotation for K8s/Helm; depends_on chains for Terraform; DependsOn for CloudFormation; no-op for Compose). Nested boundaries do not implicitly inherit — each declares its own wave."
         },
         "annotations": {
           "type": "object",

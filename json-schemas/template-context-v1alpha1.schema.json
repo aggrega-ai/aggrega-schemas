@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://aggrega.ai/schemas/internal/template-context-v1alpha1.schema.json",
     "title": "Aggrega Internal Template Context",
-    "description": "The runtime view assembled by the Go compiler and injected into Recipe and FeatureRecipe Go templates during Step 5. For credential FeatureRecipes (implementing Features labeled feature.aggrega.ai/kind: secret), the compiler additionally populates .secret_name and .inject with the secret-specific context. This is NOT persisted to disk; it exists only in compiler memory during rendering. This schema documents the contract between the compiler and Ops template authors.\n\nPhase B sub-pass availability:\n  Pass 1 (provides): partial pillars (self-ref banned).\n  Phase B.0 (locals + source eval): all pillars; .source and .workload absent.\n  Phase B.1 (valuesMapping): all pillars + .source; .workload absent.\n  Phase B.2 (workload eval): all pillars + .source; .workload being evaluated (absent from self-reference).\n  Phase B.3 (artifacts): all pillars + .source + .workload (fullest context).",
+    "description": "The runtime view assembled by the Go compiler and injected into Recipe and FeatureRecipe Go templates during Step 5. For credential FeatureRecipes (implementing Features labeled feature.aggrega.ai/kind: secret), the compiler additionally populates .secret_name and .inject with the secret-specific context. For boundary-scope FeatureRecipes (spec.executionScope: boundary), the .context, .workload, .secret_name, .inject, and .inject_raw pillars are absent and a .boundary.* pillar is populated instead — see the boundary block at the bottom of properties. This is NOT persisted to disk; it exists only in compiler memory during rendering. This schema documents the contract between the compiler and Ops template authors.\n\nPhase B sub-pass availability:\n  Pass 1 (provides): partial pillars (self-ref banned).\n  Phase B.0 (locals + source eval): all pillars; .source and .workload absent.\n  Phase B.1 (valuesMapping): all pillars + .source; .workload absent.\n  Phase B.2 (workload eval): all pillars + .source; .workload being evaluated (absent from self-reference).\n  Phase B.3 (artifacts): all pillars + .source + .workload (fullest context).",
     "type": "object",
     "required": [
       "context",
@@ -228,6 +228,61 @@
           { "$ref": "workload-v1alpha1.schema.json" },
           { "type": "null" }
         ]
+      },
+      "boundary": {
+        "type": "object",
+        "description": "Boundary-scope context — populated only when evaluating a FeatureRecipe whose spec.executionScope is 'boundary'. Component-scope FRs do not receive this pillar; their context.instance_id, context.inject, context.uses, and the .workload pillar carry per-component data instead. Boundary-scope FRs receive .boundary.* in place of those per-component pillars.",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The boundary's evaluated directory path (post-template-evaluation). Same string used for per-(path, provider) dispatch grouping at orchestrator-time."
+          },
+          "boundary_name": {
+            "type": "string",
+            "description": "The boundary's name (the map key in release.spec.boundaries)."
+          },
+          "components": {
+            "type": "object",
+            "description": "Map of instance_id to ComponentInfo for every component in the boundary's subtree (recursive, includes nested-boundary components). Each entry carries the component's resolved type URI, instance ID, and provided values from per-component provides evaluation.",
+            "additionalProperties": true
+          },
+          "internal_uses_edges": {
+            "type": "array",
+            "description": "Uses edges where source AND target are both in this boundary's subtree.",
+            "items": { "type": "object", "additionalProperties": true }
+          },
+          "outgoing_cross_boundary_uses_edges": {
+            "type": "array",
+            "description": "Uses edges where source is in subtree, target is outside. Used by compose-bridge: which outbound connections need the bridge to proxy.",
+            "items": { "type": "object", "additionalProperties": true }
+          },
+          "incoming_cross_boundary_uses_edges": {
+            "type": "array",
+            "description": "Uses edges where target is in subtree, source is outside. Used by ingress-style aggregators that need to know who's calling in.",
+            "items": { "type": "object", "additionalProperties": true }
+          },
+          "cross_boundary_uses_edges": {
+            "type": "array",
+            "description": "Convenience union of outgoing and incoming cross-boundary edges.",
+            "items": { "type": "object", "additionalProperties": true }
+          },
+          "labels": {
+            "type": "object",
+            "description": "Union of components' labels in the subtree, with author-order preservation.",
+            "additionalProperties": { "type": "string" }
+          },
+          "annotations": {
+            "type": "object",
+            "description": "The boundary's own annotations after the cascade resolves.",
+            "additionalProperties": { "type": "string" }
+          },
+          "feature_attachments": {
+            "type": "array",
+            "description": "List of features directly attached to this boundary (for cross-feature reference within boundary scope).",
+            "items": { "type": "object", "additionalProperties": true }
+          }
+        },
+        "additionalProperties": false
       }
     },
     "additionalProperties": false,

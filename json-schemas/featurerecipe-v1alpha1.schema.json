@@ -168,6 +168,12 @@
             },
             "additionalProperties": false
           }
+        },
+        "executionScope": {
+          "type": "string",
+          "enum": ["component", "boundary"],
+          "default": "component",
+          "description": "Whether this FeatureRecipe's Resource Generation runs per-component (default, today's behavior) or once per boundary attachment. Boundary-scope FeatureRecipes deduplicate by (boundary_path, FR-instance) and receive a different TemplateContext shape (.boundary.* pillars instead of per-component .context.* pillars). Phase A injectMapping continues to fan per-consumer regardless of executionScope."
         }
       },
       "additionalProperties": false

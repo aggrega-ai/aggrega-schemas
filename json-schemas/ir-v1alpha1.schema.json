@@ -78,8 +78,8 @@
                   "description": "The exact Semantic Version of the Component resolved during compilation."
                 },
                 "sync_wave": {
-                  "type": "string",
-                  "description": "The temporal execution stage mapped from the Release (e.g., '0', '1'). Passed to rendering plugins to generate GitOps sequencing annotations."
+                  "type": "integer",
+                  "description": "The deployment wave inherited from the IRNode's containing boundary's syncWave field (default 0; negative permitted). Renderers translate the integer to provider-native sequencing artifacts (argocd.argoproj.io/sync-wave for K8s/Helm; depends_on for Terraform; DependsOn for CloudFormation; no-op for Compose)."
                 },
                 "boundary_path": {
                   "type": "string",
