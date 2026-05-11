@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/mappinglibrary-v1alpha1.schema.json",
+  "title": "Aggrega Catalog (MappingLibrary)",
+  "description": "A reusable collection of Go template fragments that Recipes and FeatureRecipes consume at render time via `valuesMapping: { $import: ... }`. Tier 3 — opt-in for catalogs that need cross-Recipe mapping reuse. Single authoring mode: Go templates only; no parallel `mappingsJsonnet:` field.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "aggrega.ai/v1alpha1"
+    },
+    "kind": {
+      "type": "string",
+      "const": "MappingLibrary"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$",
+          "description": "PascalCase identifier for the library. The canonical reference URL derivation uses this as the <library> path segment in oci://<host>/<library>@<version>#/mappings/<name>."
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+          "description": "Strict Semantic Versioning of the library (e.g., 1.0.0). Drives the @<version> segment of the canonical reference URL."
+        },
+        "description": {
+          "type": "string",
+          "description": "A concise summary of what the library covers."
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Author-declared labels. The compiler does not interpret label values; labels are metadata for discovery + hub UI surfacing."
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Author-declared annotations. Same opaque-metadata posture as labels."
+        }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "required": [
+        "mappings"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "mappings": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^[A-Z][A-Za-z0-9]*$",
+            "description": "PascalCase identifier. Entry keys appear in canonical reference URLs (`#/mappings/<name>`); the envelope-level constraint prevents non-PascalCase keys from propagating through the catalog ecosystem."
+          },
+          "additionalProperties": {
+            "type": "string",
+            "description": "A single mapping entry. The value is a Go template fragment authored as a YAML string. The compiler stores the fragment verbatim at MappingLibrary load; parsing happens at Recipe / FeatureRecipe render time when the entry is imported via `valuesMapping: { $import: ... }`."
+          },
+          "description": "Named map of reusable Go template fragments. Each entry's body is opaque to the envelope validation — content semantics are handled by the Go template parser at consumption time."
+        }
+      },
+      "description": "The MappingLibrary's content. spec.mappings is required and must declare at least one entry. spec carries additionalProperties: false — no parallel authoring modes (e.g., `mappingsJsonnet:`) are accepted at the envelope level. The single-authoring-mode posture keeps Recipe rendering uniform (Go template throughout) and avoids forcing authors to switch evaluation models mid-render when consuming imported fragments."
+    }
+  }
+}
