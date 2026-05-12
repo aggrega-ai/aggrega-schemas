@@ -98,14 +98,24 @@
           "description": "Enables base-layer inheritance for frictionless local Dev Loops vs Prod deployments."
         },
         "parameters": {
-          "type": "object",
-          "description": "Environment-specific variable fulfillment contract. Structured nested maps.",
-          "additionalProperties": true
-        },
-        "parametersFrom": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "Imports external structured parameter files for GitOps workflows."
+          "description": "Environment-specific variable fulfillment contract with two authoring modes via content-shape dispatch. Mode 1 (inline): a YAML map carrying structured nested parameter values directly. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a single local file that supplies the parameter values. Single-source-only at this site — the pre-migration array form (`parametersFrom: [a, b, c]`) is removed; the multi-file layering use case migrates to Release `extends:` chains (the parent Release supplies base parameters; the child extends + overrides).",
+          "oneOf": [
+            {
+              "type": "object",
+              "not": {
+                "required": ["$import"]
+              },
+              "additionalProperties": true
+            },
+            {
+              "type": "object",
+              "required": ["$import"],
+              "properties": {
+                "$import": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          ]
         },
         "boundaries": {
           "type": "object",

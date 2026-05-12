@@ -95,29 +95,18 @@
               "source": false,
               "valuesMapping": false,
               "workload": false,
-              "workloadFrom": false,
-              "artifacts": false,
-              "artifactsFrom": false
+              "artifacts": false
             },
             "description": "The eval provider executes formatting in-memory. Fetching a 'source', a 'workload', 'artifacts', or utilizing base mapping fields is mathematically banned."
           },
           "else": {
-            "description": "Non-eval providers use the three-input-kinds model. At least one input kind must be present: sourced (source + values overlay), synthesized (workload / workloadFrom), or artifacts (artifacts / artifactsFrom). Deeper pairing rules (valuesMapping <-> source, workload requires provider workloadSchema) are enforced at Recipe load time in Go.",
+            "description": "Non-eval providers use the three-input-kinds model. At least one input kind must be present: sourced (source + values overlay), synthesized (workload), or artifacts. Deeper pairing rules (valuesMapping <-> source, workload requires provider workloadSchema) are enforced at Recipe load time in Go.",
             "anyOf": [
               { "required": ["source"] },
               { "required": ["valuesMapping"] },
               { "required": ["workload"] },
-              { "required": ["workloadFrom"] },
-              { "required": ["artifacts"] },
-              { "required": ["artifactsFrom"] }
-            ],
-            "not": {
-              "description": "workload and workloadFrom are mutually exclusive.",
-              "allOf": [
-                { "required": ["workload"] },
-                { "required": ["workloadFrom"] }
-              ]
-            }
+              { "required": ["artifacts"] }
+            ]
           }
         }
       ],
@@ -175,22 +164,51 @@
           ]
         },
         "workload": {
-          "type": "string",
-          "description": "Inline Go template string whose output is a YAML document parsed as 'aggrega.ai/v1alpha1 Workload' (synthesized mode). The compiler evaluates the template during Phase B.2, parses the result against workload-v1alpha1.schema.json, then hands the parsed Workload to the provider Engine for translation into provider-native manifests (e.g., K8s Deployment + Services + PVCs for the helm provider; compose services + networks for the compose provider). Mutually exclusive with workloadFrom. The target Provider entity MUST declare workloadSchema (enforced at Recipe load in Go)."
-        },
-        "workloadFrom": {
-          "type": "string",
-          "description": "File path inside the recipe package pointing to a Workload YAML template (e.g., './workload.yaml'), resolved relative to the Recipe directory. The file is Go-templated against the full pillar context before parsing. Mutually exclusive with workload."
+          "description": "Workload YAML producer with two authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output parses as 'aggrega.ai/v1alpha1 Workload'. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. The library-import mode (oci:// URL) is not supported at this site — use a local file path. The target Provider entity MUST declare workloadSchema (enforced at Recipe load in Go).",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "required": ["$import"],
+              "properties": {
+                "$import": {
+                  "type": "string",
+                  "not": {
+                    "pattern": "^oci://"
+                  },
+                  "description": "Local file path. Library imports via oci:// URLs are not supported at workload: — use valuesMapping: { $import: oci://... } for library content patterns."
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
         },
         "artifacts": {
           "type": "object",
-          "description": "Inline map of output filename to Go template string. Each template is evaluated during Phase B.3 against the full pillar context (including .workload and .source when present) and the output YAML is emitted as <filename> in the boundary's output directory. Map keys become output filenames verbatim. Collisions across artifact entries, source output, workload synthesis, or artifactsFrom basenames are load-time or render-time errors (002- §5.3).",
-          "additionalProperties": { "type": "string" }
-        },
-        "artifactsFrom": {
-          "type": "array",
-          "description": "List of relative paths to YAML files containing Go-templated provider-native manifests. Each file is Go-templated against the full pillar context (.workload / .source available). The output filename is the basename of the input path; basename collisions are load-time errors.",
-          "items": { "type": "string" }
+          "description": "Map of output filename to artifact-content authoring. Each entry's value carries one of two modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output is the artifact body. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. The library-import mode (oci:// URL) is not supported at this site — use a local file path. Map keys become output filenames verbatim. Collisions across artifact entries, source output, workload synthesis are load-time or render-time errors.",
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "required": ["$import"],
+                "properties": {
+                  "$import": {
+                    "type": "string",
+                    "not": {
+                      "pattern": "^oci://"
+                    },
+                    "description": "Local file path. Library imports via oci:// URLs are not supported at artifacts:."
+                  }
+                },
+                "additionalProperties": false
+              }
+            ]
+          }
         },
         "pipeline": {
           "type": "array",
