@@ -187,6 +187,13 @@
           "type": "object",
           "additionalProperties": true,
           "description": "JSON Schema 2020-12 content covering the free-form pillars: values (developer-tunable knobs), infra (Ops-tunable infrastructure parameters), and provides (downstream context keys published to consuming components). Accepts three authoring modes via content-shape dispatch: (1) inline content (a YAML map carrying compact form, JSON Schema YAML, or mixed); (2) single-file replacement via {$import: <path>}; (3) cross-document reference via {$ref: oci://<host>/<library>@<version>#/schemas/<name>} into a SchemaLibrary entry. The companion fields usesSchema and secretsSchema cover the fixed-shape pillars (dependency sockets, credential bindings); the bridge synthesis composes the three into the entity's unified validation surface."
+        },
+        "assertions": {
+          "type": "object",
+          "description": "Build-time cross-field validation. Each entry is a named assertion: the key is a stable rule identifier surfaced in error messages; the value is a Go template string with `{{ fail \"message\" }}` halt semantics. Multiple named assertions per entity evaluate per-instance in author-declared order; the first failing assertion halts the build. Component assertions evaluate at Step 4b (post-resolution, post-analyzer-gate, pre-render) and express architectural invariants of the contract that hold regardless of which Recipe binds. Template context: .values / .infra / .uses / .secrets / .metadata. The evaluator uses missingkey=error: references to undefined keys halt with a no-such-key diagnostic; optional-field idioms use Sprig default / hasKey.",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       },
       "additionalProperties": false
