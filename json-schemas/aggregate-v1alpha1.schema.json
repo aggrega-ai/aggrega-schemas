@@ -96,8 +96,38 @@
       "properties": {
         "parameters": {
           "type": "object",
-          "description": "Global environment contract. External variables (structured nested maps) injected to make this Aggregate reusable.",
-          "additionalProperties": true
+          "description": "Global environment contract. Each entry is either a simple <key>: <default-value> shorthand (a bare scalar default; the type is inferred from the scalar's YAML kind, no constraints) or a typed contract object using the compact-form vocabulary subset (type, description, default, enum, min/max, minLength/maxLength, pattern, format, validate, validateMessage, required, items, valuesType, properties). Nested structure is expressed via the typed-form properties: sub-field or via recursive YAML nesting at this map. Release fulfillment may be inline (parameters: {...}) or single-source file import (parameters: {$import: <path>}); Step 1a validates the merged map against this contract before parameter interpolation.",
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": ["string", "number", "integer", "boolean"],
+                "description": "Simple shorthand: bare scalar default value. Inferred as type matching the scalar's YAML kind; no further constraints."
+              },
+              {
+                "type": "object",
+                "description": "Typed contract using the compact-form vocabulary subset.",
+                "properties": {
+                  "type":            { "type": "string", "enum": ["string", "integer", "number", "boolean", "object", "array"] },
+                  "description":     { "type": "string" },
+                  "default":         {},
+                  "enum":            { "type": "array" },
+                  "min":             {},
+                  "max":             {},
+                  "minLength":       { "type": "integer" },
+                  "maxLength":       { "type": "integer" },
+                  "pattern":         { "type": "string" },
+                  "format":          { "type": "string" },
+                  "validate":        { "type": "string" },
+                  "validateMessage": { "type": "string" },
+                  "required":        { "type": "boolean" },
+                  "items":           {},
+                  "valuesType":      {},
+                  "properties":      { "type": "object" }
+                },
+                "additionalProperties": false
+              }
+            ]
+          }
         },
         "aggregates": {
           "type": "object",
