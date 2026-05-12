@@ -94,8 +94,6 @@
             "properties": {
               "source": false,
               "valuesMapping": false,
-              "valuesMappingFile": false,
-              "valuesMappingJsonnet": false,
               "workload": false,
               "workloadFrom": false,
               "artifacts": false,
@@ -104,19 +102,17 @@
             "description": "The eval provider executes formatting in-memory. Fetching a 'source', a 'workload', 'artifacts', or utilizing base mapping fields is mathematically banned."
           },
           "else": {
-            "description": "Non-eval providers use the three-input-kinds model. At least one input kind must be present: sourced (source + values overlay), synthesized (workload / workloadFrom), or artifacts (artifacts / artifactsFrom). Deeper pairing rules (valuesMapping ⇔ source, workload requires provider workloadSchema) are enforced at Recipe load time in Go.",
+            "description": "Non-eval providers use the three-input-kinds model. At least one input kind must be present: sourced (source + values overlay), synthesized (workload / workloadFrom), or artifacts (artifacts / artifactsFrom). Deeper pairing rules (valuesMapping <-> source, workload requires provider workloadSchema) are enforced at Recipe load time in Go.",
             "anyOf": [
               { "required": ["source"] },
               { "required": ["valuesMapping"] },
-              { "required": ["valuesMappingFile"] },
-              { "required": ["valuesMappingJsonnet"] },
               { "required": ["workload"] },
               { "required": ["workloadFrom"] },
               { "required": ["artifacts"] },
               { "required": ["artifactsFrom"] }
             ],
             "not": {
-              "description": "workload and workloadFrom are mutually exclusive (002- §2.3 rule 3).",
+              "description": "workload and workloadFrom are mutually exclusive.",
               "allOf": [
                 { "required": ["workload"] },
                 { "required": ["workloadFrom"] }
@@ -163,16 +159,20 @@
           }
         },
         "valuesMapping": {
-          "type": "string",
-          "description": "Inline Go template string mapping Aggrega context (.values, .secrets, .infra) to the provider's expected format. Mutually exclusive with valuesMappingFile."
-        },
-        "valuesMappingFile": {
-          "type": "string",
-          "description": "File path inside the recipe package pointing to a single Go template mapping file (e.g., './mappings/vars.yaml'). Mutually exclusive with valuesMapping and valuesMappingJsonnet."
-        },
-        "valuesMappingJsonnet": {
-          "type": "string",
-          "description": "File path inside the recipe package pointing to a Jsonnet mapping file (e.g., './mappings/vars.jsonnet'). The compiler evaluates the Jsonnet program with the full Aggrega context (.values, .infra, .context) injected as external variables via std.extVar(). The Jsonnet output must be a single JSON object mapping to the provider's expected format. Mutually exclusive with valuesMapping and valuesMappingFile. Recommended for complex mappings where Go template logic becomes unwieldy."
+          "description": "Values mapping content with three authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar (typically block-scalar YAML `|`) producing the provider's expected values format from Aggrega context (.values, .secrets, .infra). Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.tmpl`, pointing at a local Go-template file. Mode 3 (library import): a YAML map of exactly one key, `$import: oci://<host>/<library>@<version>#/mappings/<entry>`, referencing a MappingLibrary entry resolved via the lockfile.",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "required": ["$import"],
+              "properties": {
+                "$import": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          ]
         },
         "workload": {
           "type": "string",

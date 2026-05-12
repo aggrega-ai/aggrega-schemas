@@ -122,16 +122,20 @@
           ]
         },
         "valuesMapping": {
-          "type": "string",
-          "description": "Optional inline Go template evaluated strictly to feed variables into the external 'source' template. Mutually exclusive with valuesMappingFile and valuesMappingJsonnet."
-        },
-        "valuesMappingFile": {
-          "type": "string",
-          "description": "File path inside the recipe package pointing to a single Go template mapping file (e.g., './mappings/vars.yaml'). Mutually exclusive with valuesMapping and valuesMappingJsonnet."
-        },
-        "valuesMappingJsonnet": {
-          "type": "string",
-          "description": "File path inside the recipe package pointing to a Jsonnet mapping file (e.g., './mappings/vars.jsonnet'). The compiler evaluates the Jsonnet program with the full Aggrega context (.values, .infra, .context) injected as external variables via std.extVar(). The Jsonnet output must be a single JSON object mapping to the provider's expected format. Mutually exclusive with valuesMapping and valuesMappingFile. Recommended for complex mappings where Go template logic becomes unwieldy."
+          "description": "Values mapping content with three authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar producing the provider's expected values format. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.tmpl`, pointing at a local Go-template file. Mode 3 (library import): a YAML map of exactly one key, `$import: oci://<host>/<library>@<version>#/mappings/<entry>`, referencing a MappingLibrary entry resolved via the lockfile.",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "required": ["$import"],
+              "properties": {
+                "$import": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          ]
         },
         "injectMapping": {
           "type": "string",

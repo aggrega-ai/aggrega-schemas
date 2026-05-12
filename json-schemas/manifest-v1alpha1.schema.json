@@ -95,18 +95,28 @@
         },
         "mappings": {
           "type": "object",
-          "description": "Maps abstract interfaces to concrete implementations, grouped by provider. Each provider section contains components, features, and secrets sub-sections with two-tier resolution: 'type' for bulk DRY mapping by component/feature/secret type, 'name' for granular overrides by instance name. Resolution order: name wins over type. Versioned type keys win over unversioned. After resolution, every entity must have a mapping or the compiler halts.",
+          "description": "Maps abstract interfaces to concrete implementations. Two authoring shapes coexist during the migration window: (a) flat shape with reserved top-level keys 'components' and 'features' that map component-type / feature-type URIs directly to Recipe / FeatureRecipe URIs (recommended; provider-agnostic at the Manifest layer; provider determination flows from each resolved Recipe's spec.provider at orchestrator-time); (b) legacy per-provider shape where the top-level keys are provider names (e.g., 'helm', 'compose') and each provider section carries its own components / features sub-sections. The flat shape takes precedence when both are present in the same Manifest. The legacy shape retires when downstream WIs complete the testdata migration.",
+          "properties": {
+            "components": {
+              "$ref": "#/$defs/mapping_tier",
+              "description": "Flat-shape component-type to Recipe URI mapping. Recipe URIs support exact ('core/helm/postgres-bitnami:1.2.0'), range ('core/helm/postgres-bitnami:^1.2.0'), or unversioned ('core/helm/postgres-bitnami') forms; the resolver pins the resolved version in the lockfile at first resolve."
+            },
+            "features": {
+              "$ref": "#/$defs/mapping_tier",
+              "description": "Flat-shape feature-type to FeatureRecipe URI mapping. Includes both operational Features and credential Features (labeled feature.aggrega.ai/kind: secret)."
+            }
+          },
           "patternProperties": {
-            "^[a-zA-Z0-9_-]+$": {
+            "^(?!components$|features$)[a-zA-Z0-9_-]+$": {
               "type": "object",
-              "description": "Provider-scoped mapping section (e.g., 'helm', 'terraform', 'compose').",
+              "description": "Legacy per-provider mapping section (e.g., 'helm', 'terraform', 'compose'). Retires when downstream WIs complete the testdata migration to the flat shape.",
               "properties": {
                 "components": {
                   "$ref": "#/$defs/mapping_tier"
                 },
                 "features": {
                   "$ref": "#/$defs/mapping_tier",
-                  "description": "Maps Feature types to FeatureRecipe URIs. Includes both operational Features and credential Features (labeled feature.aggrega.ai/kind: secret) — there is no separate secrets sub-section."
+                  "description": "Maps Feature types to FeatureRecipe URIs. Includes both operational Features and credential Features."
                 }
               },
               "additionalProperties": false
