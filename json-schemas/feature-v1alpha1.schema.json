@@ -263,13 +263,10 @@
           },
           "additionalProperties": false
         },
-        "cueSchema": {
-          "type": "string",
-          "description": "Evaluated strictly. Must define what is used in values, infra, and provides. Pillars not defined are assumed empty by the compiler (e.g., if infra is not used, the compiler assumes infra: {}). The compiler dynamically generates a strict baseUsesCueSchema from the usesSchema and unifies it with this payload (baseUsesCueSchema & userCueSchema)."
-        },
-        "cueSchemaRef": {
-          "type": "string",
-          "description": "URI or relative file path referencing an external .cue file that contains the validation logic."
+        "schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON Schema 2020-12 content covering the free-form pillars: values (operator-tunable knobs), infra (infrastructure parameters), and provides (downstream context keys). Accepts three authoring modes via content-shape dispatch: (1) inline content (a YAML map carrying compact form, JSON Schema YAML, or mixed); (2) single-file replacement via {$import: <path>}; (3) cross-document reference via {$ref: oci://<host>/<library>@<version>#/schemas/<name>} into a SchemaLibrary entry. The companion fields usesSchema and secretsSchema cover the fixed-shape pillars (dependency sockets, credential bindings); the bridge synthesis composes the three into the entity's unified validation surface."
         }
       },
       "additionalProperties": false

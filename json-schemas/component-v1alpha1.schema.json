@@ -183,13 +183,10 @@
           },
           "additionalProperties": false
         },
-        "cueSchema": {
-          "type": "string",
-          "description": "Evaluated strictly. Must define what is used in values, infra, and provides. Pillars not defined are assumed empty by the compiler (e.g., if infra is not used, the compiler assumes infra: {}). The compiler dynamically generates a strict baseUsesCueSchema from the usesSchema and unifies it with this payload (baseUsesCueSchema & userCueSchema). IMPORTANT: The 'provides' pillar defined inside this CUE string is the authoritative source of output keys for Early Inject Key Validation. During Step 1, the compiler parses the CUE to extract the set of provides keys and validates that every 'from' key in Developer inject blocks references a key that exists in this set. This validation occurs at the CUE level, not the JSON Schema level."
-        },
-        "cueSchemaRef": {
-          "type": "string",
-          "description": "URI or relative file path referencing an external .cue file that contains the validation logic."
+        "schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON Schema 2020-12 content covering the free-form pillars: values (developer-tunable knobs), infra (Ops-tunable infrastructure parameters), and provides (downstream context keys published to consuming components). Accepts three authoring modes via content-shape dispatch: (1) inline content (a YAML map carrying compact form, JSON Schema YAML, or mixed); (2) single-file replacement via {$import: <path>}; (3) cross-document reference via {$ref: oci://<host>/<library>@<version>#/schemas/<name>} into a SchemaLibrary entry. The companion fields usesSchema and secretsSchema cover the fixed-shape pillars (dependency sockets, credential bindings); the bridge synthesis composes the three into the entity's unified validation surface."
         }
       },
       "additionalProperties": false
