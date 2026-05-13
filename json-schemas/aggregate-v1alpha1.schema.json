@@ -185,36 +185,26 @@
   },
   "$defs": {
     "inject_delivery": {
-      "description": "A single delivery mechanism supporting compact (map) or verbose (array) syntax. Compact form semantics depend on placement: in uses[].inject, values are target provides key references; in component.inject, values are literal strings. Verbose form uses explicit 'from' (provides reference) or 'value' (literal) keywords to remove ambiguity.",
-      "oneOf": [
-        {
-          "type": "object",
-          "description": "Compact form: keys are local identifiers (env var names, file paths, arg flags). In uses[].inject context, values are target provides key references. In component.inject context, values are literal strings.",
-          "additionalProperties": { "type": "string" }
+      "type": "array",
+      "description": "A single delivery mechanism, authored as an array of entries. Each entry carries an 'in' (local identifier — env var name, file path, arg flag, or custom mechanism-specific key) plus exactly one of 'from' (a provides key to resolve) or 'value' (a literal string, optionally containing Go template expressions evaluated during Step 5 Pass 2a). 'from' resolves against the target's provides in uses[].inject context, or against the component's own provides in component.inject context.",
+      "items": {
+        "type": "object",
+        "required": ["in"],
+        "oneOf": [
+          { "required": ["from"] },
+          { "required": ["value"] }
+        ],
+        "properties": {
+          "in": { "type": "string", "description": "The local identifier to inject into. Semantics determined by the parent mechanism (env → variable name, file → mount path, arg → flag prefix, custom → mechanism-specific key)." },
+          "from": { "type": "string", "description": "A provides key to resolve. In uses[].inject, resolves against the target node's provides. In component.inject, resolves against the component's own provides." },
+          "value": { "type": "string", "description": "A literal string value. Supports Go template expressions (e.g., '{{ .values.app_token }}', '{{ .infra.namespace }}') evaluated during Step 5 Pass 2a with access to .values, .infra, .context.instance_id, .context.labels, .context.annotations.*, and .metadata.*." }
         },
-        {
-          "type": "array",
-          "description": "Verbose form: array of objects with 'in' (local identifier) plus exactly one of 'from' (provides key reference) or 'value' (literal string). 'from' resolves against the target's provides (in uses[].inject) or the component's own provides (in component.inject). 'value' is a literal string, optionally containing Go template expressions evaluated in Step 5 Pass 2a.",
-          "items": {
-            "type": "object",
-            "required": ["in"],
-            "oneOf": [
-              { "required": ["from"] },
-              { "required": ["value"] }
-            ],
-            "properties": {
-              "in": { "type": "string", "description": "The local identifier to inject into. Semantics determined by the parent mechanism (env → variable name, file → mount path, arg → flag prefix, custom → mechanism-specific key)." },
-              "from": { "type": "string", "description": "A provides key to resolve. In uses[].inject, resolves against the target node's provides. In component.inject, resolves against the component's own provides." },
-              "value": { "type": "string", "description": "A literal string value. Supports Go template expressions (e.g., '{{ .values.app_token }}', '{{ .infra.namespace }}') evaluated during Step 5 Pass 2a with access to .values, .infra, .context.instance_id, .context.labels, .context.annotations.*, and .metadata.*." }
-            },
-            "additionalProperties": false
-          }
-        }
-      ]
+        "additionalProperties": false
+      }
     },
     "inject_block": {
       "type": "object",
-      "description": "Agnostic injection routing. Maps local variables to Target provides keys. Each delivery mechanism (env, file, arg, or custom) supports two equivalent syntaxes: a compact map form ({LOCAL: 'provides_key'}) or a verbose array form ([{in: 'LOCAL', from: 'provides_key'}]). The compiler normalizes both to map form during Step 2.",
+      "description": "Agnostic injection routing. Maps local variables to target provides keys (uses[].inject) or to literal strings / template expressions (component.inject). Each delivery mechanism (env, file, arg, or custom) is authored as an array of {in, from?, value?} entries — explicit 'from' for provides references and 'value' for literals.",
       "properties": {
         "env": { "$ref": "#/$defs/inject_delivery" },
         "file": { "$ref": "#/$defs/inject_delivery" },
