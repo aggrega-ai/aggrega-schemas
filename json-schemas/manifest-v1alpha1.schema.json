@@ -155,12 +155,12 @@
               },
               "infra": {
                 "type": "object",
-                "description": "CUE schema for annotation value → infra field mapping (ops-facing).",
+                "description": "Validating schema for the ops-facing payload produced by the annotation value. JSON Schema 2020-12 source.",
                 "additionalProperties": true
               },
               "values": {
                 "type": "object",
-                "description": "CUE schema for annotation value → values field mapping (dev-facing).",
+                "description": "Validating schema for the dev-facing payload produced by the annotation value. JSON Schema 2020-12 source.",
                 "additionalProperties": true
               }
             },
