@@ -99,7 +99,7 @@
             },
             "description": "A single template entry. Carries $params: declarations plus a body that references $params: placeholders by literal scalar substitution. Referenced from schema entries via $instantiate: + $args:."
           },
-          "description": "Optional named map of parameterized helpers. Schema entries reference templates by name via $instantiate:; literal scalar substitution only — no embedded Go templates, no conditionals, no loops (the fourth-language argument per the master LDR)."
+          "description": "Optional named map of parameterized helpers. Schema entries reference templates by name via $instantiate:; literal scalar substitution only — no embedded Go templates, no conditionals, no loops. The library substitution layer is intentionally narrower than full template evaluation so authoring stays in the schema language rather than introducing a separate templating surface."
         }
       },
       "description": "The SchemaLibrary's content. spec.schemas is required and must declare at least one entry; spec.templates is optional and only present when the library uses parameterized helpers."
