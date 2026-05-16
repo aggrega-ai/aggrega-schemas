@@ -277,6 +277,19 @@
                         }
                       },
                       "additionalProperties": false
+                    },
+                    "origin": {
+                      "type": "string",
+                      "enum": ["explicit", "annotation"],
+                      "description": "Distinguishes Feature attachments authored in a features: block (explicit) from synthetic attachments produced by the annotation-driven expansion pass (annotation)."
+                    },
+                    "annotation_key": {
+                      "type": "string",
+                      "description": "Annotation name that triggered a synthetic attachment (e.g. feature.myco/rewrite-host). Empty when origin is explicit."
+                    },
+                    "annotation_source": {
+                      "type": "string",
+                      "description": "Source location of the annotation declaration as <release-file-path>:<dotted-yaml-key-path>. Empty when origin is explicit."
                     }
                   },
                   "additionalProperties": false
