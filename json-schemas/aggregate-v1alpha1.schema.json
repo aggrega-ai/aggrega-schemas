@@ -251,9 +251,9 @@
         },
         "annotations": {
           "type": "object",
-          "description": "Logical annotations cascading down to the .context.annotations.aggregate bucket.",
+          "description": "Developer-authored annotations on this subsystem. Values are strings or null; explicit null on a key inherited from a parent subsystem removes the inherited binding from this subsystem (annotation-driven Feature opt-out). Annotations declared here are inherited by nested subsystems and by contained components; closer-level wins per-key. Cascades down to the .context.annotations.aggregate bucket on each derived IR node.",
           "additionalProperties": {
-            "type": "string"
+            "type": ["string", "null"]
           }
         },
         "features": {
@@ -314,6 +314,13 @@
         "description": {
           "type": "string",
           "description": "Optional documentation describing this component instance's role in the application. Passed through to the IR graph for augmenting rendering."
+        },
+        "annotations": {
+          "type": "object",
+          "description": "Developer-authored annotations on this component. Values are strings or null; explicit null on a key inherited from a parent subsystem removes the inherited binding from this component (annotation-driven Feature opt-out). Component-level annotations override inherited subsystem-level annotations per key; sibling components in the same subsystem retain their own annotation maps independently.",
+          "additionalProperties": {
+            "type": ["string", "null"]
+          }
         },
         "values": {
           "type": "object",
