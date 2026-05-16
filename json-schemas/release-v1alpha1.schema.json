@@ -147,7 +147,7 @@
         },
         "annotations": {
           "type": "object",
-          "description": "Component-specific Ops annotations that override boundary-level annotations for this component. Deep-merged over boundary annotations (component wins on key collision). Used for per-component provider well-known annotation overrides (e.g., aggrega.ai/chart-name). The provider is responsible for validating consistency when grouping components (e.g., helm-chart provider rejects components with different aggrega.ai/namespace values in the same chart). Explicit null on a key inherited from the parent boundary removes the inherited binding from this component (annotation-driven Feature opt-out); sibling components retain the inherited binding.",
+          "description": "Component-specific Operator annotations that override boundary-level annotations for this component. Deep-merged over boundary annotations (component wins on key collision). Used for per-component provider well-known annotation overrides (e.g., aggrega.ai/chart-name). The provider is responsible for validating consistency when grouping components (e.g., helm-chart provider rejects components with different aggrega.ai/namespace values in the same chart). Explicit null on a key inherited from the parent boundary removes the inherited binding from this component (annotation-driven Feature opt-out); sibling components retain the inherited binding.",
           "additionalProperties": {
             "type": ["string", "null"]
           }
@@ -159,18 +159,18 @@
         },
         "features": {
           "type": "object",
-          "description": "Features attached to this component via the Release. For features also declared in the Aggregate, only infra is provided (values come from the Aggregate). For Release-only features (Ops-injected), type is required. The Release MUST NOT provide values for features — this is the Developer's domain.",
+          "description": "Features attached to this component via the Release. For features also declared in the Aggregate, only infra is provided (values come from the Aggregate). For Release-only features (Operator-injected), type is required. The Release MUST NOT provide values for features — this is the Developer's domain.",
           "patternProperties": {
             "^[a-zA-Z0-9_-]+$": {
               "type": "object",
               "properties": {
                 "type": {
                   "type": "string",
-                  "description": "The URI of the Feature. Required for Release-only features (Ops-injected). Must match the Aggregate's type if both declare it."
+                  "description": "The URI of the Feature. Required for Release-only features (Operator-injected). Must match the Aggregate's type if both declare it."
                 },
                 "description": {
                   "type": "string",
-                  "description": "Optional documentation explaining why Ops attached this feature at this boundary level."
+                  "description": "Optional documentation explaining why the Operator attached this feature at this boundary level."
                 },
                 "infra": {
                   "type": "object",
@@ -192,11 +192,11 @@
               "properties": {
                 "type": {
                   "type": "string",
-                  "description": "The URI of the credential Feature. Required for Release-only secrets (Ops-injected). Must match the Aggregate's type if both declare it."
+                  "description": "The URI of the credential Feature. Required for Release-only secrets (Operator-injected). Must match the Aggregate's type if both declare it."
                 },
                 "description": {
                   "type": "string",
-                  "description": "Optional documentation explaining why Ops attached this credential at this boundary level."
+                  "description": "Optional documentation explaining why the Operator attached this credential at this boundary level."
                 },
                 "infra": {
                   "type": "object",
@@ -260,7 +260,7 @@
         },
         "annotations": {
           "type": "object",
-          "description": "Boundary-wide Ops annotations cascading down to the .context.annotations.release bucket. Values are strings or null; explicit null on a key inherited from a parent boundary removes the inherited binding from this boundary's effective annotation set (annotation-driven Feature opt-out), propagating to every component routed into this boundary unless a deeper override re-introduces the binding.",
+          "description": "Boundary-wide Operator annotations cascading down to the .context.annotations.release bucket. Values are strings or null; explicit null on a key inherited from a parent boundary removes the inherited binding from this boundary's effective annotation set (annotation-driven Feature opt-out), propagating to every component routed into this boundary unless a deeper override re-introduces the binding.",
           "additionalProperties": {
             "type": ["string", "null"]
           }
