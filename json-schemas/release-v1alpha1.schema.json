@@ -147,9 +147,9 @@
         },
         "annotations": {
           "type": "object",
-          "description": "Component-specific Ops annotations that override boundary-level annotations for this component. Deep-merged over boundary annotations (component wins on key collision). Used for per-component provider well-known annotation overrides (e.g., aggrega.ai/chart-name). The provider is responsible for validating consistency when grouping components (e.g., helm-chart provider rejects components with different aggrega.ai/namespace values in the same chart).",
+          "description": "Component-specific Ops annotations that override boundary-level annotations for this component. Deep-merged over boundary annotations (component wins on key collision). Used for per-component provider well-known annotation overrides (e.g., aggrega.ai/chart-name). The provider is responsible for validating consistency when grouping components (e.g., helm-chart provider rejects components with different aggrega.ai/namespace values in the same chart). Explicit null on a key inherited from the parent boundary removes the inherited binding from this component (annotation-driven Feature opt-out); sibling components retain the inherited binding.",
           "additionalProperties": {
-            "type": "string"
+            "type": ["string", "null"]
           }
         },
         "infra": {
@@ -260,9 +260,9 @@
         },
         "annotations": {
           "type": "object",
-          "description": "Boundary-wide Ops annotations cascading down to the .context.annotations.release bucket.",
+          "description": "Boundary-wide Ops annotations cascading down to the .context.annotations.release bucket. Values are strings or null; explicit null on a key inherited from a parent boundary removes the inherited binding from this boundary's effective annotation set (annotation-driven Feature opt-out), propagating to every component routed into this boundary unless a deeper override re-introduces the binding.",
           "additionalProperties": {
-            "type": "string"
+            "type": ["string", "null"]
           }
         },
         "features": {
