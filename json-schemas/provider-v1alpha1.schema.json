@@ -90,11 +90,11 @@
         },
         "baseSchema": {
           "type": "string",
-          "description": "JSON Schema 2020-12 (compact-form YAML accepted) defining the keys this provider understands in generative (sourceless) mode. When a Recipe omits the source field, the compiler validates the valuesMapping output against this schema. The IDE/LSP reads it for autocomplete. If absent, the provider does not support generative mode — all Recipes must have a source. See vocabulary/compact-form-authoring.md for the authoring surface."
+          "description": "JSON Schema 2020-12 defining the keys this provider understands in generative (sourceless) mode. When a Recipe omits the source field, the compiler validates the valuesMapping output against this schema. The IDE/LSP reads it for autocomplete. If absent, the provider does not support generative mode — all Recipes must have a source. See vocabulary/compact-form-authoring.md for the authoring surface."
         },
         "workloadSchema": {
           "type": "string",
-          "description": "JSON Schema 2020-12 (compact-form YAML accepted) documenting how this provider translates the aggrega.ai/v1alpha1 Workload kind into provider-native manifests. When present, the provider supports Recipes that declare workload: or workloadFrom: (synthesized mode) — the compiler synthesizes provider-native manifests via a Go Engine, informed by this schema as documentation/contract. When absent, the provider does NOT support Workload synthesis; any Recipe for this provider that uses workload: or workloadFrom: is rejected at Recipe load time with a clear error. Today the field acts as a presence flag (any non-empty body indicates support); the body becomes executable input to Wasm translators in a future iteration."
+          "description": "JSON Schema 2020-12 documenting how this provider translates the aggrega.ai/v1alpha1 Workload kind into provider-native manifests. When present, the provider supports Recipes that declare workload: or workloadFrom: (synthesized mode) — the compiler synthesizes provider-native manifests via a Go Engine, informed by this schema as documentation/contract. When absent, the provider does NOT support Workload synthesis; any Recipe for this provider that uses workload: or workloadFrom: is rejected at Recipe load time with a clear error. Today the field acts as a presence flag (any non-empty body indicates support); the body becomes executable input to Wasm translators in a future iteration."
         }
       },
       "additionalProperties": false
