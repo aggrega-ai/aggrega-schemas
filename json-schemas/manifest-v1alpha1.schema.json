@@ -145,27 +145,46 @@
         },
         "annotations": {
           "type": "object",
-          "description": "Annotation-driven Feature shortcuts. Maps annotation keys to Feature types for compact Release authoring. The Feature type referenced by 'feature' MUST also appear in the 'type' section (that is where the FeatureRecipe version binding lives).",
+          "description": "Annotation-driven Feature shortcuts. Maps annotation keys to a Feature URI plus a pillar-grouped routing table from dotted-path subkey to Feature pillar (values or infra). Validation derives from the target Feature's spec.schema.<pillar>.<dotted-path> declaration; the binding declares routing only. The Feature URI referenced by 'feature' MUST also appear in the 'type' section (that is where the FeatureRecipe version binding lives).",
           "additionalProperties": {
             "type": "object",
+            "required": ["feature", "maps"],
+            "additionalProperties": false,
             "properties": {
               "feature": {
                 "type": "string",
-                "description": "Feature type to expand into. Must exist in features.type."
+                "description": "Feature URI this annotation routes to. The Feature is looked up in the catalog; its spec.schema declares the validating types for each routed subkey path."
               },
-              "infra": {
+              "maps": {
                 "type": "object",
-                "description": "Validating schema for the ops-facing payload produced by the annotation value. JSON Schema 2020-12 source.",
-                "additionalProperties": true
-              },
-              "values": {
-                "type": "object",
-                "description": "Validating schema for the dev-facing payload produced by the annotation value. JSON Schema 2020-12 source.",
-                "additionalProperties": true
+                "additionalProperties": false,
+                "description": "Pillar-grouped subkey-path routing table. At least one of infra: or values: must declare at least one path. Paths use dotted notation to navigate nested Feature schema properties (e.g., 'ingress.host' addresses the schema's ingress sub-object's host property).",
+                "anyOf": [
+                  { "required": ["infra"], "properties": { "infra": { "minItems": 1 } } },
+                  { "required": ["values"], "properties": { "values": { "minItems": 1 } } }
+                ],
+                "properties": {
+                  "infra": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "description": "Subkey paths routing to the Feature's infra pillar. Paths are dotted identifier sequences; each path must reference an existing property in Feature.Spec.Schema.infra.",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*(\\.[a-zA-Z_][a-zA-Z0-9_]*)*$"
+                    }
+                  },
+                  "values": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "description": "Subkey paths routing to the Feature's values pillar. Paths are dotted identifier sequences; each path must reference an existing property in Feature.Spec.Schema.values.",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*(\\.[a-zA-Z_][a-zA-Z0-9_]*)*$"
+                    }
+                  }
+                }
               }
-            },
-            "required": ["feature"],
-            "additionalProperties": false
+            }
           }
         }
       },
