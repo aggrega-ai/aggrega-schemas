@@ -343,7 +343,7 @@
                 },
                 "values": {
                   "type": "object",
-                  "description": "Developer-provided configuration for the Feature, validated by its cueSchema.",
+                  "description": "Developer-provided configuration for the Feature, validated by its schema declaration.",
                   "additionalProperties": true
                 },
                 "uses": {
@@ -370,7 +370,7 @@
                         },
                         "values": {
                           "type": "object",
-                          "description": "Vault query configuration validated by the credential Feature's cueSchema.",
+                          "description": "Vault query configuration validated by the credential Feature's schema declaration.",
                           "additionalProperties": true
                         },
                         "uses": {
@@ -409,7 +409,7 @@
                 },
                 "values": {
                   "type": "object",
-                  "description": "Vault query configuration validated by the credential Feature's cueSchema (e.g., path, key).",
+                  "description": "Vault query configuration validated by the credential Feature's schema declaration (e.g., path, key).",
                   "additionalProperties": true
                 },
                 "uses": {

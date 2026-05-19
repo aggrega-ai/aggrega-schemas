@@ -324,7 +324,7 @@
                     },
                     "values": {
                       "type": "object",
-                      "description": "Configuration validated by the credential Feature's cueSchema (e.g., path, key).",
+                      "description": "Configuration validated by the credential Feature's schema declaration (e.g., path, key).",
                       "additionalProperties": true
                     },
                     "inject": {

@@ -94,7 +94,7 @@
       },
       "values": {
         "type": "object",
-        "description": "The opaque cognitive payload for this node, already validated by CUE in Step 1. Passed through untouched.",
+        "description": "The opaque cognitive payload for this node, already validated by the schema validator in Step 1. Passed through untouched.",
         "additionalProperties": true
       },
       "infra": {

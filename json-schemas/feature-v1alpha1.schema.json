@@ -104,11 +104,11 @@
       "properties": {
         "extends": {
           "type": "string",
-          "description": "URI of a base Feature to inherit YAML metadata from and auto-unify CUE schemas with."
+          "description": "URI of a base Feature to inherit YAML metadata from and auto-merge JSON Schema 2020-12 declarations with."
         },
         "secretsSchema": {
           "type": "object",
-          "description": "Declarative credential slot definitions. Parallel to usesSchema. The compiler generates CUE validation rules from this schema.",
+          "description": "Declarative credential slot definitions. Parallel to usesSchema. The compiler generates JSON Schema 2020-12 validation rules from this schema.",
           "additionalProperties": {
             "type": "object",
             "properties": {
