@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/wasm-mutator-v1alpha1.schema.json",
+  "title": "Aggrega Wasm Mutator Socket",
+  "description": "The JSON wire shapes the mutator.wasm plugin socket consumes (MutatorInput) and emits (MutatorOutput). The mutator runs in Step 2 of the compilation pipeline and applies JSON Patch documents to the topology graph before the IR builder consumes it. The two wire shapes are co-canonical with the Go types in aggrega-cli/internal/compiler/topology/wasm_types.go and with each per-language PDK's mirror; per-language round-trip tests catch drift.",
+  "oneOf": [
+    { "$ref": "#/$defs/MutatorInput" },
+    { "$ref": "#/$defs/MutatorOutput" }
+  ],
+  "$defs": {
+    "MutatorInput": {
+      "type": "object",
+      "description": "The payload the host hands the mutator plugin on each invocation: release-level compilation context plus a labels-only projection of the topology graph.",
+      "required": [
+        "compilation_context",
+        "graph"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "compilation_context": {
+          "$ref": "#/$defs/CompilationContext"
+        },
+        "graph": {
+          "$ref": "#/$defs/MutatorGraph"
+        }
+      }
+    },
+    "MutatorOutput": {
+      "type": "object",
+      "description": "The response shape the mutator plugin emits: a list of opaque JSON Patch documents the host applies to the topology graph. Patches stay opaque at the schema layer so the host need not duplicate the JSON Patch parser the guest already implements.",
+      "required": [
+        "patches"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "patches": {
+          "type": "array",
+          "description": "Opaque JSON Patch documents to apply to the topology graph, in order.",
+          "items": {}
+        }
+      }
+    },
+    "CompilationContext": {
+      "type": "object",
+      "description": "Release-level metadata the mutator reads when deciding which compliance, FinOps, or governance rules apply to the build.",
+      "required": [
+        "release_destination",
+        "release_name",
+        "environment"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "release_destination": {
+          "type": "string",
+          "description": "The boundary path or destination identifier the Release targets."
+        },
+        "release_name": {
+          "type": "string",
+          "description": "The Release's metadata.name."
+        },
+        "environment": {
+          "type": "string",
+          "description": "The environment label the Release runs under (e.g., dev, staging, prod)."
+        }
+      }
+    },
+    "MutatorGraph": {
+      "type": "object",
+      "description": "The labels-only projection of the topology graph exposed to the mutator plugin. Intentionally narrower than the full topology result: edges, values, and feature payloads are not exposed because the mutator's job is labelling, not topology reshaping.",
+      "required": [
+        "nodes"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "nodes": {
+          "type": "object",
+          "description": "Nodes keyed by absolute node ID.",
+          "additionalProperties": {
+            "$ref": "#/$defs/MutatorNode"
+          }
+        }
+      }
+    },
+    "MutatorNode": {
+      "type": "object",
+      "description": "The minimum per-node projection the mutator plugin needs to evaluate compliance rules: which Component the node implements, which version of that Component resolved, and which labels the node carries.",
+      "required": [
+        "component",
+        "resolved_version",
+        "labels"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "component": {
+          "type": "string",
+          "description": "The name of the underlying Component the node instantiates."
+        },
+        "resolved_version": {
+          "type": "string",
+          "description": "The exact Semantic Version of the Component the resolver pinned for this node."
+        },
+        "labels": {
+          "type": "object",
+          "description": "The node's duck-typing and ontology labels.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

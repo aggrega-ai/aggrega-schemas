@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/wasm-policy-validator-v1alpha1.schema.json",
+  "title": "Aggrega Wasm Policy Validator Socket",
+  "description": "The JSON wire shapes the policy-validator.wasm plugin socket consumes (PolicyValidatorInput) and emits (PolicyValidatorOutput). The policy validator runs in Step 4 of the compilation pipeline; a fail verdict halts the build with a build-time diagnostic. The two wire shapes are co-canonical with the Go types in aggrega-cli/internal/compiler/analyzer/wasm_types.go and with each per-language PDK's mirror; per-language round-trip tests catch drift.",
+  "oneOf": [
+    { "$ref": "#/$defs/PolicyValidatorInput" },
+    { "$ref": "#/$defs/PolicyValidatorOutput" }
+  ],
+  "$defs": {
+    "PolicyValidatorInput": {
+      "type": "object",
+      "description": "The payload Step 4 hands to the policy-validator socket: a per-node policy projection of the IR graph plus the precalculated routing paths the analyzer enumerates alongside.",
+      "required": [
+        "graph",
+        "precalculated_paths"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "graph": {
+          "$ref": "#/$defs/PolicyGraph"
+        },
+        "precalculated_paths": {
+          "type": "array",
+          "description": "Routing paths the analyzer pre-enumerated so policies can reason about reachability without re-walking the graph.",
+          "items": {
+            "$ref": "#/$defs/PrecalculatedPath"
+          }
+        }
+      }
+    },
+    "PolicyValidatorOutput": {
+      "type": "object",
+      "description": "The response shape the policy-validator plugin emits: one PolicyResult per evaluated rule. An empty results array signals 'no policy rules ran' (distinct from 'all rules passed', which is an array of pass=true results).",
+      "required": [
+        "results"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "results": {
+          "type": "array",
+          "description": "One verdict per evaluated policy rule.",
+          "items": {
+            "$ref": "#/$defs/PolicyResult"
+          }
+        }
+      }
+    },
+    "PolicyGraph": {
+      "type": "object",
+      "description": "The IR subset exposed to the policy validator: per-node component identity, version, labels, and Feature attachments, plus the per-edge routing identity and edge-atomicity marker.",
+      "required": [
+        "nodes",
+        "edges"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "nodes": {
+          "type": "object",
+          "description": "Nodes keyed by absolute node ID.",
+          "additionalProperties": {
+            "$ref": "#/$defs/PolicyNode"
+          }
+        },
+        "edges": {
+          "type": "array",
+          "description": "Edges in author order; the cross-package determinism contract preserves this ordering across runs of identical input.",
+          "items": {
+            "$ref": "#/$defs/PolicyEdge"
+          }
+        }
+      }
+    },
+    "PolicyNode": {
+      "type": "object",
+      "description": "The per-node projection exposed to the policy validator. Narrower than the full IR node surface: boundary path, subsystem path, sync wave, the three annotation buckets, provides, and self-inject are not exposed. Constraining the surface matches the principle-of-least-authority discipline that applies to every Wasm plugin socket.",
+      "required": [
+        "component",
+        "resolved_version",
+        "labels"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "component": {
+          "type": "string",
+          "description": "The catalog component URI the node resolves against; policies scope rules by component type."
+        },
+        "resolved_version": {
+          "type": "string",
+          "description": "The exact Semantic Version of the Component the resolver pinned for this node; policies can express version-floor or version-pin rules."
+        },
+        "labels": {
+          "type": "object",
+          "description": "The node's catalog and authoring labels. The vocabulary that compliance, AI ontology, and topological-purity policy use.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "features": {
+          "type": "object",
+          "description": "Per-instance Feature attachment map (instance name to attachment entry). Policies can enforce required-feature and forbidden-feature rules.",
+          "additionalProperties": {
+            "$ref": "#/$defs/PolicyFeatureEntry"
+          }
+        }
+      }
+    },
+    "PolicyEdge": {
+      "type": "object",
+      "description": "The per-edge projection exposed to the policy validator. Source, target, and socket carry routing identity. OriginFeature distinguishes Component-authored edges from Feature-authored edges so policies can express rules sensitive to which authoring surface introduced the edge.",
+      "required": [
+        "source",
+        "target",
+        "socket"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "The originating node's absolute ID."
+        },
+        "target": {
+          "type": "string",
+          "description": "The destination node's absolute ID."
+        },
+        "socket": {
+          "type": "string",
+          "description": "The usesSchema category this edge belongs to (e.g., 'databases', 'tools')."
+        },
+        "origin_feature": {
+          "type": "string",
+          "description": "The originating Feature instance name when this edge was autonomously declared by a Feature; empty for Component-authored edges."
+        }
+      }
+    },
+    "PrecalculatedPath": {
+      "type": "object",
+      "description": "One pre-enumerated routing path the analyzer materializes so policy rules can reason about reachability without re-walking the graph.",
+      "required": [
+        "path_id",
+        "nodes",
+        "attached_features"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "path_id": {
+          "type": "string",
+          "description": "Stable identifier for this path; deterministic across runs of identical input."
+        },
+        "nodes": {
+          "type": "array",
+          "description": "Ordered sequence of node IDs the path traverses, from source to terminal.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "attached_features": {
+          "type": "array",
+          "description": "Alphabetically sorted union of Feature type URIs attached to any node along the path. Set-membership semantics: a Feature appears once even if multiple nodes carry it. Empty when no node along the path carries any Feature attachment.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "PolicyFeatureEntry": {
+      "type": "object",
+      "description": "A Feature attachment exposed to the policy validator: the Feature type URI, the resolved version, and the operational payloads. Mirrors the per-feature shape policies need without exposing internal provenance metadata.",
+      "required": [
+        "type",
+        "resolved_version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The URI of the catalog Feature this attachment instantiates."
+        },
+        "resolved_version": {
+          "type": "string",
+          "description": "The exact Semantic Version of the Feature the resolver pinned for this attachment."
+        },
+        "values": {
+          "type": "object",
+          "description": "The operational configuration payload for the Feature attachment.",
+          "additionalProperties": true
+        },
+        "infra": {
+          "type": "object",
+          "description": "Physical sizing overrides targeting this Feature attachment.",
+          "additionalProperties": true
+        },
+        "origin": {
+          "type": "string",
+          "enum": ["explicit", "annotation"],
+          "description": "Distinguishes Feature attachments authored in a features: block ('explicit') from synthetic attachments produced by the annotation-driven expansion pass ('annotation')."
+        }
+      }
+    },
+    "PolicyResult": {
+      "type": "object",
+      "description": "One rule's verdict. Pass=false halts the build with Message surfaced as a build-time diagnostic; Pass=true is informational and does not affect build outcome.",
+      "required": [
+        "pass",
+        "message"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "pass": {
+          "type": "boolean",
+          "description": "True when the rule's verdict permits the build to proceed; false halts the build."
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable diagnostic. Always populated. On pass=false the message surfaces as the build-time error; on pass=true it is informational."
+        }
+      }
+    }
+  }
+}
