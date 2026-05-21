@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/aggrega-config-v1alpha1.schema.json",
+  "title": "Aggrega Workspace Config",
+  "description": "Per-workspace configuration file consumed by the aggrega CLI. Lives at `.aggrega-config.yaml` in the workspace root and carries four top-level blocks: workspace (registry/cache/offline settings + CUE-module registry routing), build (authoring-release hint + deprecation strictness dials), plugins (workspace-level Wasm plugin attachments: mutator, policy, linter, importer), and lint (per-rule strictness dials, currently a single `publishing_discipline` block). Workspace-config file (flat top-level shape, no apiVersion/kind envelope) distinct from catalog content. Schema evolution discipline: adding a new top-level block alongside `workspace`/`build`/`plugins`/`lint` is a SemVer-MINOR bump (additive); adding a new flag inside an existing block is likewise a SemVer-MINOR bump; removing a key or tightening a constraint is a SemVer-MAJOR break.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "workspace": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Workspace-level orientation: which registry the build pushes to and pulls from, where the local artifact cache lives, whether the build operates offline, and how CUE-module imports resolve to registries.",
+      "properties": {
+        "default_registry": {
+          "type": "string",
+          "default": "hub.aggrega.ai",
+          "description": "Default OCI registry host the build pushes published artifacts to and pulls dependencies from when an entity does not name a registry explicitly. Defaults to `hub.aggrega.ai`."
+        },
+        "catalog_dirs": {
+          "type": "array",
+          "default": [],
+          "items": { "type": "string" },
+          "description": "Optional vendored catalog directories the resolver consults before falling back to the registry. Each entry is a filesystem path relative to the workspace root."
+        },
+        "cache_dir": {
+          "type": "string",
+          "default": ".aggrega",
+          "description": "Local artifact cache directory (registry pulls, OCI manifests, compiled fixtures). Defaults to `.aggrega`. Should be gitignored by convention."
+        },
+        "offline": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, the build does not contact any registry; only cached artifacts and vendored catalog content are consulted. Defaults to false."
+        },
+        "cue_registry": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "CUE-module registry routing. `default` is the registry host CUE-module imports resolve through; `overrides` maps prefixes (e.g. `acme.com`) to alternative registry hosts.",
+          "properties": {
+            "default": {
+              "type": "string",
+              "default": "hub.aggrega.ai",
+              "description": "Default registry host for CUE-module imports."
+            },
+            "overrides": {
+              "type": "array",
+              "default": [],
+              "description": "Prefix-based routing overrides. Each entry routes module imports under the named prefix to the named registry.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["prefix", "registry"],
+                "properties": {
+                  "prefix": {
+                    "type": "string",
+                    "description": "Module-path prefix this override applies to (e.g. `acme.com`)."
+                  },
+                  "registry": {
+                    "type": "string",
+                    "description": "Registry host imports matching the prefix resolve through."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Build-time strictness dials and authoring hints. `authoring_release` provides the LSP a `current Release` hint for inline diagnostics; `halt_on_deprecated` and `halt_on_deprecated_severity` (reserved for the deprecation-policy rule) control how the build reacts to deprecated-entity consumption.",
+      "properties": {
+        "authoring_release": {
+          "type": "string",
+          "description": "Path to a Release YAML file the LSP treats as the `current Release` context for inline diagnostics. Optional."
+        },
+        "halt_on_deprecated": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, consuming a deprecated entity halts the build (instead of emitting a warning). Reserved for the upcoming deprecation-policy rule; today the loader accepts the key but no rule consumes it yet."
+        },
+        "halt_on_deprecated_severity": {
+          "type": "string",
+          "enum": ["error", "warning"],
+          "default": "error",
+          "description": "Severity level the deprecation-policy rule emits when `halt_on_deprecated` is true: `error` halts the build, `warning` emits a diagnostic but lets the build proceed. Reserved for the upcoming deprecation-policy rule."
+        }
+      }
+    },
+    "plugins": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Workspace-level Wasm plugin attachments. Each socket (mutator, policy, linter, importer) takes an array of plugin references; the build invokes each plugin's documented entry function per its socket contract.",
+      "properties": {
+        "mutator": {
+          "type": "array",
+          "default": [],
+          "items": { "$ref": "#/$defs/PluginRef" },
+          "description": "Mutator-socket plugins. Default entry function: `mutate`."
+        },
+        "policy": {
+          "type": "array",
+          "default": [],
+          "items": { "$ref": "#/$defs/PluginRef" },
+          "description": "Policy-validator-socket plugins. Default entry function: `validate`."
+        },
+        "linter": {
+          "type": "array",
+          "default": [],
+          "items": { "$ref": "#/$defs/PluginRef" },
+          "description": "Linter-socket plugins. Default entry function: `lint`."
+        },
+        "importer": {
+          "type": "array",
+          "default": [],
+          "items": { "$ref": "#/$defs/PluginRef" },
+          "description": "Importer-socket plugins. Default entry function: `import`."
+        }
+      }
+    },
+    "lint": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Per-rule strictness dials. Future lint sub-categories (build-time discouragement, FinOps lint, etc.) land as peer sub-blocks of `publishing_discipline`.",
+      "properties": {
+        "publishing_discipline": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Workspace-wide gates for the publishing-linter's rule set. `enforce_monotonic_narrowing` and `enforce_immutability` are workspace-wide rule gates (default true each); `narrowing_exemptions` carries per-entity escape hatches for legitimate narrowing cases. The remaining `allow_*` flags relax individual discouragement checks.",
+          "properties": {
+            "enforce_monotonic_narrowing": {
+              "type": "boolean",
+              "default": true,
+              "description": "When true (default), the publishing-linter and discouragement walker enforce the monotonic-narrowing rule: a child schema's constraint must narrow (not widen) vs the parent's. Set to false for the rare workspace-wide opt-out; per-entity exemptions are the recommended pattern for legitimate cases."
+            },
+            "enforce_immutability": {
+              "type": "boolean",
+              "default": true,
+              "description": "When true (default), the publishing-linter enforces the artifact-immutability rule: a published `name:version` plus content digest is treated as final; `aggrega push` rejects overwrites. Set to false only for forensic reproduction of historical builds where overwrites occurred prior to the rule's introduction; routine use is discouraged. Required for production catalogs."
+            },
+            "narrowing_exemptions": {
+              "type": "array",
+              "default": [],
+              "description": "Per-entity exemptions from the narrowing-violation rule. Used when `enforce_monotonic_narrowing` stays true (the default) but specific entity/path pairs need exemption with a documented reason. Each entry names the catalog entity, the specific schema paths exempted, and the human-readable justification.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["entity", "paths", "reason"],
+                "properties": {
+                  "entity": {
+                    "type": "string",
+                    "description": "Catalog entity identifier the exemption applies to (e.g. `my-team/datastore/mariadb-eu`)."
+                  },
+                  "paths": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "JSON-Pointer-style schema paths the exemption covers (e.g. `spec.schema.values.primary.replicaCount`). Each path is a fully-qualified path into the entity's schema content."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Human-readable justification for the exemption. Surfaced to reviewers; should explain why this specific narrowing violation is intentional."
+                  }
+                }
+              }
+            },
+            "allow_dynamic_refs": {
+              "type": "boolean",
+              "default": false,
+              "description": "When true, the publishing-linter accepts $dynamicRef / $dynamicAnchor JSON Schema constructs in catalog content. Default false; these constructs are discouraged because they make compile-time schema composition non-local."
+            },
+            "allow_id_overrides": {
+              "type": "boolean",
+              "default": false,
+              "description": "When true, the publishing-linter accepts $id overrides on subschemas within an entity's schema content. Default false; $id overrides break the canonical-identifier-per-schema convention the resolver and the JSON Schema validator both rely on."
+            },
+            "allow_non_pascal_schema_names": {
+              "type": "boolean",
+              "default": false,
+              "description": "When true, the publishing-linter accepts schema definition names that are not PascalCase. Default false; PascalCase keeps schema names visually distinct from instance-side keys (which are snake_case wire format)."
+            },
+            "allow_direct_x_aggrega_extensions": {
+              "type": "boolean",
+              "default": false,
+              "description": "When true, the build-time discouragement walker accepts x-aggrega-selector and x-aggrega-inject keywords authored directly in schema content. Default false; the recommended authoring path is usesSchema (for dependency sockets) or secretsSchema (for credential bindings), which the schema-composition layer then synthesises into the inline extension form."
+            },
+            "allow_nonstandard_names": {
+              "type": "boolean",
+              "default": false,
+              "description": "When true, the publishing-linter accepts catalog entity names that do not follow the project's documented naming conventions. Default false; consistent naming is load-bearing for the resolver, the selector engine, and reviewer ergonomics."
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "PluginRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uri"],
+      "description": "Reference to a Wasm plugin attached at a workspace-level socket. `uri` identifies the plugin (OCI reference, local path, or registry alias). `function` overrides the socket's default entry function (`mutate`, `validate`, `lint`, `import` per socket); when omitted, the socket's documented default applies.",
+      "properties": {
+        "uri": {
+          "type": "string",
+          "description": "Plugin identifier: OCI reference (e.g. `oci://hub.aggrega.ai/aggrega-team/mutator-bundle@v1`), local filesystem path, or registry alias."
+        },
+        "function": {
+          "type": "string",
+          "description": "Optional override for the socket's default entry function. When omitted, the socket's documented default applies (mutator → `mutate`, policy → `validate`, linter → `lint`, importer → `import`)."
+        }
+      }
+    }
+  }
+}
