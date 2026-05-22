@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/lockfile-v1alpha1.schema.json",
+  "title": "Aggrega Per-Release Lockfile",
+  "description": "Machine-generated lockfile pinning every URI resolved from a Release for deterministic future builds. Lives at `<release-stem>.lock` next to `<release-stem>.yaml`; produced by `aggrega pull <release>`; consumed by `aggrega build <release>`. Two provenance shapes serve two distinct closure-graph relationships: `referenced_from` (list of strings — dotted authoring-site paths) appears on `entities`, `cue_modules`, and `wasm_plugins` to record where in the Release / Aggregate / Manifest / `.aggrega-config.yaml` each URI was pulled in from; `consumers` (list of `{consumer_uri, fragments}` records) appears on `schema_libraries` and `mapping_libraries` to record which catalog entity references which `<entry-name>` fragments of a library — the structured shape makes consumer-affected-by-library-bump diffs traceable without re-running closure. Schema evolution discipline: adding a new top-level section is SemVer-MINOR (additive); adding a new field inside an existing section is SemVer-MINOR; removing a key or tightening a constraint is SemVer-MAJOR. The `cue_modules` section is retained indefinitely for third-party / enterprise catalogs that have not migrated to `SchemaLibrary` / `MappingLibrary` entities; the reader emits a deprecation diagnostic per populated entry but never auto-translates or breaks legacy lockfiles. A future additive `source_artifacts` section is reserved for the source-resolution amendment.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "release", "generated_at"],
+  "properties": {
+    "cue_modules": {
+      "type": "array",
+      "default": [],
+      "description": "Legacy CUE-module pins for third-party / enterprise catalogs that have not migrated to SchemaLibrary / MappingLibrary entities. First-party Aggrega catalogs ship no CUE modules. The reader emits a deprecation diagnostic per populated entry; no auto-translation.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["module", "resolved_version", "digest"],
+        "properties": {
+          "module": {
+            "type": "string",
+            "description": "Domain-qualified CUE module path (e.g. `aggrega.ai/core@v1`)."
+          },
+          "resolved_version": {
+            "type": "string",
+            "description": "Concrete version resolved at pull time (e.g. `v1.0.0`)."
+          },
+          "digest": {
+            "type": "string",
+            "description": "Content digest of the resolved module archive (e.g. `sha256:...`)."
+          },
+          "resolution_path": {
+            "type": "string",
+            "description": "Diagnostic provenance tag (e.g. `tier3-registry`)."
+          },
+          "registry": {
+            "type": "string",
+            "description": "Registry host the module resolved through."
+          },
+          "referenced_from": {
+            "type": "array",
+            "default": [],
+            "items": { "type": "string" },
+            "description": "Authoring-site origins — dotted paths into Release / Aggregate / Manifest YAML or `.aggrega-config.yaml` recording why this URI is in the closure."
+          }
+        }
+      }
+    },
+    "cue_registry": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Resolution-time snapshot of the workspace's CUE-module registry routing at pull time. Recorded for build-time drift verification — if the workspace cue_registry changes between pull and build, the build halts asking for a fresh pull.",
+      "properties": {
+        "default": {
+          "type": "string",
+          "description": "Default registry host CUE-module imports resolved through at pull time."
+        },
+        "overrides": {
+          "type": "array",
+          "default": [],
+          "description": "Prefix-based routing overrides at pull time. Each entry routes module imports under the named prefix to the named registry.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["prefix", "registry"],
+            "properties": {
+              "prefix": { "type": "string" },
+              "registry": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "entities": {
+      "type": "array",
+      "default": [],
+      "description": "Catalog entities reachable from this Release: Component, Feature, Recipe, FeatureRecipe, Provider, Aggregate. Each entry is keyed by canonical URI and records the resolved version, content digest, resolution path, and the authoring-site origins (`referenced_from`) that pulled the URI into closure.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["uri", "resolved_version", "digest"],
+        "properties": {
+          "uri": {
+            "type": "string",
+            "description": "Canonical URI of the catalog entity (e.g. `hub.aggrega.ai/component/core/compute/api-server`)."
+          },
+          "resolved_version": {
+            "type": "string",
+            "description": "Concrete version the resolver selected at pull time (e.g. `1.2.3`)."
+          },
+          "digest": {
+            "type": "string",
+            "description": "Content digest of the resolved artifact (e.g. `sha256:...`)."
+          },
+          "resolution_path": {
+            "type": "string",
+            "description": "Diagnostic provenance tag describing which resolver tier returned the artifact (e.g. `tier3-registry`, `tier2-workspace`)."
+          },
+          "referenced_from": {
+            "type": "array",
+            "default": [],
+            "items": { "type": "string" },
+            "description": "Authoring-site origins — dotted paths into Release / Aggregate / Manifest YAML (e.g. `aggregate.spec.components.api.type`) recording why this URI is in the closure."
+          }
+        }
+      }
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp of the pull that produced this lockfile. Diagnostic provenance — records the wall-clock moment of resolution. Intentionally changes between pulls; not part of the WriteLockfile byte-identity guarantee."
+    },
+    "mapping_libraries": {
+      "type": "array",
+      "default": [],
+      "description": "MappingLibrary entries the closure references via Recipe / FeatureRecipe `valuesMapping: { $import: ... }` sites. Each entry's `consumers` list records which catalog entity references which `<entry-name>` fragments of the library — a structured record that makes library-version-bump impact diffs traceable without re-running closure.",
+      "items": { "$ref": "#/$defs/LibraryEntry" }
+    },
+    "release": {
+      "type": "string",
+      "description": "Path to the Release this lockfile corresponds to, resolved relative to the lockfile's own directory (e.g. `./release-prod.yaml`). The per-Release naming convention places `<release-stem>.lock` next to `<release-stem>.yaml`; the relative path makes the lockfile self-describing without machine-specific absolute paths."
+    },
+    "schema_libraries": {
+      "type": "array",
+      "default": [],
+      "description": "SchemaLibrary entries the closure references via `$ref` and `$import:` sites in entity `schema:` / `usesSchema:` / `secretsSchema:` content. Each entry's `consumers` list records which catalog entity references which `<entry-name>` fragments of the library — a structured record that makes library-version-bump impact diffs traceable without re-running closure.",
+      "items": { "$ref": "#/$defs/LibraryEntry" }
+    },
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Lockfile schema version. Currently 1; future SemVer-MAJOR breaks of the schema increment this integer."
+    },
+    "wasm_plugins": {
+      "type": "array",
+      "default": [],
+      "description": "Wasm plugins the closure references — workspace-level plugin pins from `.aggrega-config.yaml` `plugins.{mutator,policy,linter,importer}[]:` plus any embedded plugin URIs from referenced Recipes / FeatureRecipes / Providers.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["uri", "resolved_version", "digest"],
+        "properties": {
+          "uri": {
+            "type": "string",
+            "description": "Canonical URI of the Wasm plugin (e.g. `hub.aggrega.ai/wasm/aggrega-security-baseline`)."
+          },
+          "resolved_version": {
+            "type": "string",
+            "description": "Concrete version resolved at pull time."
+          },
+          "digest": {
+            "type": "string",
+            "description": "Content digest of the resolved Wasm artifact (e.g. `sha256:...`)."
+          },
+          "resolution_path": {
+            "type": "string",
+            "description": "Diagnostic provenance tag (e.g. `tier3-registry`)."
+          },
+          "referenced_from": {
+            "type": "array",
+            "default": [],
+            "items": { "type": "string" },
+            "description": "Authoring-site origins — dotted paths recording why this URI is in the closure (e.g. `.aggrega-config.yaml.plugins.policy`)."
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "LibraryEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uri", "resolved_version", "digest"],
+      "description": "Common shape shared by `schema_libraries` and `mapping_libraries` entries. The `consumers` list captures the catalog-graph relationship — which catalog entity references which `<entry-name>` fragments of this library — supporting structured impact diffs when the library's digest changes.",
+      "properties": {
+        "uri": {
+          "type": "string",
+          "description": "Canonical URI of the library entity."
+        },
+        "resolved_version": {
+          "type": "string",
+          "description": "Concrete version resolved at pull time (MVS selection over the library-dependency graph)."
+        },
+        "digest": {
+          "type": "string",
+          "description": "Content digest of the resolved library artifact (e.g. `sha256:...`)."
+        },
+        "resolution_path": {
+          "type": "string",
+          "description": "Diagnostic provenance tag (e.g. `tier3-registry`)."
+        },
+        "consumers": {
+          "type": "array",
+          "default": [],
+          "description": "Records of which catalog entity references this library and at which `<entry-name>` fragments. Captures the fan-in: many consumers per library, each potentially referencing many fragments. Each record carries the consumer URI plus the set of fragments that consumer pulls in.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["consumer_uri", "fragments"],
+            "properties": {
+              "consumer_uri": {
+                "type": "string",
+                "description": "Canonical URI of the catalog entity (Component or Feature) referencing this library."
+              },
+              "fragments": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Set of `<entry-name>` fragments this consumer references within the library (e.g. `[\"#/schemas/PortSpec\", \"#/schemas/EndpointSpec\"]`). Order is canonicalized lexicographically by the writer."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
