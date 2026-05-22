@@ -24,8 +24,8 @@
         },
         "cache_dir": {
           "type": "string",
-          "default": ".aggrega",
-          "description": "Local artifact cache directory (registry pulls, OCI manifests, compiled fixtures). Defaults to `.aggrega`. Should be gitignored by convention."
+          "default": ".aggrega/cache",
+          "description": "Local artifact cache directory (registry pulls, OCI manifests, compiled fixtures). Defaults to `.aggrega/cache`. Should be gitignored by convention."
         },
         "offline": {
           "type": "boolean",
