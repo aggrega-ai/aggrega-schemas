@@ -179,11 +179,6 @@
               "default": false,
               "description": "When true, the publishing-linter accepts $id overrides on subschemas within an entity's schema content. Default false; $id overrides break the canonical-identifier-per-schema convention the resolver and the JSON Schema validator both rely on."
             },
-            "allow_non_pascal_schema_names": {
-              "type": "boolean",
-              "default": false,
-              "description": "When true, the publishing-linter accepts schema definition names that are not PascalCase. Default false; PascalCase keeps schema names visually distinct from instance-side keys (which are snake_case wire format)."
-            },
             "allow_direct_x_aggrega_extensions": {
               "type": "boolean",
               "default": false,

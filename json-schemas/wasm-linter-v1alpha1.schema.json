@@ -45,6 +45,10 @@
           "description": "Parsed structure of the previous-version entity, for rules that perform pairwise comparison (schema-evolution). Omitted when the rule does not need a previous-version reference (e.g., first publication, structural-only rules).",
           "type": "object"
         },
+        "parent": {
+          "description": "Parsed structure of the resolved parent entity in the extends chain, for rules that perform child-vs-parent comparison (narrowing). The host caller resolves the entity's spec.extends URI before invocation. Omitted when no parent exists or the rule does not need parent context.",
+          "type": "object"
+        },
         "policies": {
           "$ref": "#/$defs/Policies"
         }
@@ -131,10 +135,6 @@
         "allow_id_overrides": {
           "type": "boolean",
           "description": "When true, $id overrides in SchemaLibrary entries are permitted (suppresses the id_overrides rule). Default false."
-        },
-        "allow_non_pascal_schema_names": {
-          "type": "boolean",
-          "description": "When true, SchemaLibrary entry names that are not PascalCase are permitted (suppresses the pascalcase rule). Default false."
         },
         "allow_direct_x_aggrega_extensions": {
           "type": "boolean",
