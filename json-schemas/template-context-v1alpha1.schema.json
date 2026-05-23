@@ -223,7 +223,7 @@
         ]
       },
       "workload": {
-        "description": "Parsed Workload spec for this node. Populated at Phase B.2 from the Recipe's workload: / workloadFrom: field after Go-template evaluation + Workload JSON-schema validation (against workload-v1alpha1.schema.json). Available in Phase B.3+ (artifacts) so artifacts can reference workload fields without duplication (e.g., a ServiceMonitor reading .workload.services.metrics.ports.prom). Evaluates to null when the Recipe has no workload: or workloadFrom:. Template attempts to dereference .workload.* on a null value fail with a clear error at template eval time.",
+        "description": "Parsed Workload spec for this node. Populated at Phase B.2 from the Recipe's workload: field after Go-template evaluation + Workload JSON-schema validation (against workload-v1alpha1.schema.json). Available in Phase B.3+ (artifacts) so artifacts can reference workload fields without duplication (e.g., a ServiceMonitor reading .workload.services.metrics.ports.prom). Evaluates to null when the Recipe has no workload: block. Template attempts to dereference .workload.* on a null value fail with a clear error at template eval time.",
         "oneOf": [
           { "$ref": "workload-v1alpha1.schema.json" },
           { "type": "null" }
