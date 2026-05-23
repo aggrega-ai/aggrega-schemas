@@ -32,6 +32,11 @@
           "default": false,
           "description": "When true, the build does not contact any registry; only cached artifacts and vendored catalog content are consulted. Defaults to false."
         },
+        "auto_pull": {
+          "type": "boolean",
+          "default": true,
+          "description": "When true (default), `aggrega build` invokes `aggrega pull` in-process whenever the per-release lockfile is missing, so a first-time build against a Release does not require an explicit pull step. When false, missing lockfile halts the build with a diagnostic asking the operator to run pull explicitly. Independent of `offline`: `offline: true` ignores `auto_pull` and always halts on missing lockfile."
+        },
         "cue_registry": {
           "type": "object",
           "additionalProperties": false,
