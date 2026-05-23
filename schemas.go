@@ -38,6 +38,9 @@ var AggregaConfigV1alpha1 string
 //go:embed json-schemas/aggregate-v1alpha1.schema.json
 var AggregateV1alpha1 string
 
+//go:embed json-schemas/cache-metadata-v1alpha1.schema.json
+var CacheMetadataV1alpha1 string
+
 //go:embed json-schemas/component-v1alpha1.schema.json
 var ComponentV1alpha1 string
 
