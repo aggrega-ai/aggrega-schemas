@@ -125,6 +125,12 @@
       "description": "SchemaLibrary entries the closure references via `$ref` and `$import:` sites in entity `schema:` / `usesSchema:` / `secretsSchema:` content. Each entry's `consumers` list records which catalog entity references which `<entry-name>` fragments of the library — a structured record that makes library-version-bump impact diffs traceable without re-running closure.",
       "items": { "$ref": "#/$defs/LibraryEntry" }
     },
+    "source_artifacts": {
+      "type": "array",
+      "default": [],
+      "description": "Source artifacts pulled from Recipe / FeatureRecipe `spec.source` fields at pull time. Each entry identifies a unique `{kind, url, pinned_version}` triple with content digest, mediatype, and the structured `referenced_by:` back-pointers naming every catalog entity that resolved to this artifact. Multiple Recipes pinning the same chart at the same version dedupe to a single entry with multiple `referenced_by:` records. The kind enum covers the four currently-supported source kinds plus one reserved (terraform-module-oci) for the future terraform engine.",
+      "items": { "$ref": "#/$defs/SourceArtifactEntry" }
+    },
     "version": {
       "type": "integer",
       "const": 1,
@@ -208,6 +214,64 @@
               }
             }
           }
+        }
+      }
+    },
+    "SourceArtifactEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "url", "pinned_version", "digest", "mediatype", "referenced_by"],
+      "description": "A single source artifact pin: the {kind, url, pinned_version} identity, the content digest verifying the pull, the canonical mediatype, and the structured back-pointers to every catalog entity that resolved to this artifact.",
+      "properties": {
+        "kind": {
+          "enum": ["helm-oci-chart", "helm-https-chart", "compose-https-fragment", "terraform-module-git", "terraform-module-oci"],
+          "description": "The source kind. Determines which adapter resolved the artifact and which mediatype is expected. `terraform-module-oci` is reserved for the future terraform provider; no adapter ships at the moment."
+        },
+        "url": {
+          "type": "string",
+          "description": "The canonical resolved URL. For helm-https when the input was a repo-root URL, this is the direct .tgz URL the index resolved to (NOT the repo root). For terraform-git, this is the cloneable repository URL. For helm-oci, the registry reference."
+        },
+        "pinned_version": {
+          "type": "string",
+          "description": "The concrete version the resolver pinned at pull time. For helm-* kinds, the chart version. For terraform-module-git, the resolved commit SHA (NOT the original tag/branch ref — that is recorded under `requested_ref:` on each `referenced_by:` entry when it differs from the SHA)."
+        },
+        "digest": {
+          "type": "string",
+          "description": "Content digest of the resolved .tar.gz archive (e.g. `sha256:...`). Build-time verification reads the cache slot's bytes, recomputes the digest, and compares against this field; mismatch halts with ErrFetchIntegrity."
+        },
+        "mediatype": {
+          "type": "string",
+          "description": "Canonical media type the registry advertised (or the kind's default for kinds without registry metadata). Recorded for diagnostic provenance and forward-compatibility with future kind-mediatype enrichments."
+        },
+        "referenced_by": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Catalog entities that resolved to this artifact. The list is sorted by `(uri, field)` for deterministic output. `minItems: 1` because an artifact entry exists only because at least one Recipe / FeatureRecipe pulled it; the closure walker never emits an unreferenced entry.",
+          "items": { "$ref": "#/$defs/SourceArtifactReference" }
+        }
+      }
+    },
+    "SourceArtifactReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entity", "uri", "field"],
+      "description": "A single catalog-entity → source-artifact back-pointer. `entity` + `uri` together identify the catalog entity; `field` names the source-side path inside the entity's spec where the artifact was declared. The optional `requested_ref:` preserves the user-authored ref string when the resolved `pinned_version:` is a transformed value (terraform-module-git tags/branches → commit SHA).",
+      "properties": {
+        "entity": {
+          "enum": ["recipe", "feature_recipe"],
+          "description": "The catalog-entity kind that holds this back-pointer."
+        },
+        "uri": {
+          "type": "string",
+          "description": "Canonical URI of the Recipe or FeatureRecipe (e.g. `hub.aggrega.ai/recipe/helm/mariadb-bitnami:1.0.0`)."
+        },
+        "field": {
+          "type": "string",
+          "description": "Source-side path inside the entity's spec where the artifact was declared. In the current implementation the value is always `spec.source`. A future extension covering remote-URL forms of `spec.artifacts[*].source` will widen the value space."
+        },
+        "requested_ref": {
+          "type": "string",
+          "description": "Optional — the user-authored ref string when `pinned_version:` is a transformed value. For terraform-module-git Recipes authoring `ref: v1.0.0`, this preserves `\"v1.0.0\"` while `pinned_version:` holds the resolved commit SHA. Absent for kinds where `pinned_version:` IS the authored version (helm-*, compose-*)."
         }
       }
     }
