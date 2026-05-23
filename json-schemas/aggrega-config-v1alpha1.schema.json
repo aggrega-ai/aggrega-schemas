@@ -189,6 +189,11 @@
               "default": false,
               "description": "When true, the build-time discouragement walker accepts x-aggrega-selector and x-aggrega-inject keywords authored directly in schema content. Default false; the recommended authoring path is usesSchema (for dependency sockets) or secretsSchema (for credential bindings), which the schema-composition layer then synthesises into the inline extension form."
             },
+            "allow_aggrega_ai_prefix": {
+              "type": "boolean",
+              "default": false,
+              "description": "When true, the publishing-linter accepts annotation keys using the reserved aggrega.ai/ and feature.aggrega.ai/ namespaces outside their canonical contexts. The reserved-prefix rule polices catalog-entity metadata.annotations: the bare aggrega.ai/ prefix is platform-native (well-known annotation keys are exempt regardless of this flag); the feature.aggrega.ai/ prefix is canonical on Feature kind only. Default false. Operators set this when enterprise tooling legitimately needs to use a reserved prefix; per-prefix granularity is deferred to a future iteration."
+            },
             "allow_nonstandard_names": {
               "type": "boolean",
               "default": false,

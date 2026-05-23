@@ -140,6 +140,10 @@
           "type": "boolean",
           "description": "When true, direct x-aggrega-selector / x-aggrega-inject authoring is permitted (suppresses the x_aggrega_discouragement rule). Default false."
         },
+        "allow_aggrega_ai_prefix": {
+          "type": "boolean",
+          "description": "When true, the annotation-prefix rule is suppressed entirely (both the bare aggrega.ai/ check and the feature.aggrega.ai/ kind-conditional check). Default false. Mirrors workspaceconfig.PublishingDisciplineConfig.AllowAggregaAIPrefix; the host serialises the field through the LinterInput.policies passthrough."
+        },
         "allow_nonstandard_names": {
           "type": "boolean",
           "description": "When true, name-shape violations are permitted (suppresses the name_shape rule). Default false."
