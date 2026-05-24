@@ -147,7 +147,7 @@
         "properties": {
           "uri": {
             "type": "string",
-            "description": "Canonical URI of the Wasm plugin (e.g. `hub.aggrega.ai/wasm/aggrega-security-baseline`)."
+            "description": "Canonical URI of the Wasm plugin (e.g. `hub.aggrega.ai/wasm/policy-validator/aggrega-security-baseline`). The path segment after `wasm/` is the plugin's socket (`linter`, `policy-validator`, `mutator`, `formatter`, `importer`, `security`, `pipeline`); the segment after that is the plugin name. Socket + name together form the plugin's identity — same name in different sockets is a different plugin."
           },
           "resolved_version": {
             "type": "string",
