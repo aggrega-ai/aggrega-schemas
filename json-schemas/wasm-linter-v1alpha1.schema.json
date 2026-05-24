@@ -49,6 +49,10 @@
           "description": "Parsed structure of the resolved parent entity in the extends chain, for rules that perform child-vs-parent comparison (narrowing). The host caller resolves the entity's spec.extends URI before invocation. Omitted when no parent exists or the rule does not need parent context.",
           "type": "object"
         },
+        "source_path": {
+          "description": "Filesystem path the entity was loaded from. Populated by host callers walking the catalog filesystem; consumed by path-aware rules (e.g., category-matches-directory). Omitted when the caller has no path context.",
+          "type": "string"
+        },
         "policies": {
           "$ref": "#/$defs/Policies"
         }
@@ -147,6 +151,10 @@
         "allow_nonstandard_names": {
           "type": "boolean",
           "description": "When true, name-shape violations are permitted (suppresses the name_shape rule). Default false."
+        },
+        "allow_category_mismatches": {
+          "type": "boolean",
+          "description": "When true, suppress the category-matches-directory rule's findings. The standard-catalog convention requires Components under core/<category>/ to declare component.aggrega.ai/category={category} matching the directory segment, where {category} is one of the 15 closed-set values. Workspaces with legitimate persistent exceptions opt out here. Default false."
         }
       }
     },

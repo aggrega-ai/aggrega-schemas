@@ -193,6 +193,11 @@
               "type": "boolean",
               "default": false,
               "description": "When true, the publishing-linter accepts catalog entity names that do not follow the project's documented naming conventions. Default false; consistent naming is load-bearing for the resolver, the selector engine, and reviewer ergonomics."
+            },
+            "allow_category_mismatches": {
+              "type": "boolean",
+              "default": false,
+              "description": "When true, the publishing-linter suppresses the category-matches-directory rule. The standard-catalog convention requires Components under core/<category>/ to declare component.aggrega.ai/category={category} matching the directory segment, where {category} is one of the closed-set values (like ai-agent, ai-model, ai-tool, datastore, gateway, compute, ...). Workspaces with legitimate persistent exceptions opt out here. Default false."
             }
           }
         }
