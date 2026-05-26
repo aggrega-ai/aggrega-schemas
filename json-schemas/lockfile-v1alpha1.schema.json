@@ -2,49 +2,11 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/lockfile-v1alpha1.schema.json",
   "title": "Aggrega Per-Release Lockfile",
-  "description": "Machine-generated lockfile pinning every URI resolved from a Release for deterministic future builds. Lives at `<release-stem>.lock` next to `<release-stem>.yaml`; produced by `aggrega pull <release>`; consumed by `aggrega build <release>`. Two provenance shapes serve two distinct closure-graph relationships: `referenced_from` (list of strings — dotted authoring-site paths) appears on `entities`, `cue_modules`, and `wasm_plugins` to record where in the Release / Aggregate / Manifest / `.aggrega-config.yaml` each URI was pulled in from; `consumers` (list of `{consumer_uri, fragments}` records) appears on `schema_libraries` and `mapping_libraries` to record which catalog entity references which `<entry-name>` fragments of a library — the structured shape makes consumer-affected-by-library-bump diffs traceable without re-running closure. Schema evolution discipline: adding a new top-level section is SemVer-MINOR (additive); adding a new field inside an existing section is SemVer-MINOR; removing a key or tightening a constraint is SemVer-MAJOR. The `cue_modules` section is retained indefinitely for third-party / enterprise catalogs that have not migrated to `SchemaLibrary` / `MappingLibrary` entities; the reader emits a deprecation diagnostic per populated entry but never auto-translates or breaks legacy lockfiles. A future additive `source_artifacts` section is reserved for the source-resolution amendment.",
+  "description": "Machine-generated lockfile pinning every URI resolved from a Release for deterministic future builds. Lives at `<release-stem>.lock` next to `<release-stem>.yaml`; produced by `aggrega pull <release>`; consumed by `aggrega build <release>`. Two provenance shapes serve two distinct closure-graph relationships: `referenced_from` (list of strings — dotted authoring-site paths) appears on `entities` and `wasm_plugins` to record where in the Release / Aggregate / Manifest / `.aggrega-config.yaml` each URI was pulled in from; `consumers` (list of `{consumer_uri, fragments}` records) appears on `schema_libraries` and `mapping_libraries` to record which catalog entity references which `<entry-name>` fragments of a library — the structured shape makes consumer-affected-by-library-bump diffs traceable without re-running closure. Schema evolution discipline: adding a new top-level section is SemVer-MINOR (additive); adding a new field inside an existing section is SemVer-MINOR; removing a key or tightening a constraint is SemVer-MAJOR. A future additive `source_artifacts` section is reserved for the source-resolution amendment.",
   "type": "object",
   "additionalProperties": false,
   "required": ["version", "release", "generated_at"],
   "properties": {
-    "cue_modules": {
-      "type": "array",
-      "default": [],
-      "description": "Legacy CUE-module pins for third-party / enterprise catalogs that have not migrated to SchemaLibrary / MappingLibrary entities. First-party Aggrega catalogs ship no CUE modules. The reader emits a deprecation diagnostic per populated entry; no auto-translation.",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["module", "resolved_version", "digest"],
-        "properties": {
-          "module": {
-            "type": "string",
-            "description": "Domain-qualified CUE module path (e.g. `aggrega.ai/core@v1`)."
-          },
-          "resolved_version": {
-            "type": "string",
-            "description": "Concrete version resolved at pull time (e.g. `v1.0.0`)."
-          },
-          "digest": {
-            "type": "string",
-            "description": "Content digest of the resolved module archive (e.g. `sha256:...`)."
-          },
-          "resolution_path": {
-            "type": "string",
-            "description": "Diagnostic provenance tag (e.g. `tier3-registry`)."
-          },
-          "registry": {
-            "type": "string",
-            "description": "Registry host the module resolved through."
-          },
-          "referenced_from": {
-            "type": "array",
-            "default": [],
-            "items": { "type": "string" },
-            "description": "Authoring-site origins — dotted paths into Release / Aggregate / Manifest YAML or `.aggrega-config.yaml` recording why this URI is in the closure."
-          }
-        }
-      }
-    },
     "cue_registry": {
       "type": "object",
       "additionalProperties": false,

@@ -10,7 +10,7 @@
   "$defs": {
     "LinterInput": {
       "type": "object",
-      "description": "The payload the host hands the publishing-linter plugin on each invocation. rule_id selects which rule the plugin dispatches to. entity_kind identifies the entity kind being linted (Component, Feature, Recipe, FeatureRecipe, Provider, SchemaLibrary, MappingLibrary, Aggregate, CueModule). proposed carries the parsed entity structure being classified (the host parses YAML to JSON before sending; the plugin never sees raw bytes). previous carries the parsed previous-version entity for the schema-evolution rule; omitted when not applicable. policies carries the per-workspace publishing-discipline configuration the rule consults.",
+      "description": "The payload the host hands the publishing-linter plugin on each invocation. rule_id selects which rule the plugin dispatches to. entity_kind identifies the entity kind being linted (Component, Feature, Recipe, FeatureRecipe, Provider, SchemaLibrary, MappingLibrary, Aggregate). proposed carries the parsed entity structure being classified (the host parses YAML to JSON before sending; the plugin never sees raw bytes). previous carries the parsed previous-version entity for the schema-evolution rule; omitted when not applicable. policies carries the per-workspace publishing-discipline configuration the rule consults.",
       "required": [
         "rule_id",
         "entity_kind",
@@ -33,8 +33,7 @@
             "Provider",
             "SchemaLibrary",
             "MappingLibrary",
-            "Aggregate",
-            "CueModule"
+            "Aggregate"
           ]
         },
         "proposed": {
