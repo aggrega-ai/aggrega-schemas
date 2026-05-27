@@ -22,6 +22,12 @@
           "items": { "type": "string" },
           "description": "Optional vendored catalog directories the resolver consults before falling back to the registry. Each entry is a filesystem path relative to the workspace root."
         },
+        "catalog_dirs_append": {
+          "type": "array",
+          "default": [],
+          "items": { "type": "string" },
+          "description": "Optional append-only addition to the effective `catalog_dirs` list. At each precedence layer the entries here are concatenated onto the resolved base list, letting workspace and global configs compose catalog directories rather than shadow them. Same-layer interaction: when both `catalog_dirs` and `catalog_dirs_append` are specified at one layer, the resolved value at that layer is the base list followed by the append list."
+        },
         "cache_dir": {
           "type": "string",
           "default": ".aggrega/cache",
@@ -72,11 +78,23 @@
           "items": { "$ref": "#/$defs/PluginRef" },
           "description": "Mutator-socket plugins. Default entry function: `mutate`."
         },
+        "mutator_append": {
+          "type": "array",
+          "default": [],
+          "items": { "$ref": "#/$defs/PluginRef" },
+          "description": "Append-only addition to the effective `mutator` list. Entries here are concatenated onto the resolved base list at each precedence layer, letting workspace and global configs compose mutator attachments rather than shadow them."
+        },
         "policy": {
           "type": "array",
           "default": [],
           "items": { "$ref": "#/$defs/PluginRef" },
           "description": "Policy-validator-socket plugins. Default entry function: `validate`."
+        },
+        "policy_append": {
+          "type": "array",
+          "default": [],
+          "items": { "$ref": "#/$defs/PluginRef" },
+          "description": "Append-only addition to the effective `policy` list. Same compose-don't-shadow semantic as `mutator_append`."
         },
         "linter": {
           "type": "array",
@@ -84,11 +102,23 @@
           "items": { "$ref": "#/$defs/PluginRef" },
           "description": "Linter-socket plugins. Default entry function: `lint`."
         },
+        "linter_append": {
+          "type": "array",
+          "default": [],
+          "items": { "$ref": "#/$defs/PluginRef" },
+          "description": "Append-only addition to the effective `linter` list. Same compose-don't-shadow semantic as `mutator_append`."
+        },
         "importer": {
           "type": "array",
           "default": [],
           "items": { "$ref": "#/$defs/PluginRef" },
           "description": "Importer-socket plugins. Default entry function: `import`."
+        },
+        "importer_append": {
+          "type": "array",
+          "default": [],
+          "items": { "$ref": "#/$defs/PluginRef" },
+          "description": "Append-only addition to the effective `importer` list. Same compose-don't-shadow semantic as `mutator_append`."
         }
       }
     },
@@ -116,26 +146,13 @@
               "type": "array",
               "default": [],
               "description": "Per-entity exemptions from the narrowing-violation rule. Used when `enforce_monotonic_narrowing` stays true (the default) but specific entity/path pairs need exemption with a documented reason. Each entry names the catalog entity, the specific schema paths exempted, and the human-readable justification.",
-              "items": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": ["entity", "paths", "reason"],
-                "properties": {
-                  "entity": {
-                    "type": "string",
-                    "description": "Catalog entity identifier the exemption applies to (e.g. `my-team/datastore/mariadb-eu`)."
-                  },
-                  "paths": {
-                    "type": "array",
-                    "items": { "type": "string" },
-                    "description": "JSON-Pointer-style schema paths the exemption covers (e.g. `spec.schema.values.primary.replicaCount`). Each path is a fully-qualified path into the entity's schema content."
-                  },
-                  "reason": {
-                    "type": "string",
-                    "description": "Human-readable justification for the exemption. Surfaced to reviewers; should explain why this specific narrowing violation is intentional."
-                  }
-                }
-              }
+              "items": { "$ref": "#/$defs/NarrowingExemption" }
+            },
+            "narrowing_exemptions_append": {
+              "type": "array",
+              "default": [],
+              "description": "Append-only addition to the effective `narrowing_exemptions` list. Entries here are concatenated onto the resolved base list at each precedence layer, so workspace and global configs compose exemptions rather than shadow them.",
+              "items": { "$ref": "#/$defs/NarrowingExemption" }
             },
             "allow_dynamic_refs": {
               "type": "boolean",
@@ -170,6 +187,25 @@
           }
         }
       }
+    },
+    "cache": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Daemon parse-cache eviction caps. Both caps apply simultaneously — the LRU eviction loop runs after every cache insertion and removes least-recently-used entries until both the entry count and the byte total are within bounds. Either-zero means `unbounded on that axis`, useful for CI scenarios where the cache lives only for one invocation.",
+      "properties": {
+        "max_entries": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 1000,
+          "description": "Cap on the number of cached parses. Default 1000. `0` disables the entry-count axis (no eviction triggered by entry count)."
+        },
+        "max_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 100000000,
+          "description": "Cap on the cumulative len(content) bytes the cache holds. Default 100000000 (100 MB). `0` disables the byte axis (no eviction triggered by byte total)."
+        }
+      }
     }
   },
   "$defs": {
@@ -186,6 +222,27 @@
         "function": {
           "type": "string",
           "description": "Optional override for the socket's default entry function. When omitted, the socket's documented default applies (mutator → `mutate`, policy → `validate`, linter → `lint`, importer → `import`)."
+        }
+      }
+    },
+    "NarrowingExemption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entity", "paths", "reason"],
+      "description": "Per-entity exemption from the narrowing-violation rule.",
+      "properties": {
+        "entity": {
+          "type": "string",
+          "description": "Catalog entity identifier the exemption applies to (e.g. `my-team/datastore/mariadb-eu`)."
+        },
+        "paths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "JSON-Pointer-style schema paths the exemption covers (e.g. `spec.schema.values.primary.replicaCount`). Each path is a fully-qualified path into the entity's schema content."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Human-readable justification for the exemption. Surfaced to reviewers; should explain why this specific narrowing violation is intentional."
         }
       }
     }
