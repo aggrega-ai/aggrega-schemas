@@ -7,31 +7,6 @@
   "additionalProperties": false,
   "required": ["version", "release", "generated_at"],
   "properties": {
-    "cue_registry": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Resolution-time snapshot of the workspace's CUE-module registry routing at pull time. Recorded for build-time drift verification — if the workspace cue_registry changes between pull and build, the build halts asking for a fresh pull.",
-      "properties": {
-        "default": {
-          "type": "string",
-          "description": "Default registry host CUE-module imports resolved through at pull time."
-        },
-        "overrides": {
-          "type": "array",
-          "default": [],
-          "description": "Prefix-based routing overrides at pull time. Each entry routes module imports under the named prefix to the named registry.",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["prefix", "registry"],
-            "properties": {
-              "prefix": { "type": "string" },
-              "registry": { "type": "string" }
-            }
-          }
-        }
-      }
-    },
     "entities": {
       "type": "array",
       "default": [],

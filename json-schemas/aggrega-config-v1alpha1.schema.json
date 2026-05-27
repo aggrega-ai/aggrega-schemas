@@ -36,38 +36,6 @@
           "type": "boolean",
           "default": true,
           "description": "When true (default), `aggrega build` invokes `aggrega pull` in-process whenever the per-release lockfile is missing, so a first-time build against a Release does not require an explicit pull step. When false, missing lockfile halts the build with a diagnostic asking the operator to run pull explicitly. Independent of `offline`: `offline: true` ignores `auto_pull` and always halts on missing lockfile."
-        },
-        "cue_registry": {
-          "type": "object",
-          "additionalProperties": false,
-          "description": "CUE-module registry routing. `default` is the registry host CUE-module imports resolve through; `overrides` maps prefixes (e.g. `acme.com`) to alternative registry hosts.",
-          "properties": {
-            "default": {
-              "type": "string",
-              "default": "hub.aggrega.ai",
-              "description": "Default registry host for CUE-module imports."
-            },
-            "overrides": {
-              "type": "array",
-              "default": [],
-              "description": "Prefix-based routing overrides. Each entry routes module imports under the named prefix to the named registry.",
-              "items": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": ["prefix", "registry"],
-                "properties": {
-                  "prefix": {
-                    "type": "string",
-                    "description": "Module-path prefix this override applies to (e.g. `acme.com`)."
-                  },
-                  "registry": {
-                    "type": "string",
-                    "description": "Registry host imports matching the prefix resolve through."
-                  }
-                }
-              }
-            }
-          }
         }
       }
     },
