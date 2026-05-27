@@ -242,7 +242,7 @@
          },
          "usesSchema": {
           "type": "object",
-          "description": "Native YAML schema defining the topology. The Go CLI natively reads this to validate @selectors and allowed inject paradigms.",
+          "description": "Native YAML schema defining the topology. The Go CLI natively reads this to validate selectors and allowed inject paradigms.",
           "patternProperties": {
             "^[a-zA-Z0-9_-]+$": {
               "type": "object",

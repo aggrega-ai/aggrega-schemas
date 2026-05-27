@@ -2,14 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/aggrega-config-v1alpha1.schema.json",
   "title": "Aggrega Workspace Config",
-  "description": "Per-workspace configuration file consumed by the aggrega CLI. Lives at `.aggrega-config.yaml` in the workspace root and carries four top-level blocks: workspace (registry/cache/offline settings + CUE-module registry routing), build (authoring-release hint + deprecation strictness dials), plugins (workspace-level Wasm plugin attachments: mutator, policy, linter, importer), and lint (per-rule strictness dials, currently a single `publishing_discipline` block). Workspace-config file (flat top-level shape, no apiVersion/kind envelope) distinct from catalog content. Schema evolution discipline: adding a new top-level block alongside `workspace`/`build`/`plugins`/`lint` is a SemVer-MINOR bump (additive); adding a new flag inside an existing block is likewise a SemVer-MINOR bump; removing a key or tightening a constraint is a SemVer-MAJOR break.",
+  "description": "Per-workspace configuration file consumed by the aggrega CLI. Lives at `.aggrega-config.yaml` in the workspace root and carries four top-level blocks: workspace (registry/cache/offline settings), build (authoring-release hint + deprecation strictness dials), plugins (workspace-level Wasm plugin attachments: mutator, policy, linter, importer), and lint (per-rule strictness dials, currently a single `publishing_discipline` block). Workspace-config file (flat top-level shape, no apiVersion/kind envelope) distinct from catalog content. Schema evolution discipline: adding a new top-level block alongside `workspace`/`build`/`plugins`/`lint` is a SemVer-MINOR bump (additive); adding a new flag inside an existing block is likewise a SemVer-MINOR bump; removing a key or tightening a constraint is a SemVer-MAJOR break.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "workspace": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Workspace-level orientation: which registry the build pushes to and pulls from, where the local artifact cache lives, whether the build operates offline, and how CUE-module imports resolve to registries.",
+      "description": "Workspace-level orientation: which registry the build pushes to and pulls from, where the local artifact cache lives, and whether the build operates offline.",
       "properties": {
         "default_registry": {
           "type": "string",
