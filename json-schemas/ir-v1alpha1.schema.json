@@ -89,6 +89,10 @@
                   "type": "string",
                   "description": "The logical spatial hierarchy mapped from the Aggregate subsystems (e.g., 'finance-module/ledger-api'). Allows rendering plugins to generate logical metadata tags."
                 },
+                "source_file": {
+                  "type": "string",
+                  "description": "Filesystem path of the Aggregate file where this node was authored. Root-tier nodes carry the root Aggregate's path; sub-aggregate nodes carry the imported Aggregate's file path. Consumers that filter diagnostics per file use this to drop entries originating in a file other than the one being validated."
+                },
                 "catalog_metadata": {
                   "type": "object",
                   "description": "The Enterprise Metadata Suite explicitly extracted from the Catalog entity, exposing lifecycle and ownership data to Wasm linters.",
