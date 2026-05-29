@@ -91,7 +91,7 @@
                 },
                 "source_file": {
                   "type": "string",
-                  "description": "Filesystem path of the Aggregate file where this node was authored. Root-tier nodes carry the root Aggregate's path; sub-aggregate nodes carry the imported Aggregate's file path. Consumers that filter diagnostics per file use this to drop entries originating in a file other than the one being validated."
+                  "description": "Workspace-relative path of the Aggregate file where this node was authored. Root-tier nodes carry the root Aggregate's path; sub-aggregate nodes carry the imported Aggregate's file path. The emitter normalizes against the workspace root (the directory containing .aggrega-config.yaml) so the IR wire shape stays byte-identical across developer machines whose workspaces live at different absolute paths. Consumers that filter diagnostics per file resolve the field against the same workspace root before comparison. Empty when the emitter has no workspace concept (e.g., synthetic test fixtures); the field is omitted from the JSON when empty."
                 },
                 "catalog_metadata": {
                   "type": "object",
