@@ -11,6 +11,109 @@
     "spec"
   ],
   "additionalProperties": false,
+  "$defs": {
+    "field_provenance": {
+      "type": "object",
+      "description": "Origin of one leaf in an attachment's values or infra payload.",
+      "required": ["origin"],
+      "properties": {
+        "origin": {
+          "type": "string",
+          "description": "Whether the leaf was authored explicitly or contributed by the annotation-driven expansion pass."
+        },
+        "side": {
+          "type": "string",
+          "description": "Authoring surface the annotation was declared on; empty for explicit leaves."
+        },
+        "annotation_key": {
+          "type": "string",
+          "description": "Annotation name that contributed this leaf; empty for explicit leaves."
+        },
+        "annotation_source": {
+          "type": "string",
+          "description": "Source location of the annotation declaration as <file-path>:<dotted-yaml-key-path>; empty for explicit leaves."
+        },
+        "overrides_annotation": {
+          "$ref": "#/$defs/field_provenance",
+          "description": "When an explicit leaf overwrote an annotation-contributed leaf, the suppressed provenance it replaced."
+        }
+      },
+      "additionalProperties": false
+    },
+    "attachment_entry": {
+      "type": "object",
+      "description": "One resolved attachment for a node. Shared shape for a Feature (in feature_values_mapping) and a credential request (in the secrets bucket): a credential is a Feature labeled kind=secret, partitioned into the secrets bucket rather than given a lossier shape. Values carries vault pointers for credentials, never resolved plaintext.",
+      "required": [
+        "type",
+        "resolved_version"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "URI of the Catalog Feature; in the secrets bucket, the credential Feature interface."
+        },
+        "resolved_version": {
+          "type": "string",
+          "description": "The exact semantic version resolved during compilation."
+        },
+        "values": {
+          "type": "object",
+          "description": "Operational configuration payload for the attachment; vault pointers for credentials.",
+          "additionalProperties": true
+        },
+        "infra": {
+          "type": "object",
+          "description": "Per-instance physical sizing for this attachment.",
+          "additionalProperties": true
+        },
+        "inject": {
+          "type": "object",
+          "description": "Agnostic injection routing. Maps local variables to Target provides keys.",
+          "properties": {
+            "env": { "type": "object", "additionalProperties": { "type": "string" } },
+            "file": { "type": "object", "additionalProperties": { "type": "string" } },
+            "arg": { "type": "object", "additionalProperties": { "type": "string" } }
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          }
+        },
+        "secrets": {
+          "type": "object",
+          "description": "Credentials scoped explicitly to this attachment.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": { "$ref": "#/$defs/attachment_entry" }
+          },
+          "additionalProperties": false
+        },
+        "origin": {
+          "type": "string",
+          "enum": ["explicit", "annotation"],
+          "description": "Distinguishes attachments authored in a features: block (explicit) from synthetic attachments produced by the annotation-driven expansion pass (annotation)."
+        },
+        "annotation_key": {
+          "type": "string",
+          "description": "Annotation name that triggered a synthetic attachment. Empty when origin is explicit."
+        },
+        "annotation_source": {
+          "type": "string",
+          "description": "Source location of the annotation declaration as <release-file-path>:<dotted-yaml-key-path>. Empty when origin is explicit."
+        },
+        "values_provenance": {
+          "type": "object",
+          "description": "Per-leaf origin for the values payload, keyed by dotted leaf path.",
+          "additionalProperties": { "$ref": "#/$defs/field_provenance" }
+        },
+        "infra_provenance": {
+          "type": "object",
+          "description": "Per-leaf origin for the infra payload, keyed by dotted leaf path.",
+          "additionalProperties": { "$ref": "#/$defs/field_provenance" }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
   "properties": {
     "apiVersion": {
       "type": "string",
@@ -211,93 +314,7 @@
             "^[a-zA-Z0-9_.-]+$": {
               "type": "object",
               "patternProperties": {
-                "^[a-zA-Z0-9_-]+$": {
-                  "type": "object",
-                  "required": [
-                    "type",
-                    "resolved_version"
-                  ],
-                  "properties": {
-                    "type": {
-                      "type": "string",
-                      "description": "The URI of the Catalog Feature."
-                    },
-                    "resolved_version": {
-                      "type": "string",
-                      "description": "The exact Semantic Version of the Feature resolved during compilation."
-                    },
-                    "values": {
-                      "type": "object",
-                      "description": "The operational configuration payload for the feature.",
-                      "additionalProperties": true
-                    },
-                    "infra": {
-                      "type": "object",
-                      "description": "Physical sizing overrides targeting this feature.",
-                      "additionalProperties": true
-                    },
-                    "inject": {
-                      "type": "object",
-                      "description": "Agnostic injection routing. Maps local variables to Target provides keys.",
-                      "properties": {
-                        "env": { "type": "object", "additionalProperties": { "type": "string" } },
-                        "file": { "type": "object", "additionalProperties": { "type": "string" } },
-                        "arg": { "type": "object", "additionalProperties": { "type": "string" } }
-                      },
-                      "additionalProperties": {
-                        "type": "object",
-                        "additionalProperties": { "type": "string" }
-                      }
-                    },
-                    "secrets": {
-                      "type": "object",
-                      "description": "Credentials scoped explicitly to this Feature.",
-                      "patternProperties": {
-                        "^[a-zA-Z0-9_-]+$": {
-                          "type": "object",
-                          "required": [
-                            "type",
-                            "resolved_version"
-                          ],
-                          "properties": {
-                            "type": { "type": "string", "description": "The URI of the credential Feature interface." },
-                            "resolved_version": { "type": "string", "description": "The exact Semantic Version of the credential Feature resolved during compilation." },
-                            "values": { "type": "object", "additionalProperties": true },
-                            "inject": {
-                              "type": "object",
-                              "description": "Agnostic injection routing. Maps local variables to Target provides keys.",
-                              "properties": {
-                                "env": { "type": "object", "additionalProperties": { "type": "string" } },
-                                "file": { "type": "object", "additionalProperties": { "type": "string" } },
-                                "arg": { "type": "object", "additionalProperties": { "type": "string" } }
-                              },
-                              "additionalProperties": {
-                                "type": "object",
-                                "additionalProperties": { "type": "string" }
-                              }
-                            }
-                          },
-                          "additionalProperties": false
-                        }
-                      },
-                      "additionalProperties": false
-                    },
-                    "origin": {
-                      "type": "string",
-                      "enum": ["explicit", "annotation"],
-                      "description": "Distinguishes Feature attachments authored in a features: block (explicit) from synthetic attachments produced by the annotation-driven expansion pass (annotation)."
-                    },
-                    "annotation_key": {
-                      "type": "string",
-                      "description": "Annotation name that triggered a synthetic attachment (e.g. feature.myco/rewrite-host). Empty when origin is explicit."
-                    },
-                    "annotation_source": {
-                      "type": "string",
-                      "description": "Source location of the annotation declaration as <release-file-path>:<dotted-yaml-key-path>. Empty when origin is explicit."
-                    }
-                  },
-                  "additionalProperties": false
-                }
+                "^[a-zA-Z0-9_-]+$": { "$ref": "#/$defs/attachment_entry" }
               },
               "additionalProperties": false
             }
@@ -311,42 +328,7 @@
             "^[a-zA-Z0-9_.-]+$": {
               "type": "object",
               "patternProperties": {
-                "^[a-zA-Z0-9_-]+$": {
-                  "type": "object",
-                  "required": [
-                    "type",
-                    "resolved_version"
-                  ],
-                  "properties": {
-                    "type": {
-                      "type": "string",
-                      "description": "The URI of the credential Feature interface to use."
-                    },
-                    "resolved_version": {
-                      "type": "string",
-                      "description": "The exact Semantic Version of the credential Feature resolved during compilation."
-                    },
-                    "values": {
-                      "type": "object",
-                      "description": "Configuration validated by the credential Feature's schema declaration (e.g., path, key).",
-                      "additionalProperties": true
-                    },
-                    "inject": {
-                      "type": "object",
-                      "description": "Agnostic injection routing. Maps local variables to Target provides keys.",
-                      "properties": {
-                        "env": { "type": "object", "additionalProperties": { "type": "string" } },
-                        "file": { "type": "object", "additionalProperties": { "type": "string" } },
-                        "arg": { "type": "object", "additionalProperties": { "type": "string" } }
-                      },
-                      "additionalProperties": {
-                        "type": "object",
-                        "additionalProperties": { "type": "string" }
-                      }
-                    }
-                  },
-                  "additionalProperties": false
-                }
+                "^[a-zA-Z0-9_-]+$": { "$ref": "#/$defs/attachment_entry" }
               },
               "additionalProperties": false
             }
