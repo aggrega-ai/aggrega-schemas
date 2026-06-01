@@ -112,6 +112,25 @@
         }
       },
       "additionalProperties": false
+    },
+    "boundary_feature": {
+      "type": "object",
+      "description": "A boundary-level Feature attachment projected into the IR: the Feature type URI plus the boundary infra a boundary-scope FeatureRecipe renders and resolves its source against. Boundary-level attachments carry no values payload.",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "URI of the Catalog Feature attached at this boundary."
+        },
+        "infra": {
+          "type": "object",
+          "description": "Physical sizing for the boundary attachment; the infra a boundary-scope FeatureRecipe evaluates its templates and source against.",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
     }
   },
   "properties": {
@@ -329,6 +348,20 @@
               "type": "object",
               "patternProperties": {
                 "^[a-zA-Z0-9_-]+$": { "$ref": "#/$defs/attachment_entry" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "boundary_features": {
+          "type": "object",
+          "description": "Un-folded projection of each boundary's Feature attachments, keyed by boundary path then by instance name. Mirrors the boundaries' feature attachments as the single source both lock-time source resolution and the render-time boundary-scope dispatch read, so neither re-walks the routing tree. Present only when the graph has boundary-level Feature attachments.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_./-]+$": {
+              "type": "object",
+              "patternProperties": {
+                "^[a-zA-Z0-9_-]+$": { "$ref": "#/$defs/boundary_feature" }
               },
               "additionalProperties": false
             }
