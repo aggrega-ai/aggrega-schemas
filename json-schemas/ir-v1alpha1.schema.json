@@ -290,7 +290,11 @@
               },
               "origin_feature": {
                 "type": "string",
-                "description": "If this edge was autonomously declared by a Feature (including credential Features labeled feature.aggrega.ai/kind: secret), this identifies the Feature instance name. Allows Wasm plugins to isolate their own topology."
+                "description": "If this edge was autonomously declared by a Feature (including credential Features labeled feature.aggrega.ai/kind: secret), this identifies the Feature type URI. Allows Wasm plugins to isolate their own topology."
+              },
+              "origin_feature_instance": {
+                "type": "string",
+                "description": "The per-attachment instance name of the Feature that declared this edge. Locates a boundary-scope FeatureRecipe's resolved provides by instance, disambiguating two attachments of the same Feature type on one boundary."
               },
               "inject": {
                 "type": "object",
