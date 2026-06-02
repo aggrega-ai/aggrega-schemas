@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/schemalibrary-v1alpha1.schema.json",
   "title": "Aggrega Catalog (SchemaLibrary)",
-  "description": "A reusable collection of JSON Schema 2020-12 definitions that catalog content (Components, Features, etc.) can $ref into via the canonical oci://<host>/<library>@<version>#/schemas/<name> reference. Tier 3 — opt-in for catalogs that need cross-Component schema reuse.",
+  "description": "A reusable collection of JSON Schema 2020-12 definitions that catalog content (Components, Features, etc.) can $ref into via the bare-name identity reference <Library>#/schemas/<name> (the version is supplied by the per-Release lockfile; no registry host appears in the reference). Tier 3 — opt-in for catalogs that need cross-Component schema reuse.",
   "type": "object",
   "required": [
     "apiVersion",
@@ -31,12 +31,12 @@
         "name": {
           "type": "string",
           "pattern": "^[A-Z][A-Za-z0-9]*$",
-          "description": "PascalCase identifier for the library. The canonical $id derivation uses this as the <library> path segment in oci://<host>/<library>@<version>#/schemas/<name>."
+          "description": "PascalCase identifier for the library. It is the <Library> name in the bare-name identity reference <Library>#/schemas/<name>; the version is supplied by the per-Release lockfile and no registry host enters the reference or any derived identifier."
         },
         "version": {
           "type": "string",
           "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
-          "description": "Strict Semantic Versioning of the library (e.g., 1.0.0). Drives the @<version> segment of the canonical $id."
+          "description": "Strict Semantic Versioning of the library (e.g., 1.0.0). The per-Release lockfile pins one version per library."
         },
         "description": {
           "type": "string",
@@ -66,7 +66,7 @@
           "minProperties": 1,
           "propertyNames": {
             "pattern": "^[A-Z][A-Za-z0-9]*$",
-            "description": "PascalCase identifier — `^[A-Z][A-Za-z0-9]*$`. Entry keys appear in canonical $id URIs (`#/schemas/<name>`); the envelope-level constraint prevents non-PascalCase keys from propagating through the catalog ecosystem."
+            "description": "PascalCase identifier — `^[A-Z][A-Za-z0-9]*$`. Entry keys appear in bare-name identity references (`<Library>#/schemas/<name>`); the envelope-level constraint prevents non-PascalCase keys from propagating through the catalog ecosystem."
           },
           "additionalProperties": {
             "description": "A single schema entry. Authored in compact form, JSON Schema 2020-12 YAML, or mixed (per-node dispatch via the compact-form compiler's content-shape detection). Entries may also use $instantiate: to reference a template declared under spec.templates with $args: bindings — substitution is literal-scalar-only.",
@@ -78,7 +78,7 @@
           "type": "object",
           "propertyNames": {
             "pattern": "^[A-Z][A-Za-z0-9]*$",
-            "description": "PascalCase identifier — `^[A-Z][A-Za-z0-9]*$`. Same envelope-level discipline as schema entry keys; template names reference into canonical $id URIs at instantiation time."
+            "description": "PascalCase identifier — `^[A-Z][A-Za-z0-9]*$`. Same envelope-level discipline as schema entry keys; template names are referenced via $instantiate: at instantiation time."
           },
           "additionalProperties": {
             "type": "object",
