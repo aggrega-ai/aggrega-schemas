@@ -31,7 +31,7 @@
         "name": {
           "type": "string",
           "pattern": "^[A-Z][A-Za-z0-9]*$",
-          "description": "PascalCase identifier for the library. The canonical reference URL derivation uses this as the <library> path segment in oci://<host>/<library>@<version>#/mappings/<name>."
+          "description": "PascalCase identifier for the library. It is the <Library> name in the bare-name identity reference <Library>#/mappings/<name>; the version is supplied by the per-Release lockfile and no registry host enters the reference or any derived identifier."
         },
         "version": {
           "type": "string",

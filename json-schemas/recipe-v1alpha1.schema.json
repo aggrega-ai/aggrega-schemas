@@ -148,7 +148,7 @@
           }
         },
         "valuesMapping": {
-          "description": "Values mapping content with three authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar (typically block-scalar YAML `|`) producing the provider's expected values format from Aggrega context (.values, .secrets, .infra). Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.tmpl`, pointing at a local Go-template file. Mode 3 (library import): a YAML map of exactly one key, `$import: oci://<host>/<library>@<version>#/mappings/<entry>`, referencing a MappingLibrary entry resolved via the lockfile.",
+          "description": "Values mapping content with three authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar (typically block-scalar YAML `|`) producing the provider's expected values format from Aggrega context (.values, .secrets, .infra). Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.tmpl`, pointing at a local Go-template file. Mode 3 (library import): a YAML map of exactly one key, `$import: <Library>#/mappings/<entry>`, referencing a MappingLibrary entry by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference).",
           "oneOf": [
             {
               "type": "string"
@@ -164,7 +164,7 @@
           ]
         },
         "workload": {
-          "description": "Workload YAML producer with two authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output parses as 'aggrega.ai/v1alpha1 Workload'. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. The library-import mode (oci:// URL) is not supported at this site — use a local file path. The target Provider entity MUST declare workloadSchema (enforced at Recipe load in Go).",
+          "description": "Workload YAML producer with two authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output parses as 'aggrega.ai/v1alpha1 Workload'. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Library imports are not supported at this site — use a local file path. The target Provider entity MUST declare workloadSchema (enforced at Recipe load in Go).",
           "oneOf": [
             {
               "type": "string"
@@ -176,9 +176,9 @@
                 "$import": {
                   "type": "string",
                   "not": {
-                    "pattern": "^oci://"
+                    "pattern": "^oci://|#/"
                   },
-                  "description": "Local file path. Library imports via oci:// URLs are not supported at workload: — use valuesMapping: { $import: oci://... } for library content patterns."
+                  "description": "Local file path. Library imports are not supported at workload: — use a local file path."
                 }
               },
               "additionalProperties": false
@@ -187,7 +187,7 @@
         },
         "artifacts": {
           "type": "object",
-          "description": "Map of output filename to artifact-content authoring. Each entry's value carries one of two modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output is the artifact body. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. The library-import mode (oci:// URL) is not supported at this site — use a local file path. Map keys become output filenames verbatim. Collisions across artifact entries, source output, workload synthesis are load-time or render-time errors.",
+          "description": "Map of output filename to artifact-content authoring. Each entry's value carries one of two modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output is the artifact body. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Library imports are not supported at this site — use a local file path. Map keys become output filenames verbatim. Collisions across artifact entries, source output, workload synthesis are load-time or render-time errors.",
           "additionalProperties": {
             "oneOf": [
               {
@@ -200,9 +200,9 @@
                   "$import": {
                     "type": "string",
                     "not": {
-                      "pattern": "^oci://"
+                      "pattern": "^oci://|#/"
                     },
-                    "description": "Local file path. Library imports via oci:// URLs are not supported at artifacts:."
+                    "description": "Local file path. Library imports are not supported at artifacts:."
                   }
                 },
                 "additionalProperties": false
