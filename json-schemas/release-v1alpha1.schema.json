@@ -176,6 +176,10 @@
                   "type": "object",
                   "description": "Operational sizing for this specific feature (e.g., target_var, sidecar_cpu, namespace_annotation).",
                   "additionalProperties": true
+                },
+                "uses": {
+                  "$ref": "#/$defs/uses_block",
+                  "description": "Topology wiring contributed by this feature. Each socket's targets become a dependency edge from this component to the target, carrying this feature as the edge's origin; the component is injected the target's provides. A wiring declaration, not a value — permitted on the Release."
                 }
               },
               "additionalProperties": false
@@ -267,7 +271,33 @@
         },
         "features": {
           "type": "object",
-          "description": "Boundary-wide features applied to all nested components (e.g., default security mesh)."
+          "description": "Boundary-wide features applied to all nested components (e.g., default security mesh). A feature's uses block projects to every component in the boundary, declaring a shared dependency once at the boundary rather than repeating it on each component.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "The URI of the Feature. Required for Release-only features (Operator-injected). Must match the Aggregate's type if both declare it."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Optional documentation explaining why the Operator attached this feature boundary-wide."
+                },
+                "infra": {
+                  "type": "object",
+                  "description": "Operational sizing for this feature (e.g., target_var, sidecar_cpu, namespace_annotation).",
+                  "additionalProperties": true
+                },
+                "uses": {
+                  "$ref": "#/$defs/uses_block",
+                  "description": "Topology wiring projected to every component in this boundary. Each socket's targets become a dependency edge from each component to the target, carrying this feature as the edge's origin; each component is injected the target's provides. A wiring declaration, not a value — permitted on the Release."
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
         },
         "secrets": {
           "type": "object",
@@ -305,6 +335,99 @@
         }
       },
       "additionalProperties": false
+    },
+    "uses_block": {
+      "type": "object",
+      "description": "The Structural Topology - Developer Owned. Declares logical network edges and dependencies.",
+      "patternProperties": {
+        "^[a-zA-Z0-9_-]+$": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "object",
+              "patternProperties": {
+                "^[a-zA-Z0-9_-]+$": {
+                  "type": "object",
+                  "required": [
+                    "target"
+                  ],
+                  "properties": {
+                    "target": {
+                      "type": "string"
+                    },
+                    "inject": {
+                      "$ref": "#/$defs/inject_block"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "inject_block": {
+      "type": "object",
+      "description": "Agnostic injection routing. Maps local variables to target provides keys (uses[].inject) or to literal strings / template expressions (component.inject). Each delivery mechanism (env, file, arg, or custom) is authored as an array of {in, from?, value?} entries — explicit 'from' for provides references and 'value' for literals.",
+      "properties": {
+        "env": {
+          "$ref": "#/$defs/inject_delivery"
+        },
+        "file": {
+          "$ref": "#/$defs/inject_delivery"
+        },
+        "arg": {
+          "$ref": "#/$defs/inject_delivery"
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/inject_delivery"
+      }
+    },
+    "inject_delivery": {
+      "type": "array",
+      "description": "A single delivery mechanism, authored as an array of entries. Each entry carries an 'in' (local identifier — env var name, file path, arg flag, or custom mechanism-specific key) plus exactly one of 'from' (a provides key to resolve) or 'value' (a literal string, optionally containing Go template expressions evaluated during Step 5 Pass 2a). 'from' resolves against the target's provides in uses[].inject context, or against the component's own provides in component.inject context.",
+      "items": {
+        "type": "object",
+        "required": [
+          "in"
+        ],
+        "oneOf": [
+          {
+            "required": [
+              "from"
+            ]
+          },
+          {
+            "required": [
+              "value"
+            ]
+          }
+        ],
+        "properties": {
+          "in": {
+            "type": "string",
+            "description": "The local identifier to inject into. Semantics determined by the parent mechanism (env → variable name, file → mount path, arg → flag prefix, custom → mechanism-specific key)."
+          },
+          "from": {
+            "type": "string",
+            "description": "A provides key to resolve. In uses[].inject, resolves against the target node's provides. In component.inject, resolves against the component's own provides."
+          },
+          "value": {
+            "type": "string",
+            "description": "A literal string value. Supports Go template expressions (e.g., '{{ .values.app_token }}', '{{ .infra.namespace }}') evaluated during Step 5 Pass 2a with access to .values, .infra, .context.instance_id, .context.labels, .context.annotations.*, and .metadata.*."
+          }
+        },
+        "additionalProperties": false
+      }
     }
   }
 }
