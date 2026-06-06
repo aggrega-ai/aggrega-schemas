@@ -87,11 +87,11 @@
       "properties": {
         "aggregate": { 
           "type": "string",
-          "description": "Pointer to the Aggregate (Developer Intent) this release deploys." 
+          "description": "Reference to the Aggregate (Developer Intent) this release deploys. A bare token resolves by identity — the referenced Aggregate's metadata.name, searched in the Release's own directory and then the catalog. A value beginning with './' or '../' is an explicit local file resolved relative to the Release (e.g. '../shared/app.yaml' to share one Aggregate across release variants in a subdirectory)."
         },
         "manifest": {
           "type": "string",
-          "description": "Pointer to the Manifest dependency lockfile resolving the abstract interfaces."
+          "description": "Reference to the Manifest resolving the abstract interfaces this release deploys against. A bare token resolves by identity — the referenced Manifest's metadata.name, searched in the Release's own directory. A value beginning with './' or '../' is an explicit local file resolved relative to the Release. A Manifest is deployment-side and is not catalog-indexed, so it resolves only from the Release directory or an explicit path."
         },
         "extends": { 
           "type": "string",
