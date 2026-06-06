@@ -28,10 +28,6 @@
             "type": "string",
             "description": "Content digest of the resolved artifact (e.g. `sha256:...`)."
           },
-          "resolution_path": {
-            "type": "string",
-            "description": "Diagnostic provenance tag describing which resolver tier returned the artifact (e.g. `tier3-registry`, `tier2-workspace`)."
-          },
           "referenced_from": {
             "type": "array",
             "default": [],
@@ -94,10 +90,6 @@
             "type": "string",
             "description": "Content digest of the resolved Wasm artifact (e.g. `sha256:...`)."
           },
-          "resolution_path": {
-            "type": "string",
-            "description": "Diagnostic provenance tag (e.g. `tier3-registry`)."
-          },
           "referenced_from": {
             "type": "array",
             "default": [],
@@ -126,10 +118,6 @@
         "digest": {
           "type": "string",
           "description": "Content digest of the resolved library artifact (e.g. `sha256:...`)."
-        },
-        "resolution_path": {
-          "type": "string",
-          "description": "Diagnostic provenance tag (e.g. `tier3-registry`)."
         },
         "consumers": {
           "type": "array",
