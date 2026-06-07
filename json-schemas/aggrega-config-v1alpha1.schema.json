@@ -48,11 +48,18 @@
     "build": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Build-time strictness dials and authoring hints. `authoring_release` provides the LSP a `current Release` hint for inline diagnostics; `halt_on_deprecated` and `halt_on_deprecated_severity` (reserved for the deprecation-policy rule) control how the build reacts to deprecated-entity consumption.",
+      "description": "Build-time strictness dials and authoring hints. `authoring_release` provides the LSP a `current Release` hint for inline diagnostics; `halt_on_deprecated` and `halt_on_deprecated_severity` (reserved for the deprecation-policy rule) control how the build reacts to deprecated-entity consumption; `yaml_indent` sets the indentation width of every rendered YAML artifact.",
       "properties": {
         "authoring_release": {
           "type": "string",
           "description": "Path to a Release YAML file the LSP treats as the `current Release` context for inline diagnostics. Optional."
+        },
+        "yaml_indent": {
+          "type": "integer",
+          "default": 2,
+          "minimum": 2,
+          "maximum": 9,
+          "description": "Indentation width (in spaces) for every rendered YAML artifact — docker-compose files, Helm chart templates and values, and Kubernetes manifests. Defaults to 2, the conventional width for those formats."
         },
         "halt_on_deprecated": {
           "type": "boolean",
