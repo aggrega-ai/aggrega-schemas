@@ -84,6 +84,25 @@
         "provider",
         "implements"
       ],
+      "allOf": [
+        {
+          "if": {
+            "properties": { "provider": { "const": "eval" } }
+          },
+          "then": {
+            "properties": {
+              "source": false,
+              "valuesMapping": false,
+              "workload": false,
+              "artifacts": false
+            },
+            "description": "The eval provider executes formatting in-memory. Fetching a 'source', a 'workload', or 'artifacts' is mathematically banned. injectMapping (a Phase-A delivery transform, not a rendering surface) remains allowed."
+          },
+          "else": {
+            "description": "Non-eval providers use the three-input-kinds model (sourced, synthesised, artifacts) plus the FeatureRecipe-only injectMapping. Unlike a Recipe, a FeatureRecipe is not required to declare any input kind: a pure-wiring FeatureRecipe (provider + implements only) is valid and renders nothing — its effect is the uses-edge the Feature it implements carries. Pairing rules (valuesMapping requires source; workload requires the provider's workloadSchema) are enforced at FeatureRecipe load time or at render in Go."
+          }
+        }
+      ],
       "properties": {
         "provider": {
           "type": "string",
@@ -136,6 +155,53 @@
               "additionalProperties": false
             }
           ]
+        },
+        "workload": {
+          "description": "Workload YAML producer with two authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output parses as 'aggrega.ai/v1alpha1 Workload'. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Library imports are not supported at this site — use a local file path. The target Provider entity MUST declare workloadSchema (enforced at render in Go). A synthesized FeatureRecipe workload emits its provider-native manifests under the feature's output directory.",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "required": ["$import"],
+              "properties": {
+                "$import": {
+                  "type": "string",
+                  "not": {
+                    "pattern": "^oci://|#/"
+                  },
+                  "description": "Local file path. Library imports are not supported at workload: — use a local file path."
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "artifacts": {
+          "type": "object",
+          "description": "Map of output filename to artifact-content authoring. Each entry's value carries one of two modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output is the artifact body. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Library imports are not supported at this site — use a local file path. Map keys become output filenames verbatim. The auxiliary resources a resource-generating FeatureRecipe emits (ConfigMap, ServiceMonitor, NetworkPolicy, ExternalSecret CRD, etc.) are artifact-shaped; artifacts: is the primary resource-generation mechanism. Collisions across artifact entries, source output, and workload synthesis are load-time or render-time errors.",
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "required": ["$import"],
+                "properties": {
+                  "$import": {
+                    "type": "string",
+                    "not": {
+                      "pattern": "^oci://|#/"
+                    },
+                    "description": "Local file path. Library imports are not supported at artifacts:."
+                  }
+                },
+                "additionalProperties": false
+              }
+            ]
+          }
         },
         "injectMapping": {
           "type": "string",
