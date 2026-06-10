@@ -296,6 +296,20 @@
                 "type": "string",
                 "description": "The per-attachment instance name of the Feature that declared this edge. Locates a boundary-scope FeatureRecipe's resolved provides by instance, disambiguating two attachments of the same Feature type on one boundary."
               },
+              "origin_release": {
+                "type": "boolean",
+                "description": "True when this edge was created by a Release wiring a declared-but-unbound socket to an existing component. Marks edge AUTHORSHIP, not configuration: a developer-declared edge that a Release merely supplied infra for stays Aggregate-origin (origin_release unset; its Release infra appears in the edge's infra map). origin_feature set => Feature-origin; origin_release true => Release-origin; neither => Aggregate-origin."
+              },
+              "values": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Resolved per-connection developer values for this edge (from the Aggregate edge), validated against the target socket's valueSchema at Step 1 and projected into the consuming node's render context at .uses.<socket>.<alias>.values."
+              },
+              "infra": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Resolved per-connection infra for this edge (Aggregate-seeded and/or Release-supplied), validated against the target socket's infraSchema at Step 1 and projected at .uses.<socket>.<alias>.infra."
+              },
               "inject": {
                 "type": "object",
                 "description": "Agnostic injection routing. Maps local variables to Target provides keys.",

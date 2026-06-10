@@ -222,7 +222,17 @@
                   "required": ["target"],
                   "properties": {
                     "target": { "type": "string" },
-                    "inject": { "$ref": "#/$defs/inject_block" }
+                    "inject": { "$ref": "#/$defs/inject_block" },
+                    "values": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Per-connection developer values for this edge, validated against the target socket's valueSchema by the Step-1 conformance gate (not structurally here). Projected into the consuming node's render context at .uses.<socket>.<alias>.values."
+                    },
+                    "infra": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Per-connection infra for this edge. The Aggregate may seed defaults; a Release edge surface may supply or override per-edge infra. Validated against the target socket's infraSchema by the Step-1 conformance gate."
+                    }
                   },
                   "additionalProperties": false
                 }

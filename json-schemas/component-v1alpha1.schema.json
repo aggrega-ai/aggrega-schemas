@@ -176,6 +176,16 @@
                   "type": "boolean",
                   "default": false,
                   "description": "When true, developer must declare at least one dependency in this socket."
+                },
+                "valueSchema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "description": "JSON Schema 2020-12 content defining the per-connection value contract for this socket — the developer-supplied values an Aggregate edge may carry into the consuming node's render context. Accepts the same three authoring modes as the Component schema field via content-shape dispatch: inline content, single-file replacement via {$import: <path>}, or cross-document reference via {$ref: <Library>#/schemas/<name>}. Per-edge values are validated against this contract by the Step-1 conformance gate, not structurally at the edge."
+                },
+                "infraSchema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "description": "JSON Schema 2020-12 content defining the per-connection infra contract for this socket — the operator-supplied infra a Release edge may carry. Accepts the same three authoring modes as the Component schema field via content-shape dispatch: inline content, {$import: <path>}, or {$ref: <Library>#/schemas/<name>}. Per-edge infra is validated against this contract by the Step-1 conformance gate."
                 }
               },
               "additionalProperties": false
