@@ -131,95 +131,28 @@
           }
         },
         "appliesTo": {
-          "type": "object",
-          "description": "Label selectors to match Components. All key-value pairs must match (AND logic).",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "appliesToExpressions": {
-          "type": "array",
-          "description": "A list of label selector requirements. The requirements are ANDed.",
-          "items": {
-            "type": "object",
-            "required": [
-              "key",
-              "operator"
-            ],
-            "properties": {
-               "key": {
-                "type": "string",
-                "description": "The label key that the selector applies to."
-              },
-              "operator": {
-                "type": "string",
-                "enum": [
-                  "In",
-                  "NotIn",
-                  "Exists",
-                  "DoesNotExist"
-                ],
-                "description": "Represents a key's relationship to a set of values."
-              },
-              "values": {
-                "type": "array",
-                "description": "An array of string values. Empty if operator is Exists or DoesNotExist.",
-                "items": {
-                  "type": "string"
-                }
-              }
-            },
-            "additionalProperties": false
-           }
+          "type": "string",
+          "description": "Kubernetes-style label-selector string matching Components. Comma-separated requirements all must hold (AND). Supported forms: key=value, key!=value, key in (v1, v2), key notin (v1, v2), bare key (label present), !key (label absent). Example: \"tier in (critical, production), !legacy\". An empty or absent selector declares no constraint. The pattern here is a loose shape gate; the compiler's selector parser performs the full grammar validation.",
+          "pattern": "^(?:[^()]*[()][\\s\\S]*|[ \\t]*(?:![ \\t]*[^,]*[^ \\t,][^,]*|[^ \\t,!][^,]*)?(?:,[ \\t]*(?:![ \\t]*[^,]*[^ \\t,][^,]*|[^ \\t,!][^,]*)?)*)$"
         },
         "appliesToAnyOf": {
           "type": "array",
-          "description": "A list of label selectors. The feature applies if ANY of the selectors in this list match (OR logic).",
+          "description": "A list of selectors; the Feature applies if ANY item matches (OR logic). Each item is either a label-selector string (same grammar as appliesTo; requirements inside the string AND together) or a flat key-value map where every pair must match (equality only).",
           "items": {
-            "type": "object",
-            "description": "A single selector term. Rules inside this term are ANDed together.",
-            "properties": {
-              "matchLabels": {
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "A label-selector string; same grammar as appliesTo.",
+                "pattern": "^(?:[^()]*[()][\\s\\S]*|[ \\t]*(?:![ \\t]*[^,]*[^ \\t,][^,]*|[^ \\t,!][^,]*)?(?:,[ \\t]*(?:![ \\t]*[^,]*[^ \\t,][^,]*|[^ \\t,!][^,]*)?)*)$"
+              },
+              {
                 "type": "object",
-                "description": "A map of {key,value} pairs. All must match.",
+                "description": "A flat map of label key-value pairs; all pairs must match (equality only).",
                 "additionalProperties": {
                   "type": "string"
                 }
-              },
-              "matchExpressions": {
-                "type": "array",
-                "description": "A list of expression requirements. All must match.",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "key",
-                    "operator"
-                   ],
-                  "properties": {
-                    "key": {
-                      "type": "string"
-                    },
-                    "operator": {
-                      "type": "string",
-                      "enum": [
-                        "In",
-                        "NotIn",
-                        "Exists",
-                        "DoesNotExist"
-                      ]
-                     },
-                    "values": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                       }
-                    }
-                  },
-                  "additionalProperties": false
-                }
-               }
-            },
-            "additionalProperties": false
+              }
+            ]
           }
         },
         "interoperability": {
