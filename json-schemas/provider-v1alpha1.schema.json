@@ -45,6 +45,7 @@
           "description": "List of maintainers who own this entity.",
           "items": {
             "type": "object",
+            "x-aggrega-go-type": "Maintainer",
             "properties": {
               "name": { "type": "string" },
               "email": { "type": "string" },
@@ -80,6 +81,7 @@
     },
     "spec": {
       "type": "object",
+      "description": "The plugin URI for the rendering engine, the baseSchema used to validate valuesMapping output in sourceless mode, and the workloadSchema declaring how this provider materialises a Workload. A Provider that declares a non-empty workloadSchema supports Recipes that use the synthesized input kind (the workload: block); a Provider that omits it rejects synthesized-mode Recipes at load time.",
       "properties": {
         "plugin": {
           "type": "string",
