@@ -45,6 +45,7 @@
           "description": "List of maintainers who own this entity.",
           "items": {
             "type": "object",
+            "x-aggrega-go-type": "Maintainer",
             "properties": {
               "name": { "type": "string" },
               "email": { "type": "string" },
@@ -80,6 +81,7 @@
     },
     "spec": {
       "type": "object",
+      "description": "The provider binding, mapping, pipeline, and inject mapping for a FeatureRecipe. Carries the same three input kinds as a Recipe (sourced, synthesized, artifacts) plus the FeatureRecipe-only injectMapping; a pure-wiring FeatureRecipe declaring only provider and implements is valid and renders nothing.",
       "required": [
         "provider",
         "implements"
@@ -114,6 +116,7 @@
         },
         "locals": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
           "description": "The Private Ops State. Internal computation results available only within this FeatureRecipe's templates. Used to export physical realities (e.g., target containers, JSON paths) for downstream Wasm plugins. Never exposed to callers — use provides for the public API.",
           "additionalProperties": {
             "type": "string"
@@ -121,6 +124,7 @@
         },
         "provides": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
           "description": "The Public Developer API. Contractual output variables available for downstream Caller inject resolution.",
           "additionalProperties": {
             "type": "string"
@@ -141,6 +145,7 @@
           ]
         },
         "valuesMapping": {
+          "x-aggrega-go-type": "ValuesMapping",
           "description": "Values mapping content with three authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar producing the provider's expected values format. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.tmpl`, pointing at a local Go-template file. Mode 3 (library import): a YAML map of exactly one key, `$import: <Library>#/mappings/<entry>`, referencing a MappingLibrary entry by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference).",
           "oneOf": [
             {
@@ -157,6 +162,7 @@
           ]
         },
         "workload": {
+          "x-aggrega-go-type": "WorkloadTemplate",
           "description": "Workload YAML producer with two authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output parses as 'aggrega.ai/v1alpha1 Workload'. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Library imports are not supported at this site — use a local file path. The target Provider entity MUST declare workloadSchema (enforced at render in Go). A synthesized FeatureRecipe workload emits its provider-native manifests under the feature's output directory.",
           "oneOf": [
             {
@@ -180,6 +186,7 @@
         },
         "artifacts": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[ArtifactEntry]",
           "description": "Map of output filename to artifact-content authoring. Each entry's value carries one of two modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output is the artifact body. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Library imports are not supported at this site — use a local file path. Map keys become output filenames verbatim. The auxiliary resources a resource-generating FeatureRecipe emits (ConfigMap, ServiceMonitor, NetworkPolicy, ExternalSecret CRD, etc.) are artifact-shaped; artifacts: is the primary resource-generation mechanism. Collisions across artifact entries, source output, and workload synthesis are load-time or render-time errors.",
           "additionalProperties": {
             "oneOf": [
@@ -212,6 +219,7 @@
           "description": "Sequential list of Wasm plugins to execute for stateful AST mutation.",
           "items": {
             "type": "object",
+            "x-aggrega-go-type": "PipelineStep",
             "required": [
               "id",
               "plugin",
@@ -247,6 +255,7 @@
         },
         "assertions": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
           "description": "Build-time cross-field validation. Each entry is a named assertion: the key is a stable rule identifier surfaced in error messages; the value is a Go template string with `{{ fail \"message\" }}` halt semantics. Multiple named assertions per entity evaluate per-instance in author-declared order; the first failing assertion halts the build. FeatureRecipe assertions evaluate at Step 5b (post-binding, post-allProvides-evaluation, pre-render) and express implementation invariants of the specific wrapped chart or module. Template context: .values / .infra / .uses / .secrets / .metadata plus .provides / .locals / .recipe. The evaluator uses missingkey=error: references to undefined keys halt with a no-such-key diagnostic; optional-field idioms use Sprig default / hasKey.",
           "additionalProperties": {
             "type": "string"

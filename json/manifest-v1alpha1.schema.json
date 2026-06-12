@@ -45,6 +45,7 @@
           "description": "List of maintainers who own this entity.",
           "items": {
             "type": "object",
+            "x-aggrega-go-type": "Maintainer",
             "properties": {
               "name": { "type": "string" },
               "email": { "type": "string" },
@@ -87,6 +88,7 @@
     },
     "spec": {
       "type": "object",
+      "description": "The Manifest's mapping declarations plus optional base inheritance: mappings connects abstract component and feature types to concrete Recipe and FeatureRecipe implementations; extends inherits mappings from a base Manifest.",
       "required": ["mappings"],
       "properties": {
         "extends": {
@@ -95,7 +97,8 @@
         },
         "mappings": {
           "type": "object",
-          "description": "Maps abstract interfaces to concrete implementations. Two authoring shapes coexist during the migration window: (a) flat shape with reserved top-level keys 'components' and 'features' that map component-type / feature-type URIs directly to Recipe / FeatureRecipe URIs (recommended; provider-agnostic at the Manifest layer; provider determination flows from each resolved Recipe's spec.provider at orchestrator-time); (b) legacy per-provider shape where the top-level keys are provider names (e.g., 'helm', 'compose') and each provider section carries its own components / features sub-sections. The flat shape takes precedence when both are present in the same Manifest. The legacy shape retires when downstream WIs complete the testdata migration.",
+          "x-aggrega-go-type": "ManifestMappings",
+          "description": "Maps abstract interfaces to concrete implementations. Two authoring shapes are accepted: (a) the flat shape, with reserved top-level keys 'components' and 'features' mapping component-type / feature-type URIs directly to Recipe / FeatureRecipe URIs (recommended; provider-agnostic at the Manifest layer — provider determination flows from each resolved Recipe's spec.provider at orchestrator-time); (b) the legacy per-provider shape, with top-level keys naming providers (e.g., 'helm', 'compose'), each provider section carrying its own components / features sub-sections. The flat shape takes precedence when both are present in the same Manifest.",
           "properties": {
             "components": {
               "$ref": "#/$defs/mapping_tier",
@@ -111,7 +114,7 @@
           },
           "additionalProperties": {
             "type": "object",
-            "description": "Legacy per-provider mapping section (e.g., 'helm', 'terraform', 'compose'). Any key other than the reserved 'components' and 'features' names a provider section. Retires when downstream WIs complete the testdata migration to the flat shape.",
+            "description": "Legacy per-provider mapping section (e.g., 'helm', 'terraform', 'compose'). Any key other than the reserved 'components' and 'features' names a provider section.",
             "properties": {
               "components": {
                 "type": "object",

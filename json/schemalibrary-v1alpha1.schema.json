@@ -44,11 +44,13 @@
         },
         "labels": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
           "additionalProperties": { "type": "string" },
           "description": "Author-declared labels. The compiler does not interpret label values (per the dumb-compiler invariant); labels are metadata for discovery + hub UI surfacing."
         },
         "annotations": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
           "additionalProperties": { "type": "string" },
           "description": "Author-declared annotations. Same opaque-metadata posture as labels."
         }
@@ -63,6 +65,7 @@
       "properties": {
         "schemas": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[SchemaEntry]",
           "minProperties": 1,
           "propertyNames": {
             "pattern": "^[A-Z][A-Za-z0-9]*$",
@@ -76,6 +79,7 @@
         },
         "templates": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[TemplateEntry]",
           "propertyNames": {
             "pattern": "^[A-Z][A-Za-z0-9]*$",
             "description": "PascalCase identifier — `^[A-Z][A-Za-z0-9]*$`. Same envelope-level discipline as schema entry keys; template names are referenced via $instantiate: at instantiation time."

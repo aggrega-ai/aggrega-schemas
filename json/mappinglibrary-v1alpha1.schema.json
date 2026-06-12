@@ -44,11 +44,13 @@
         },
         "labels": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
           "additionalProperties": { "type": "string" },
           "description": "Author-declared labels. The compiler does not interpret label values; labels are metadata for discovery + hub UI surfacing."
         },
         "annotations": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
           "additionalProperties": { "type": "string" },
           "description": "Author-declared annotations. Same opaque-metadata posture as labels."
         }
@@ -63,6 +65,7 @@
       "properties": {
         "mappings": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[MappingEntry]",
           "minProperties": 1,
           "propertyNames": {
             "pattern": "^[A-Z][A-Za-z0-9]*$",
