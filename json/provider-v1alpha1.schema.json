@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/provider-v1alpha1.schema.json",
   "title": "Aggrega Core (Provider)",
-  "description": "Global plugin registrar mapping a rendering engine name to an executable.",
+  "description": "The global plugin registrar mapping a rendering engine name to an executable.",
   "type": "object",
   "required": [
     "apiVersion",

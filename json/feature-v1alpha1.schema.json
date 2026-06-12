@@ -45,6 +45,7 @@
           "description": "List of maintainers who own this entity.",
           "items": {
             "type": "object",
+            "x-aggrega-go-type": "Maintainer",
             "properties": {
               "name": { "type": "string" },
               "email": { "type": "string" },
@@ -77,6 +78,7 @@
         },
         "labels": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
           "description": "Duck-typing labels for the Feature. The reserved label 'feature.aggrega.ai/kind' with value 'secret' marks this as a credential Feature. The compiler enforces a hard partition: credential-labeled Features may only appear in the Developer's secrets: block, and non-credential Features may only appear in the features: block.",
           "properties": {
             "feature.aggrega.ai/kind": {
@@ -91,6 +93,7 @@
         },
         "annotations": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
           "description": "Immutable, intrinsic feature characteristics authored by the Platform Architect in Domain 2. Cascades down to the .context.annotations.catalog bucket.",
           "additionalProperties": {
             "type": "string"
@@ -101,6 +104,7 @@
     },
     "spec": {
       "type": "object",
+      "description": "The validation, targeting, and interoperability contract for a catalog Feature: the free-form pillars (values, infra, provides) authored via schema, the fixed-shape pillars (usesSchema dependency sockets, secretsSchema credential slots), component targeting (appliesTo and appliesToAnyOf), and interoperability controls.",
       "properties": {
         "extends": {
           "type": "string",
@@ -108,6 +112,7 @@
         },
         "secretsSchema": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[SecretSlot]",
           "description": "Declarative credential slot definitions. Parallel to usesSchema. The compiler generates JSON Schema 2020-12 validation rules from this schema.",
           "additionalProperties": {
             "type": "object",
@@ -139,6 +144,7 @@
           "type": "array",
           "description": "A list of selectors; the Feature applies if ANY item matches (OR logic). Each item is either a label-selector string (same grammar as appliesTo; requirements inside the string AND together) or a flat key-value map where every pair must match (equality only).",
           "items": {
+            "x-aggrega-go-type": "SelectorTerm",
             "oneOf": [
               {
                 "type": "string",
@@ -157,6 +163,7 @@
         },
         "interoperability": {
           "type": "object",
+          "x-aggrega-go-type": "*Interoperability",
           "description": "Advanced operational safety and interoperability controls.",
           "properties": {
             "conflictsWith": {
@@ -175,6 +182,7 @@
          },
          "usesSchema": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[UsesSchemaEntry]",
           "description": "Native YAML schema defining the topology. The Go CLI natively reads this to validate selectors and allowed inject paradigms.",
           "patternProperties": {
             "^[a-zA-Z0-9_-]+$": {
@@ -199,10 +207,12 @@
         "schema": {
           "type": "object",
           "additionalProperties": true,
+          "x-aggrega-go-type": "yaml.Node",
           "description": "JSON Schema 2020-12 content covering the free-form pillars: values (the Developer's domain — application-shape parameters the Developer configures per Feature attachment in the Aggregate); infra (the Operator's domain — physical sizing knobs supplied by the Release); and provides (downstream context keys this Feature exposes to consumers via the topology pipe). Accepts three authoring modes via content-shape dispatch: (1) inline content (a YAML map carrying compact form, JSON Schema YAML, or mixed); (2) single-file replacement via {$import: <path>}; (3) cross-document reference via {$ref: <Library>#/schemas/<name>} into a SchemaLibrary entry by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference). The companion fields usesSchema and secretsSchema cover the fixed-shape pillars (dependency sockets, credential bindings); the bridge synthesis composes the three into the entity's unified validation surface."
         },
         "assertions": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
           "description": "Build-time cross-field validation. Each entry is a named assertion: the key is a stable rule identifier surfaced in error messages; the value is a Go template string with `{{ fail \"message\" }}` halt semantics. Multiple named assertions per entity evaluate per-instance in author-declared order; the first failing assertion halts the build. Feature assertions evaluate at Step 4b (post-resolution, post-analyzer-gate, pre-render) and express architectural invariants of the contract. Template context: .values / .infra / .uses / .secrets / .metadata. The evaluator uses missingkey=error: references to undefined keys halt with a no-such-key diagnostic; optional-field idioms use Sprig default / hasKey.",
           "additionalProperties": {
             "type": "string"
