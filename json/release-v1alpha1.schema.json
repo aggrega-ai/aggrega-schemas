@@ -33,6 +33,7 @@
           "description": "List of maintainers who own this entity.",
           "items": {
             "type": "object",
+            "x-aggrega-go-type": "Maintainer",
             "properties": {
               "name": { "type": "string" },
               "email": { "type": "string" },
@@ -68,6 +69,7 @@
     },
     "spec": {
       "type": "object",
+      "description": "The deployment binding and routing: the Aggregate and Manifest this release deploys (or an extends base), the environment-specific parameter fulfillment, and the boundaries that route components into deployment targets.",
       "required": ["boundaries"],
       "allOf": [
         {
@@ -98,6 +100,7 @@
           "description": "Enables base-layer inheritance for frictionless local Dev Loops vs Prod deployments."
         },
         "parameters": {
+          "x-aggrega-go-type": "ParametersBlock",
           "description": "Environment-specific variable fulfillment contract with two authoring modes via content-shape dispatch. Mode 1 (inline): a YAML map carrying structured nested parameter values directly. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a single local file that supplies the parameter values. Single-source-only at this site — multi-file layering is the province of Release `extends:` chains (the parent Release supplies base parameters; the child extends + overrides).",
           "oneOf": [
             {
@@ -119,6 +122,7 @@
         },
         "boundaries": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[Boundary]",
           "description": "The root logical boxes into which the Aggregate's components are routed.",
           "patternProperties": {
             "^[a-zA-Z0-9_-]+$": {

@@ -46,6 +46,7 @@
           "description": "List of maintainers who own this entity.",
           "items": {
             "type": "object",
+            "x-aggrega-go-type": "Maintainer",
             "properties": {
               "name": { "type": "string" },
               "email": { "type": "string" },
@@ -78,6 +79,7 @@
         },
         "labels": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
           "description": "Duck-typing labels to declare characteristics. Must include the reserved 'component.aggrega.ai/type' key.",
           "required": [
             "component.aggrega.ai/type"
@@ -103,6 +105,7 @@
         },
         "annotations": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
           "description": "Immutable, intrinsic component characteristics authored by the Platform Architect in Domain 2. Cascades down to the .context.annotations.catalog bucket.",
           "additionalProperties": {
             "type": "string"
@@ -121,6 +124,7 @@
         },
         "secretsSchema": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[SecretSlot]",
           "description": "Declarative credential slot definitions. Parallel to usesSchema. The compiler generates JSON Schema 2020-12 validation rules from this schema.",
           "additionalProperties": {
             "type": "object",
@@ -157,6 +161,7 @@
         },
         "usesSchema": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[UsesSchemaEntry]",
           "description": "Native YAML schema defining the topology. The Go CLI natively reads this to validate selectors and allowed inject paradigms.",
           "patternProperties": {
             "^[a-zA-Z0-9_-]+$": {
@@ -196,10 +201,12 @@
         "schema": {
           "type": "object",
           "additionalProperties": true,
+          "x-aggrega-go-type": "yaml.Node",
           "description": "JSON Schema 2020-12 content covering the free-form pillars: values (the Developer's domain — application-shape parameters the Developer configures per Component instance in the Aggregate); infra (the Operator's domain — physical sizing knobs supplied by the Release); and provides (downstream context keys this Component exposes to consumers via the topology pipe). Accepts three authoring modes via content-shape dispatch: (1) inline content (a YAML map carrying compact form, JSON Schema YAML, or mixed); (2) single-file replacement via {$import: <path>}; (3) cross-document reference via {$ref: <Library>#/schemas/<name>} into a SchemaLibrary entry by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference). The companion fields usesSchema and secretsSchema cover the fixed-shape pillars (dependency sockets, credential bindings); the bridge synthesis composes the three into the entity's unified validation surface."
         },
         "assertions": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
           "description": "Build-time cross-field validation. Each entry is a named assertion: the key is a stable rule identifier surfaced in error messages; the value is a Go template string with `{{ fail \"message\" }}` halt semantics. Multiple named assertions per entity evaluate per-instance in author-declared order; the first failing assertion halts the build. Component assertions evaluate at Step 4b (post-resolution, post-analyzer-gate, pre-render) and express architectural invariants of the contract that hold regardless of which Recipe binds. Template context: .values / .infra / .uses / .secrets / .metadata. The evaluator uses missingkey=error: references to undefined keys halt with a no-such-key diagnostic; optional-field idioms use Sprig default / hasKey.",
           "additionalProperties": {
             "type": "string"
