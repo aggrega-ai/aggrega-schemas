@@ -32,62 +32,62 @@ package schemas
 
 import _ "embed"
 
-//go:embed json-schemas/aggrega-config-v1alpha1.schema.json
+//go:embed json/aggrega-config-v1alpha1.schema.json
 var AggregaConfigV1alpha1 string
 
-//go:embed json-schemas/aggregate-v1alpha1.schema.json
+//go:embed json/aggregate-v1alpha1.schema.json
 var AggregateV1alpha1 string
 
-//go:embed json-schemas/cache-metadata-v1alpha1.schema.json
+//go:embed json/cache-metadata-v1alpha1.schema.json
 var CacheMetadataV1alpha1 string
 
-//go:embed json-schemas/component-v1alpha1.schema.json
+//go:embed json/component-v1alpha1.schema.json
 var ComponentV1alpha1 string
 
-//go:embed json-schemas/feature-v1alpha1.schema.json
+//go:embed json/feature-v1alpha1.schema.json
 var FeatureV1alpha1 string
 
-//go:embed json-schemas/featurerecipe-v1alpha1.schema.json
+//go:embed json/featurerecipe-v1alpha1.schema.json
 var FeatureRecipeV1alpha1 string
 
-//go:embed json-schemas/ir-v1alpha1.schema.json
+//go:embed json/ir-v1alpha1.schema.json
 var IRSchemaV1alpha1 string
 
-//go:embed json-schemas/lockfile-v1alpha1.schema.json
+//go:embed json/lockfile-v1alpha1.schema.json
 var LockfileV1alpha1 string
 
-//go:embed json-schemas/manifest-v1alpha1.schema.json
+//go:embed json/manifest-v1alpha1.schema.json
 var ManifestV1alpha1 string
 
-//go:embed json-schemas/mappinglibrary-v1alpha1.schema.json
+//go:embed json/mappinglibrary-v1alpha1.schema.json
 var MappingLibraryV1alpha1 string
 
-//go:embed json-schemas/path-template-context-v1alpha1.schema.json
+//go:embed json/path-template-context-v1alpha1.schema.json
 var PathTemplateContextV1alpha1 string
 
-//go:embed json-schemas/provider-v1alpha1.schema.json
+//go:embed json/provider-v1alpha1.schema.json
 var ProviderV1alpha1 string
 
-//go:embed json-schemas/recipe-v1alpha1.schema.json
+//go:embed json/recipe-v1alpha1.schema.json
 var RecipeV1alpha1 string
 
-//go:embed json-schemas/release-v1alpha1.schema.json
+//go:embed json/release-v1alpha1.schema.json
 var ReleaseV1alpha1 string
 
-//go:embed json-schemas/schemalibrary-v1alpha1.schema.json
+//go:embed json/schemalibrary-v1alpha1.schema.json
 var SchemaLibraryV1alpha1 string
 
-//go:embed json-schemas/template-context-v1alpha1.schema.json
+//go:embed json/template-context-v1alpha1.schema.json
 var TemplateContextV1alpha1 string
 
-//go:embed json-schemas/wasm-linter-v1alpha1.schema.json
+//go:embed json/wasm-linter-v1alpha1.schema.json
 var WasmLinterV1alpha1 string
 
-//go:embed json-schemas/wasm-mutator-v1alpha1.schema.json
+//go:embed json/wasm-mutator-v1alpha1.schema.json
 var WasmMutatorV1alpha1 string
 
-//go:embed json-schemas/wasm-policy-validator-v1alpha1.schema.json
+//go:embed json/wasm-policy-validator-v1alpha1.schema.json
 var WasmPolicyValidatorV1alpha1 string
 
-//go:embed json-schemas/workload-v1alpha1.schema.json
+//go:embed json/workload-v1alpha1.schema.json
 var WorkloadV1alpha1 string

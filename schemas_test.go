@@ -66,7 +66,7 @@ func TestEverySchemaIsNonEmpty(t *testing.T) {
 
 // TestEverySchemaParsesAsValidJSON asserts every embedded schema is
 // well-formed JSON. Catches the malformed-JSON-published regression
-// — a corrupted schema file in json-schemas/ would surface here
+// — a corrupted schema file in json/ would surface here
 // before consumers hit a runtime json.Unmarshal failure.
 func TestEverySchemaParsesAsValidJSON(t *testing.T) {
 	t.Parallel()
