@@ -80,13 +80,10 @@
     },
     "spec": {
       "type": "object",
-      "required": [
-        "plugin"
-      ],
       "properties": {
         "plugin": {
           "type": "string",
-          "description": "URI to the Wasm rendering socket capable of rendering this format (e.g., 'hub.aggrega.ai/providers/helm-renderer:1.0.0')."
+          "description": "Reserved. Names the Wasm rendering plugin intended to render this format (e.g., 'hub.aggrega.ai/providers/helm-renderer:1.0.0'). The compiler does not consume this field today — provider dispatch is by provider name; the Wasm binding belongs to the future plugin entity."
         },
         "baseSchema": {
           "type": "string",

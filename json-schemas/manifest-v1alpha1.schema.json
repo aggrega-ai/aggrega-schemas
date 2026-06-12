@@ -106,23 +106,35 @@
               "description": "Flat-shape feature-type to FeatureRecipe URI mapping. Includes both operational Features and credential Features (labeled feature.aggrega.ai/kind: secret)."
             }
           },
-          "patternProperties": {
-            "^(?!components$|features$)[a-zA-Z0-9_-]+$": {
-              "type": "object",
-              "description": "Legacy per-provider mapping section (e.g., 'helm', 'terraform', 'compose'). Retires when downstream WIs complete the testdata migration to the flat shape.",
-              "properties": {
-                "components": {
-                  "$ref": "#/$defs/mapping_tier"
-                },
-                "features": {
-                  "$ref": "#/$defs/mapping_tier",
-                  "description": "Maps Feature types to FeatureRecipe URIs. Includes both operational Features and credential Features."
-                }
-              },
-              "additionalProperties": false
-            }
+          "propertyNames": {
+            "pattern": "^[a-zA-Z0-9_-]+$"
           },
-          "additionalProperties": false
+          "additionalProperties": {
+            "type": "object",
+            "description": "Legacy per-provider mapping section (e.g., 'helm', 'terraform', 'compose'). Any key other than the reserved 'components' and 'features' names a provider section. Retires when downstream WIs complete the testdata migration to the flat shape.",
+            "properties": {
+              "components": {
+                "type": "object",
+                "properties": {
+                  "type": { "type": "object", "additionalProperties": { "type": "string" } },
+                  "name": { "type": "object", "additionalProperties": { "type": "string" } },
+                  "annotations": { "type": "object" }
+                },
+                "additionalProperties": false
+              },
+              "features": {
+                "type": "object",
+                "description": "Maps Feature types to FeatureRecipe URIs. Includes both operational Features and credential Features.",
+                "properties": {
+                  "type": { "type": "object", "additionalProperties": { "type": "string" } },
+                  "name": { "type": "object", "additionalProperties": { "type": "string" } },
+                  "annotations": { "type": "object" }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false

@@ -147,9 +147,9 @@
         },
         "annotations": {
           "type": "object",
-          "description": "Component-specific Operator annotations that override boundary-level annotations for this component. Deep-merged over boundary annotations (component wins on key collision). Used for per-component provider well-known annotation overrides (e.g., aggrega.ai/chart-name). The provider is responsible for validating consistency when grouping components (e.g., helm-chart provider rejects components with different aggrega.ai/namespace values in the same chart). Explicit null on a key inherited from the parent boundary removes the inherited binding from this component (annotation-driven Feature opt-out); sibling components retain the inherited binding.",
+          "description": "Component-specific Operator annotations that override boundary-level annotations for this component. Deep-merged over boundary annotations (component wins on key collision; structured values per-subkey-merge with structured parents). Values are strings, structured objects, or null. Used for per-component provider well-known annotation overrides (e.g., aggrega.ai/chart-name). The provider is responsible for validating consistency when grouping components (e.g., helm-chart provider rejects components with different aggrega.ai/namespace values in the same chart). Explicit null on a key inherited from the parent boundary removes the inherited binding from this component (annotation-driven Feature opt-out); sibling components retain the inherited binding.",
           "additionalProperties": {
-            "type": ["string", "null"]
+            "type": ["string", "object", "null"]
           }
         },
         "infra": {
@@ -159,9 +159,9 @@
         },
         "features": {
           "type": "object",
-          "description": "Features attached to this component via the Release. For features also declared in the Aggregate, only infra is provided (values come from the Aggregate). For Release-only features (Operator-injected), type is required. The Release MUST NOT provide values for features — this is the Developer's domain.",
+          "description": "Features attached to this component via the Release. For features also declared in the Aggregate, only infra is provided (values come from the Aggregate). For Release-only features (Operator-injected), type is required. Keys are feature instance names and may carry the full feature type URI (dots and slashes permitted). The Release MUST NOT provide values for features — this is the Developer's domain.",
           "patternProperties": {
-            "^[a-zA-Z0-9_-]+$": {
+            "^[a-zA-Z0-9_./-]+$": {
               "type": "object",
               "properties": {
                 "type": {
@@ -296,16 +296,16 @@
         },
         "annotations": {
           "type": "object",
-          "description": "Boundary-wide Operator annotations cascading down to the .context.annotations.release bucket. Values are strings or null; explicit null on a key inherited from a parent boundary removes the inherited binding from this boundary's effective annotation set (annotation-driven Feature opt-out), propagating to every component routed into this boundary unless a deeper override re-introduces the binding.",
+          "description": "Boundary-wide Operator annotations cascading down to the .context.annotations.release bucket. Values are strings, structured objects, or null. A structured value carries per-subkey configuration that deep-merges with structured parents (per-subkey, child wins) and flows through annotation-driven Feature expansion; only scalar values surface in the render context. Explicit null on a key inherited from a parent boundary removes the inherited binding from this boundary's effective annotation set (annotation-driven Feature opt-out), propagating to every component routed into this boundary unless a deeper override re-introduces the binding.",
           "additionalProperties": {
-            "type": ["string", "null"]
+            "type": ["string", "object", "null"]
           }
         },
         "features": {
           "type": "object",
-          "description": "Boundary-wide features applied to all nested components (e.g., default security mesh). A feature's uses block projects to every component in the boundary, declaring a shared dependency once at the boundary rather than repeating it on each component.",
+          "description": "Boundary-wide features applied to all nested components (e.g., default security mesh). A feature's uses block projects to every component in the boundary, declaring a shared dependency once at the boundary rather than repeating it on each component. Keys are feature instance names and may carry the full feature type URI (dots and slashes permitted).",
           "patternProperties": {
-            "^[a-zA-Z0-9_-]+$": {
+            "^[a-zA-Z0-9_./-]+$": {
               "type": "object",
               "properties": {
                 "type": {
@@ -347,9 +347,9 @@
         },
         "components": {
           "type": "object",
-          "description": "Which components from the Aggregate are placed in this boundary.",
+          "description": "Which components from the Aggregate are placed in this boundary. Keys are component instance names; a sub-aggregate's component is addressed by its qualified dotted path (e.g., 'data.main-db' — the aggregate instance name, a dot, the component name).",
           "patternProperties": {
-            "^[a-zA-Z0-9_-]+$": {
+            "^[a-zA-Z0-9_.-]+$": {
               "$ref": "#/$defs/boundary_component"
             }
           },

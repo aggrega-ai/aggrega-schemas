@@ -255,7 +255,7 @@
           "type": "object",
           "description": "Developer-authored annotations on this subsystem. Values are strings or null; explicit null on a key inherited from a parent subsystem removes the inherited binding from this subsystem (annotation-driven Feature opt-out). Annotations declared here are inherited by nested subsystems and by contained components; closer-level wins per-key. Cascades down to the .context.annotations.aggregate bucket on each derived IR node.",
           "additionalProperties": {
-            "type": ["string", "null"]
+            "type": ["string", "object", "null"]
           }
         },
         "features": {
@@ -321,7 +321,7 @@
           "type": "object",
           "description": "Developer-authored annotations on this component. Values are strings or null; explicit null on a key inherited from a parent subsystem removes the inherited binding from this component (annotation-driven Feature opt-out). Component-level annotations override inherited subsystem-level annotations per key; sibling components in the same subsystem retain their own annotation maps independently.",
           "additionalProperties": {
-            "type": ["string", "null"]
+            "type": ["string", "object", "null"]
           }
         },
         "values": {
@@ -334,7 +334,7 @@
         },
         "inject": {
           "$ref": "#/$defs/inject_block",
-          "description": "Component-level self-inject. Injects the component's own values (via 'value:' or compact literal) or own provides keys (via 'from:') directly into the delivery pipe (.context.inject). Only allowed if the Component catalog entity declares 'spec.inject' with the corresponding mechanisms. Compact form values are always literals in this context. The compiler validates that no inject key collides with keys declared in uses[].inject — collisions cause ErrInjectKeyCollision fatal halt."
+          "description": "Component-level self-inject. Injects the component's own values (via 'value:') or own provides keys (via 'from:') directly into the delivery pipe (.context.inject). Only allowed if the Component catalog entity declares 'spec.inject' with the corresponding mechanisms. The compiler validates that no inject key collides with keys declared in uses[].inject — collisions cause ErrInjectKeyCollision fatal halt."
         },
         "features": {
           "type": "object",

@@ -82,8 +82,7 @@
       "type": "object",
       "required": [
         "provider",
-        "implements",
-        "locals"
+        "implements"
       ],
       "allOf": [
         {
@@ -142,9 +141,9 @@
         },
         "provides": {
           "type": "object",
-          "description": "The Public Developer API. Contractual output variables available for downstream Caller inject resolution. The compiler evaluates provides templates in Pass 1 (self-contained, any order). Callers resolve inject keys against these values in Pass 2.",
+          "description": "The Public Developer API. Contractual output variables available for downstream Caller inject resolution. The compiler evaluates provides templates in Pass 1 (self-contained, any order). Callers resolve inject keys against these values in Pass 2. Values are scalars — the pipe carries them blindly and stringifies deterministically at the injection boundary.",
           "additionalProperties": {
-            "type": "string"
+            "type": ["string", "number", "boolean"]
           }
         },
         "valuesMapping": {
