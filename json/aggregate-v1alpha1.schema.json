@@ -166,7 +166,7 @@
         "subsystems": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[Subsystem]",
-          "description": "Logical groupings of developer intent.",
+          "description": "Named logical groupings of an Aggregate's components into subsystems. Mutually exclusive with top-level components — declaring both is rejected. A subsystem the author names default is an ordinary declared subsystem, distinct from the synthesized default the compiler creates for a components-only Aggregate.",
           "patternProperties": {
             "^[a-zA-Z0-9_-]+$": {
               "$ref": "#/$defs/subsystem"
@@ -177,7 +177,7 @@
         "components": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[ComponentInstance]",
-          "description": "The map of logical atomic components that make up this aggregate.",
+          "description": "The map of logical atomic components that make up this Aggregate, authored directly at the top level. Top-level components and subsystems are mutually exclusive — declaring both is rejected. When components are authored here (without subsystems), the compiler folds them into a synthesized default subsystem at load, so every downstream pass sees a uniform subsystem-bearing structure; the synthesized default is marked as such in the IR.",
           "patternProperties": {
             "^[a-zA-Z0-9_-]+$": {
               "$ref": "#/$defs/component_instance"
