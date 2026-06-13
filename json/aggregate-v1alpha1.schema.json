@@ -96,6 +96,12 @@
     "spec": {
       "type": "object",
       "description": "The Developer Intent surface: the global parameter contract, nested aggregate imports, the exported-component public API, subsystem groupings, and the component instances that make up the module.",
+      "not": {
+        "allOf": [
+          { "required": ["components"], "properties": { "components": { "minProperties": 1 } } },
+          { "required": ["subsystems"], "properties": { "subsystems": { "minProperties": 1 } } }
+        ]
+      },
       "properties": {
         "parameters": {
           "type": "object",
