@@ -70,7 +70,6 @@
     "spec": {
       "type": "object",
       "description": "The deployment binding and routing: the Aggregate and Manifest this release deploys (or an extends base), the environment-specific parameter fulfillment, and the boundaries that route components into deployment targets.",
-      "required": ["boundaries"],
       "allOf": [
         {
           "if": {
@@ -86,6 +85,12 @@
           }
         }
       ],
+      "not": {
+        "allOf": [
+          { "required": ["components"], "properties": { "components": { "minProperties": 1 } } },
+          { "required": ["boundaries"], "properties": { "boundaries": { "minProperties": 1 } } }
+        ]
+      },
       "properties": {
         "aggregate": { 
           "type": "string",
@@ -127,6 +132,17 @@
           "patternProperties": {
             "^[a-zA-Z0-9_-]+$": {
               "$ref": "#/$defs/boundary"
+            }
+          },
+          "additionalProperties": false
+        },
+        "components": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[BoundaryComponent]",
+          "description": "Top-level component instances carrying per-component operator infra, for a single-scope deployment with no named boundaries. Mutually exclusive with `boundaries`: declare `components` for a flat deployment or `boundaries` for multi-target routing, never both. When `components` is used, the compiler synthesizes a `default` boundary holding them and emits their artifacts to `dist/` flat.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "$ref": "#/$defs/boundary_component"
             }
           },
           "additionalProperties": false
