@@ -13,13 +13,14 @@
 #   3. validate a known-GOOD and a known-BAD sample entity against the schema, the
 #      GOOD one passing and the BAD one failing.
 #
-# Validator selection (first available):
-#   - yaml-language-server (npx)  — the real editor face: also exercises catalog.json
-#     fileMatch association. Preferred.
-#   - ajv / python3 jsonschema    — validate against the SERVED URL directly.
-#   - aggrega CLI envelope gate   — FALLBACK using the project's own JSON Schema
-#     2020-12 validator. Validates the source schema (byte-identical to the served
-#     bytes, asserted in step 2). In this mode the served-URL-serves-the-schema and
+# Association / validation layer (preferred first):
+#   - yaml-language-server (the real editor face) via scripts/lsp-association-smoke.mjs
+#     — drives the language service's catalog.json fileMatch association on good /
+#     bad / excluded samples. Used when `node` is available. This is the engine an
+#     editor actually runs.
+#   - aggrega CLI envelope gate — FALLBACK when node is unavailable, using the
+#     project's own JSON Schema 2020-12 validator on the source schema (byte-identical
+#     to the served bytes, asserted in step 2). In this mode the served-URL and
 #     schema-validates-good/bad claims are proven, but catalog.json's editor
 #     association is structurally verified only (the LSP engine is not driven) —
 #     see PUBLISHING.md. AGGREGA_BIN overrides the `aggrega` binary.
@@ -90,39 +91,39 @@ spec:
   bogusUnknownKey: nope
 YAML
 
-validate_good_bad() {
-  local how="$1" goodrc badrc
-  if command -v yaml-language-server >/dev/null 2>&1; then how="yaml-language-server"; fi
-  echo "validator: $how"
-  case "$how" in
-    aggrega)
-      # Envelope gate runs at catalog load; a clean dir lints, the bad key fails.
-      mkdir -p "$tmp/good-cat" "$tmp/bad-cat"
-      cp "$tmp/good.yaml" "$tmp/good-cat/component.yaml"
-      cp "$tmp/bad.yaml"  "$tmp/bad-cat/component.yaml"
-      ( cd "$tmp/good-cat" && "$AGGREGA" lint >/dev/null 2>&1 ); goodrc=$?
-      ( cd "$tmp/bad-cat"  && "$AGGREGA" lint >/dev/null 2>&1 ); badrc=$?
-      ;;
-    *)
-      echo "SKIP: no JSON Schema validator found (yaml-language-server/ajv/jsonschema); set AGGREGA_BIN to use the project validator" >&2
-      return 2
-      ;;
-  esac
+# Project-validator fallback (envelope gate). Used only when node is unavailable;
+# proves good/bad validation against the source schema but does NOT drive the LSP
+# association engine — catalog.json association is structurally verified only.
+validate_envelope_floor() {
+  local goodrc badrc
+  echo "validator: aggrega envelope gate (association structurally verified only — see PUBLISHING.md)"
+  mkdir -p "$tmp/good-cat" "$tmp/bad-cat"
+  cp "$tmp/good.yaml" "$tmp/good-cat/component.yaml"
+  cp "$tmp/bad.yaml"  "$tmp/bad-cat/component.yaml"
+  ( cd "$tmp/good-cat" && "$AGGREGA" lint >/dev/null 2>&1 ); goodrc=$?
+  ( cd "$tmp/bad-cat"  && "$AGGREGA" lint >/dev/null 2>&1 ); badrc=$?
   if [ "$goodrc" -ne 0 ]; then echo "FAIL: GOOD sample rejected (rc=$goodrc)" >&2; return 1; fi
   if [ "$badrc" -eq 0 ]; then echo "FAIL: BAD sample accepted (expected rejection)" >&2; return 1; fi
   echo "OK: GOOD sample validates, BAD sample rejected"
 }
 
-# Prefer a true URL-fetching validator; fall back to the project validator.
-if command -v yaml-language-server >/dev/null 2>&1 || command -v ajv >/dev/null 2>&1 \
-   || python3 -c "import jsonschema" >/dev/null 2>&1; then
-  validate_good_bad url || exit 1
+# Drive the real association engine when node is available; the .mjs serves json/
+# and runs yaml-language-server's catalog.json association on good/bad/excluded
+# samples. Fall back to the envelope floor only when node is absent.
+if command -v node >/dev/null 2>&1; then
+  echo "association engine: yaml-language-server via scripts/lsp-association-smoke.mjs"
+  node "$DIR/scripts/lsp-association-smoke.mjs"; rc=$?
+  case "$rc" in
+    0) : ;;  # engine smoke passed
+    2) echo "note: LSP engine could not run (re-defer to CI — see message above)."
+       if command -v "$AGGREGA" >/dev/null 2>&1 || [ -x "$AGGREGA" ]; then validate_envelope_floor || exit 1; fi ;;
+    *) echo "FAIL: LSP association engine smoke failed" >&2; exit 1 ;;
+  esac
 elif command -v "$AGGREGA" >/dev/null 2>&1 || [ -x "$AGGREGA" ]; then
-  echo "note: no external JSON Schema validator; using the project validator (aggrega envelope gate)."
-  echo "      catalog.json editor association is structurally verified only — see PUBLISHING.md."
-  validate_good_bad aggrega || exit 1
+  echo "note: node unavailable; using the project validator."
+  validate_envelope_floor || exit 1
 else
-  echo "SKIP: no validator available (no yaml-language-server/ajv/jsonschema, no aggrega binary)" >&2
+  echo "SKIP: no association engine (node) and no aggrega binary available" >&2
   exit 2
 fi
 

@@ -51,10 +51,24 @@ schemas are intentionally excluded.
 
 ## Smoke
 
-`scripts/editor-association-smoke.sh` serves `json/` locally by filename (standing
-in for the hub static path), confirms a served URL returns the schema bytes, and
-validates a known-good and a known-bad sample entity against the served schema. See
-the script header for the validator it selects.
+The smoke has two layers. `scripts/editor-association-smoke.sh` serves `json/`
+locally by filename (standing in for the hub static path) and confirms a served URL
+returns the schema bytes byte-identical to source. It then drives the association
+engine via `scripts/lsp-association-smoke.mjs`, which runs the `yaml-language-server`
+language service — the engine editors use — configured from `catalog.json`:
+
+- a good sample entity is associated to its schema by `fileMatch` and validates clean;
+- a bad sample is rejected with a diagnostic pointing at the offending field;
+- a file representing a machine-schema kind (one excluded from `catalog.json`) is
+  not associated — the same service flags the bad sample but returns nothing for the
+  excluded one, so the empty result is genuine non-association.
+
+The harness reads the committed `catalog.json` and points its schema URLs at the
+local server in memory only; the committed `url`s (the hub static path) are not
+modified. Serving the whole `json/` directory resolves any cross-document `$ref`
+locally. When `node` is unavailable, the shell smoke falls back to validating the
+good and bad samples through the project's own JSON Schema validator; in that mode
+the served-URL claims hold but the association engine is not driven.
 
 ## Go-live (infrastructure)
 
