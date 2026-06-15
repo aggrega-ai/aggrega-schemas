@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://aggrega.ai/schemas/internal/path-template-context-v1alpha1.schema.json",
+    "$id": "https://aggrega.ai/schemas/path-template-context-v1alpha1.schema.json",
     "title": "Aggrega Internal Path-Template Context",
     "description": "The variable allowlist consumed by Go templates evaluated against Release.spec.boundaries[].directory and Release.spec.boundaries[].subDirectory (and the per-component subDirectory override) at orchestrator-time. Path templates use missingkey=error (distinct from the global missingkey=zero regime for value templates) plus parse-time validation: every field reference in a path template must appear in this allowlist for the relevant context (directory: vs subDirectory:); unknown fields produce a Loud Guardrail error at parse time, never at render time. The asymmetry with value-template laxity is documented at aggrega-docs/language-reference/path-template-variables.md.",
     "type": "object",

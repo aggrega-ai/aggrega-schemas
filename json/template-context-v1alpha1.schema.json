@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://aggrega.ai/schemas/internal/template-context-v1alpha1.schema.json",
+    "$id": "https://aggrega.ai/schemas/template-context-v1alpha1.schema.json",
     "title": "Aggrega Internal Template Context",
     "description": "The runtime view assembled by the Go compiler and injected into Recipe and FeatureRecipe Go templates during Step 5. For credential FeatureRecipes (implementing Features labeled feature.aggrega.ai/kind: secret), the compiler additionally populates .secret_name and .inject with the secret-specific context. For boundary-scope FeatureRecipes (spec.executionScope: boundary), the .context, .workload, .secret_name, .inject, and .inject_raw pillars are absent and a .boundary.* pillar is populated instead — see the boundary block at the bottom of properties. This is NOT persisted to disk; it exists only in compiler memory during rendering. This schema documents the contract between the compiler and Ops template authors.\n\nPhase B sub-pass availability:\n  Pass 1 (provides): partial pillars (self-ref banned).\n  Phase B.0 (locals + source eval): all pillars; .source and .workload absent.\n  Phase B.1 (valuesMapping): all pillars + .source; .workload absent.\n  Phase B.2 (workload eval): all pillars + .source; .workload being evaluated (absent from self-reference).\n  Phase B.3 (artifacts): all pillars + .source + .workload (fullest context).",
     "type": "object",

@@ -13,12 +13,16 @@ import (
 // iterate this slice; adding a new schema requires one row here and
 // one row in schemas.go.
 //
-// Most schemas use the `https://aggrega.ai/schemas/<file-name>` form.
-// Two internal schemas (path-template-context, template-context)
-// use the `https://aggrega.ai/schemas/internal/<file-name>` form
-// because they document compiler-internal context shapes, not
-// catalog wire formats — the `internal/` namespace signals their
-// non-published-API status to consumers of the schema registry.
+// Every schema's `$id` uses the flat `https://aggrega.ai/schemas/<file-name>`
+// form, matching its filename-derived served path.
+//
+// The machine schemas fall in two roles: wire formats and ABI contracts
+// (ir, lockfile, cache-metadata, the wasm-*), and compiler-internal
+// render-context shapes (template-context, path-template-context). That
+// distinction is convention, not encoded in the `$id`. What marks all of
+// them non-published is their exclusion from catalog.json — none is
+// hand-authored or editor-associated — so the `$id` need not carry the
+// role, and identity matches the served location for every schema.
 var allSchemas = []struct {
 	name       string
 	source     string
@@ -33,12 +37,12 @@ var allSchemas = []struct {
 	{"LockfileV1alpha1", LockfileV1alpha1, "https://aggrega.ai/schemas/lockfile-v1alpha1.schema.json"},
 	{"ManifestV1alpha1", ManifestV1alpha1, "https://aggrega.ai/schemas/manifest-v1alpha1.schema.json"},
 	{"MappingLibraryV1alpha1", MappingLibraryV1alpha1, "https://aggrega.ai/schemas/mappinglibrary-v1alpha1.schema.json"},
-	{"PathTemplateContextV1alpha1", PathTemplateContextV1alpha1, "https://aggrega.ai/schemas/internal/path-template-context-v1alpha1.schema.json"},
+	{"PathTemplateContextV1alpha1", PathTemplateContextV1alpha1, "https://aggrega.ai/schemas/path-template-context-v1alpha1.schema.json"},
 	{"ProviderV1alpha1", ProviderV1alpha1, "https://aggrega.ai/schemas/provider-v1alpha1.schema.json"},
 	{"RecipeV1alpha1", RecipeV1alpha1, "https://aggrega.ai/schemas/recipe-v1alpha1.schema.json"},
 	{"ReleaseV1alpha1", ReleaseV1alpha1, "https://aggrega.ai/schemas/release-v1alpha1.schema.json"},
 	{"SchemaLibraryV1alpha1", SchemaLibraryV1alpha1, "https://aggrega.ai/schemas/schemalibrary-v1alpha1.schema.json"},
-	{"TemplateContextV1alpha1", TemplateContextV1alpha1, "https://aggrega.ai/schemas/internal/template-context-v1alpha1.schema.json"},
+	{"TemplateContextV1alpha1", TemplateContextV1alpha1, "https://aggrega.ai/schemas/template-context-v1alpha1.schema.json"},
 	{"WasmLinterV1alpha1", WasmLinterV1alpha1, "https://aggrega.ai/schemas/wasm-linter-v1alpha1.schema.json"},
 	{"WasmMutatorV1alpha1", WasmMutatorV1alpha1, "https://aggrega.ai/schemas/wasm-mutator-v1alpha1.schema.json"},
 	{"WasmPolicyValidatorV1alpha1", WasmPolicyValidatorV1alpha1, "https://aggrega.ai/schemas/wasm-policy-validator-v1alpha1.schema.json"},
