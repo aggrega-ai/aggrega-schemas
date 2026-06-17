@@ -81,7 +81,7 @@
     },
     "spec": {
       "type": "object",
-      "description": "The plugin URI for the rendering engine, the baseSchema used to validate valuesMapping output in sourceless mode, and the workloadSchema declaring how this provider materialises a Workload. A Provider that declares a non-empty workloadSchema supports Recipes that use the synthesized input kind (the workload: block); a Provider that omits it rejects synthesized-mode Recipes at load time.",
+      "description": "The plugin URI for the rendering engine, the baseSchema used to validate valuesMapping output in sourceless mode, and the workloadSchema declaring how this provider materialises a Workload. A Provider whose engine supports workload synthesis renders Recipes that use the synthesized input kind (the workload: block); the standard-library catalog declares a non-empty workloadSchema on such providers as the documented contract. A synthesized-mode Recipe bound to a provider whose engine cannot synthesize halts loudly at render time.",
       "properties": {
         "plugin": {
           "type": "string",
@@ -93,7 +93,7 @@
         },
         "workloadSchema": {
           "type": "string",
-          "description": "JSON Schema 2020-12 documenting how this provider translates the aggrega.ai/v1alpha1 Workload kind into provider-native manifests. When present, the provider supports Recipes that declare a workload: block (synthesized mode) — the compiler synthesizes provider-native manifests via a Go Engine, informed by this schema as documentation/contract. When absent, the provider does NOT support Workload synthesis; any Recipe for this provider that declares workload: is rejected at Recipe load time with a clear error. Today the field acts as a presence flag (any non-empty body indicates support); the body becomes executable input to Wasm translators in a future iteration."
+          "description": "JSON Schema 2020-12 documenting how this provider translates the aggrega.ai/v1alpha1 Workload kind into provider-native manifests. When present, the provider supports Recipes that declare a workload: block (synthesized mode) — the compiler synthesizes provider-native manifests via a Go Engine, informed by this schema as documentation/contract. Whether a workload: Recipe is supported is determined by the bound engine's synthesis capability, not by this field's presence: a synthesized-mode Recipe bound to a provider whose engine cannot synthesize halts loudly at render time. The standard-library catalog declares workloadSchema on synthesizing providers as the documented contract, kept in sync with engine capability. Today the field acts as a presence flag (any non-empty body indicates support); the body becomes executable input to Wasm translators in a future iteration."
         }
       },
       "additionalProperties": false

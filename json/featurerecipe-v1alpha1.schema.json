@@ -101,7 +101,7 @@
             "description": "The eval provider executes formatting in-memory. Fetching a 'source', a 'workload', or 'artifacts' is mathematically banned. injectMapping (a Phase-A delivery transform, not a rendering surface) remains allowed."
           },
           "else": {
-            "description": "Non-eval providers use the three-input-kinds model (sourced, synthesised, artifacts) plus the FeatureRecipe-only injectMapping. Unlike a Recipe, a FeatureRecipe is not required to declare any input kind: a pure-wiring FeatureRecipe (provider + implements only) is valid and renders nothing — its effect is the uses-edge the Feature it implements carries. Pairing rules (valuesMapping requires source; workload requires the provider's workloadSchema) are enforced at FeatureRecipe load time or at render in Go."
+            "description": "Non-eval providers use the three-input-kinds model (sourced, synthesised, artifacts) plus the FeatureRecipe-only injectMapping. Unlike a Recipe, a FeatureRecipe is not required to declare any input kind: a pure-wiring FeatureRecipe (provider + implements only) is valid and renders nothing — its effect is the uses-edge the Feature it implements carries. Pairing rules apply: valuesMapping requires source; and a workload: block requires a provider whose engine supports workload synthesis — a synthesized-mode FeatureRecipe bound to a non-synthesizing provider halts loudly at render time."
           }
         }
       ],
@@ -163,7 +163,7 @@
         },
         "workload": {
           "x-aggrega-go-type": "WorkloadTemplate",
-          "description": "Workload YAML producer with two authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output parses as 'aggrega.ai/v1alpha1 Workload'. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Library imports are not supported at this site — use a local file path. The target Provider entity MUST declare workloadSchema (enforced at render in Go). A synthesized FeatureRecipe workload emits its provider-native manifests under the feature's output directory.",
+          "description": "Workload YAML producer with two authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output parses as 'aggrega.ai/v1alpha1 Workload'. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Library imports are not supported at this site — use a local file path. The target Provider's engine must support workload synthesis; the standard-library catalog declares workloadSchema on such providers as the documented contract. A workload: FeatureRecipe bound to a provider whose engine cannot synthesize halts loudly at render time. A synthesized FeatureRecipe workload emits its provider-native manifests under the feature's output directory.",
           "oneOf": [
             {
               "type": "string"

@@ -101,7 +101,7 @@
             "description": "The eval provider executes formatting in-memory. Fetching a 'source', a 'workload', 'artifacts', or utilizing base mapping fields is mathematically banned."
           },
           "else": {
-            "description": "Non-eval providers use the three-input-kinds model. At least one input kind must be present: sourced (source + values overlay), synthesized (workload), or artifacts. Deeper pairing rules (valuesMapping <-> source, workload requires provider workloadSchema) are enforced at Recipe load time in Go.",
+            "description": "Non-eval providers use the three-input-kinds model. At least one input kind must be present: sourced (source + values overlay), synthesized (workload), or artifacts. Pairing rules apply: valuesMapping pairs with source; and a workload: block requires a provider whose engine supports workload synthesis — a synthesized-mode Recipe bound to a non-synthesizing provider halts loudly at render time.",
             "anyOf": [
               { "required": ["source"] },
               { "required": ["valuesMapping"] },
@@ -169,7 +169,7 @@
         },
         "workload": {
           "x-aggrega-go-type": "WorkloadTemplate",
-          "description": "Workload YAML producer with two authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output parses as 'aggrega.ai/v1alpha1 Workload'. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Library imports are not supported at this site — use a local file path. The target Provider entity MUST declare workloadSchema (enforced at Recipe load in Go).",
+          "description": "Workload YAML producer with two authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output parses as 'aggrega.ai/v1alpha1 Workload'. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Library imports are not supported at this site — use a local file path. The target Provider's engine must support workload synthesis; the standard-library catalog declares workloadSchema on such providers as the documented contract. A workload: Recipe bound to a provider whose engine cannot synthesize halts loudly at render time.",
           "oneOf": [
             {
               "type": "string"
