@@ -142,6 +142,10 @@
               "description": {
                 "type": "string",
                 "description": "Human documentation for this secret slot."
+              },
+              "selector": {
+                "type": "string",
+                "description": "Optional Kubernetes-style label selector constraining which credential Feature may fill this slot — the credential analog of a usesSchema socket's selector, evaluated against the attached Feature's labels. A fill whose labels do not satisfy it halts. A declared selector must constrain to secret-kind Features: its feature.aggrega.ai/kind requirement must admit only `secret`. Omit to accept any Feature in the secrets partition (the partition already guarantees a secret-kind fill)."
               }
             },
             "additionalProperties": false
