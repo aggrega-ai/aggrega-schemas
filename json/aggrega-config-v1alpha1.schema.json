@@ -2,48 +2,48 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/aggrega-config-v1alpha1.schema.json",
   "title": "Aggrega Workspace Config",
-  "description": "Per-workspace configuration file consumed by the aggrega CLI. Lives at `.aggrega-config.yaml` in the workspace root and carries four top-level blocks: workspace (registry/cache/offline settings), build (authoring-release hint + deprecation strictness dials), plugins (workspace-level Wasm plugin attachments: mutator, policy, linter, importer), and lint (per-rule strictness dials, currently a single `publishing_discipline` block). Workspace-config file (flat top-level shape, no apiVersion/kind envelope) distinct from catalog content. Schema evolution discipline: adding a new top-level block alongside `workspace`/`build`/`plugins`/`lint` is a SemVer-MINOR bump (additive); adding a new flag inside an existing block is likewise a SemVer-MINOR bump; removing a key or tightening a constraint is a SemVer-MAJOR break.",
+  "description": "Per-workspace configuration file consumed by the aggrega CLI. Lives at `.aggrega-config.yaml`. The `workspace` block is the root marker (its presence marks the workspace root; it holds only `catalog_dirs`). Pure settings live at the top level: `default_registry`, `offline`, `auto_pull`, `artifact_cache_dir`, plus the `build` (authoring-release hint + deprecation strictness dials), `plugins` (workspace-level Wasm plugin attachments: mutator, policy, linter, importer), `lint` (per-rule strictness dials), and `parse_cache` (daemon parse-cache eviction caps) blocks. Flat top-level shape, no apiVersion/kind envelope, distinct from catalog content. Schema evolution discipline: adding a new top-level key is a SemVer-MINOR bump (additive); removing or relocating a key, or tightening a constraint, is a SemVer-MAJOR break.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "workspace": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Workspace-level orientation: which registry the build pushes to and pulls from, where the local artifact cache lives, and whether the build operates offline.",
+      "description": "Workspace root marker. Its PRESENCE marks the directory as the workspace root; it carries only the root-defining catalog directories. Settings that are not root-defining (`default_registry`, `offline`, `auto_pull`, `artifact_cache_dir`) live at the top level. Write `workspace: {}` to mark a root with no vendored catalog directories.",
       "properties": {
-        "default_registry": {
-          "type": "string",
-          "default": "hub.aggrega.ai",
-          "description": "Default OCI registry host the build pushes published artifacts to and pulls dependencies from when an entity does not name a registry explicitly. Defaults to `hub.aggrega.ai`."
-        },
         "catalog_dirs": {
           "type": "array",
           "default": [],
           "items": { "type": "string" },
-          "description": "Optional vendored catalog directories the resolver consults before falling back to the registry. Each entry is a filesystem path relative to the workspace root."
+          "description": "Optional vendored catalog directories the resolver consults before falling back to the registry. Each entry is a filesystem path. Root-scoped: local vendored catalogs belong to this workspace root, so they live on the root marker rather than at the top level."
         },
         "catalog_dirs_append": {
           "type": "array",
           "default": [],
           "items": { "type": "string" },
           "description": "Optional append-only addition to the effective `catalog_dirs` list. At each precedence layer the entries here are concatenated onto the resolved base list, letting workspace and global configs compose catalog directories rather than shadow them. Same-layer interaction: when both `catalog_dirs` and `catalog_dirs_append` are specified at one layer, the resolved value at that layer is the base list followed by the append list."
-        },
-        "cache_dir": {
-          "type": "string",
-          "default": ".aggrega/cache",
-          "description": "Local artifact cache directory (registry pulls, OCI manifests, compiled fixtures). Defaults to `.aggrega/cache`. Should be gitignored by convention."
-        },
-        "offline": {
-          "type": "boolean",
-          "default": false,
-          "description": "When true, the build does not contact any registry; only cached artifacts and vendored catalog content are consulted. Defaults to false."
-        },
-        "auto_pull": {
-          "type": "boolean",
-          "default": true,
-          "description": "When true (default), `aggrega build` invokes `aggrega pull` in-process whenever the per-release lockfile is missing, so a first-time build against a Release does not require an explicit pull step. When false, missing lockfile halts the build with a diagnostic asking the operator to run pull explicitly. Independent of `offline`: `offline: true` ignores `auto_pull` and always halts on missing lockfile."
         }
       }
+    },
+    "default_registry": {
+      "type": "string",
+      "default": "hub.aggrega.ai",
+      "description": "Default OCI registry host the build pushes published artifacts to and pulls dependencies from when an entity does not name a registry explicitly. Defaults to `hub.aggrega.ai`."
+    },
+    "offline": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, the build does not contact any registry; only cached artifacts and vendored catalog content are consulted. Defaults to false."
+    },
+    "auto_pull": {
+      "type": "boolean",
+      "default": true,
+      "description": "When true (default), `aggrega build` invokes `aggrega pull` in-process whenever the per-release lockfile is missing, so a first-time build against a Release does not require an explicit pull step. When false, missing lockfile halts the build with a diagnostic asking the operator to run pull explicitly. Independent of `offline`: `offline: true` ignores `auto_pull` and always halts on missing lockfile."
+    },
+    "artifact_cache_dir": {
+      "type": "string",
+      "default": ".aggrega/cache",
+      "description": "Local artifact/content cache directory (registry pulls, OCI manifests, compiled fixtures). Defaults to `.aggrega/cache`. Should be gitignored by convention. Distinct from `parse_cache`, which caps the daemon's in-memory parse cache."
     },
     "build": {
       "type": "object",
@@ -195,10 +195,10 @@
         }
       }
     },
-    "cache": {
+    "parse_cache": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Daemon parse-cache eviction caps. Both caps apply simultaneously — the LRU eviction loop runs after every cache insertion and removes least-recently-used entries until both the entry count and the byte total are within bounds. Either-zero means `unbounded on that axis`, useful for CI scenarios where the cache lives only for one invocation.",
+      "description": "Daemon parse-cache eviction caps. Both caps apply simultaneously — the LRU eviction loop runs after every cache insertion and removes least-recently-used entries until both the entry count and the byte total are within bounds. Either-zero means `unbounded on that axis`, useful for CI scenarios where the cache lives only for one invocation. Distinct from `artifact_cache_dir`, which is the on-disk content cache.",
       "properties": {
         "max_entries": {
           "type": "integer",
