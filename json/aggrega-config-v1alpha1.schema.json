@@ -213,9 +213,32 @@
           "description": "Cap on the cumulative len(content) bytes the cache holds. Default 100000000 (100 MB). `0` disables the byte axis (no eviction triggered by byte total)."
         }
       }
+    },
+    "registries": {
+      "type": "array",
+      "default": [],
+      "items": { "$ref": "#/$defs/RegistryConfig" },
+      "description": "Per-registry settings, keyed by registry host. A registry not listed here uses the defaults (signatures not required). Today the only setting is `requires_signatures`; the entry shape is forward-compatible — additional per-registry trust settings are additive (SemVer-MINOR)."
     }
   },
   "$defs": {
+    "RegistryConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["host"],
+      "description": "Settings scoped to one OCI registry host.",
+      "properties": {
+        "host": {
+          "type": "string",
+          "description": "The registry host these settings apply to (e.g. `hub.aggrega.ai`). Matched against the registry host of the push/pull target."
+        },
+        "requires_signatures": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, pushing an unsigned artifact to this registry is refused outright, and a push to this registry signs by default. There is no override flag: an unsigned push to a signature-requiring registry always halts. Defaults to false."
+        }
+      }
+    },
     "PluginRef": {
       "type": "object",
       "additionalProperties": false,
