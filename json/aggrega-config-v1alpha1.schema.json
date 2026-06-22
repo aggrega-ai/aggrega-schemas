@@ -219,6 +219,19 @@
         }
       }
     },
+    "concurrency": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Daemon request-dispatch concurrency settings. The daemon reads requests off a single stdin stream and runs each through a worker pool that drains a bounded request queue; responses are emitted in request arrival order regardless of completion order.",
+      "properties": {
+        "pool_size": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Number of worker goroutines servicing the request queue. Default 1, which runs requests serially in arrival order."
+        }
+      }
+    },
     "registries": {
       "type": "array",
       "default": [],
