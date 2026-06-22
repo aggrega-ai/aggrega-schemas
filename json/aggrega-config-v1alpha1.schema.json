@@ -45,6 +45,11 @@
       "default": ".aggrega/cache",
       "description": "Local artifact/content cache directory (registry pulls, OCI manifests, compiled fixtures). Defaults to `.aggrega/cache`. Should be gitignored by convention. Distinct from `parse_cache`, which caps the daemon's in-memory parse cache."
     },
+    "skip_signature_verification": {
+      "type": "boolean",
+      "default": false,
+      "description": "Global, loud opt-out from signature verification. When true, signature verification is disabled across every registry, including the mandatory hub baseline. Intended for break-glass and development scenarios; it is never silent — every pull logs a prominent warning that verification was globally disabled. Defaults to false."
+    },
     "build": {
       "type": "object",
       "additionalProperties": false,
@@ -218,7 +223,7 @@
       "type": "array",
       "default": [],
       "items": { "$ref": "#/$defs/RegistryConfig" },
-      "description": "Per-registry settings, keyed by registry host. A registry not listed here uses the defaults (signatures not required). Today the only setting is `requires_signatures`; the entry shape is forward-compatible — additional per-registry trust settings are additive (SemVer-MINOR)."
+      "description": "Per-registry settings and signature trust policy, keyed by registry host. A registry not listed here uses the defaults: a present signature is verified and an absent signature is tolerated, except for `hub.aggrega.ai`, whose embedded baseline mandates a verified signature even with no explicit entry. An explicit entry for a host overrides that host's baseline."
     }
   },
   "$defs": {
@@ -226,7 +231,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["host"],
-      "description": "Settings scoped to one OCI registry host.",
+      "description": "Settings and signature trust policy scoped to one OCI registry host.",
       "properties": {
         "host": {
           "type": "string",
@@ -236,6 +241,50 @@
           "type": "boolean",
           "default": false,
           "description": "When true, pushing an unsigned artifact to this registry is refused outright, and a push to this registry signs by default. There is no override flag: an unsigned push to a signature-requiring registry always halts. Defaults to false."
+        },
+        "trusted_identities": {
+          "type": "array",
+          "default": [],
+          "items": { "$ref": "#/$defs/TrustedIdentity" },
+          "description": "OR-set of keyless signing identities accepted for artifacts pulled from this registry. A signature verifies when its certificate matches any one entry. Used by the keyless verification path."
+        },
+        "public_key": {
+          "type": "string",
+          "description": "Pinned cosign-compatible public-key PEM (inline) for a keyed-mode registry. When set, signatures from this registry are verified offline against this key rather than against keyless identities."
+        },
+        "trusted_root": {
+          "type": "string",
+          "description": "Optional path to a pinned Sigstore trust-root bundle for air-gapped keyless verification. When set, the keyless trust anchor is loaded from this file with no network; when empty, the public-good trust root is fetched and cached."
+        },
+        "advisory": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, a signature verification failure for this registry is downgraded to a warning rather than halting the pull. Verification still runs and the failure is reported; the pull proceeds. Defaults to false."
+        },
+        "skip_verification": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, signature verification is skipped for this registry entirely. Scoped to one host, unlike the global `skip_signature_verification` opt-out. Defaults to false."
+        }
+      }
+    },
+    "TrustedIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["issuer"],
+      "description": "One acceptable keyless signing identity: a certificate subject (the OIDC identity) paired with the OIDC issuer that vouched for it.",
+      "properties": {
+        "identity": {
+          "type": "string",
+          "description": "Exact certificate subject alternative name — the OIDC identity bound into the short-lived signing certificate (e.g. a maintainer email or a CI workflow URI)."
+        },
+        "identity_regexp": {
+          "type": "string",
+          "description": "Regular expression matched against the certificate subject, used instead of an exact `identity` (e.g. to accept any workflow under an organization)."
+        },
+        "issuer": {
+          "type": "string",
+          "description": "OIDC issuer URL that issued the identity token (e.g. `https://accounts.google.com` or `https://token.actions.githubusercontent.com`)."
         }
       }
     },
