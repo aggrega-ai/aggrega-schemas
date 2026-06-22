@@ -237,6 +237,10 @@
       "default": [],
       "items": { "$ref": "#/$defs/RegistryConfig" },
       "description": "Per-registry settings and signature trust policy, keyed by registry host. A registry not listed here uses the defaults: a present signature is verified and an absent signature is tolerated, except for `hub.aggrega.ai`, whose embedded baseline mandates a verified signature even with no explicit entry. An explicit entry for a host overrides that host's baseline."
+    },
+    "signing": {
+      "$ref": "#/$defs/SigningConfig",
+      "description": "Global signing-side defaults: the keyless service URLs and an optional keyed-key path. A per-registry `signing` block overrides these for that host; a CLI flag overrides both. SECURITY: this block holds no secret material — the OIDC identity token is never a config field (it is supplied at runtime via flag or the ambient OIDC environment) and `key_path` is a path to a key file, never inline key bytes."
     }
   },
   "$defs": {
@@ -278,6 +282,33 @@
           "type": "boolean",
           "default": false,
           "description": "When true, signature verification is skipped for this registry entirely. Scoped to one host, unlike the global `skip_signature_verification` opt-out. Defaults to false."
+        },
+        "signing": {
+          "$ref": "#/$defs/SigningConfig",
+          "description": "Signing-side defaults scoped to this registry: the keyless service URLs and an optional keyed-key path. Overrides the global `signing` block for pushes to this host; a CLI flag overrides both."
+        }
+      }
+    },
+    "SigningConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Signing-side endpoint defaults: the keyless service URLs and an optional pointer to a keyed-key file. The sign counterpart of the verify-side trust policy. SECURITY: holds no secret material — the OIDC identity token is never a config field (short-lived, supplied at runtime), and `key_path` is a path to a key file, never inline key bytes. This mirrors the verify side's asymmetry: an inline `public_key` is allowed there, but the sign side carries only a key PATH.",
+      "properties": {
+        "fulcio_url": {
+          "type": "string",
+          "description": "Fulcio certificate-authority URL for keyless signing. When unset, the public-good Fulcio instance is used."
+        },
+        "rekor_url": {
+          "type": "string",
+          "description": "Rekor transparency-log URL for keyless signing. When unset, the public-good Rekor instance is used."
+        },
+        "timestamp_url": {
+          "type": "string",
+          "description": "RFC3161 timestamp-authority URL for keyless signing. When unset, the public-good timestamp authority is used."
+        },
+        "key_path": {
+          "type": "string",
+          "description": "Path to a held ECDSA P-256 private-key PEM file for offline keyed signing. A POINTER to a file, never inline key material. When unset, the keyless path is used."
         }
       }
     },
