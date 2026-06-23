@@ -94,6 +94,31 @@
         "workloadSchema": {
           "type": "string",
           "description": "JSON Schema 2020-12 documenting how this provider translates the aggrega.ai/v1alpha1 Workload kind into provider-native manifests. When present, the provider supports Recipes that declare a workload: block (synthesized mode) — the compiler synthesizes provider-native manifests via a Go Engine, informed by this schema as documentation/contract. Whether a workload: Recipe is supported is determined by the bound engine's synthesis capability, not by this field's presence: a synthesized-mode Recipe bound to a provider whose engine cannot synthesize halts loudly at render time. The standard-library catalog declares workloadSchema on synthesizing providers as the documented contract, kept in sync with engine capability. Today the field acts as a presence flag (any non-empty body indicates support); the body becomes executable input to Wasm translators in a future iteration."
+        },
+        "wellKnownAnnotations": {
+          "type": "array",
+          "description": "Documentation-of-contract: the platform-native well-known annotation keys (the aggrega.ai/ namespace) this provider's rendering engine reads, with the behavior applied when each is absent. Each entry documents one engine-consumed annotation key for catalog readers and the inspect surface. The compiler does not consume this field to gate or branch a build — it is descriptive metadata about the annotations the engine recognises, not an enforcement list, and is distinct from the runtime check that governs binding a value into the reserved namespace. Entries are an ordered list and preserve author order.",
+          "items": {
+            "type": "object",
+            "x-aggrega-go-type": "WellKnownAnnotation",
+            "required": ["key", "purpose"],
+            "additionalProperties": false,
+            "properties": {
+              "key": {
+                "type": "string",
+                "pattern": "^aggrega\\.ai/.+",
+                "description": "The platform-native well-known annotation key the engine reads (e.g., aggrega.ai/namespace). Sits under the platform-reserved aggrega.ai/ annotation namespace — the engine-read platform directives."
+              },
+              "purpose": {
+                "type": "string",
+                "description": "What the annotation controls — the rendering behavior it influences when present."
+              },
+              "defaultBehavior": {
+                "type": "string",
+                "description": "The behavior the engine applies when this annotation is absent."
+              }
+            }
+          }
         }
       },
       "additionalProperties": false
