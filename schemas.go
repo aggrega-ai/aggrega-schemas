@@ -89,5 +89,8 @@ var WasmMutatorV1alpha1 string
 //go:embed json/wasm-policy-validator-v1alpha1.schema.json
 var WasmPolicyValidatorV1alpha1 string
 
+//go:embed json/wasmplugin-v1alpha1.schema.json
+var WasmPluginV1alpha1 string
+
 //go:embed json/workload-v1alpha1.schema.json
 var WorkloadV1alpha1 string

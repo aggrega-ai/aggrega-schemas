@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/wasmplugin-v1alpha1.schema.json",
+  "title": "Aggrega Core (WasmPlugin)",
+  "description": "A content-addressed Wasm plugin: an OCI-hosted WebAssembly artifact pinned by sha256 digest, declaring the socket type(s) it implements, the ABI version it targets, an optional signature pointer, and an optional runtime block. The entity is the authoring and metadata surface for a plugin; the closure pins the artifact by digest and the per-registry trust policy verifies its signature at pull. The compiler is blind to the plugin's behavior — it routes the pinned reference; the WebAssembly runtime executes the bytes.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "aggrega.ai/v1alpha1"
+    },
+    "kind": {
+      "type": "string",
+      "const": "WasmPlugin"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+          "description": "Strict Semantic Versioning of the WasmPlugin entity (e.g., 1.0.0)."
+        },
+        "description": {
+          "type": "string",
+          "description": "A concise, one-sentence summary of what the entity does."
+        },
+        "maintainers": {
+          "type": "array",
+          "description": "List of maintainers who own this entity.",
+          "items": {
+            "type": "object",
+            "x-aggrega-go-type": "Maintainer",
+            "properties": {
+              "name": { "type": "string" },
+              "email": { "type": "string" },
+              "url": { "type": "string" }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          }
+        },
+        "license": {
+          "type": "string",
+          "description": "Legal compliance license (e.g., Apache-2.0)."
+        },
+        "repository": {
+          "type": "string",
+          "description": "The URL to the Git repository where the source files live."
+        },
+        "home": {
+          "type": "string",
+          "description": "The URL of this entity's home page, wiki, or documentation."
+        },
+        "keywords": {
+          "type": "array",
+          "description": "A list of descriptive keywords for UI discoverability.",
+          "items": { "type": "string" }
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "Indicates whether this entity is deprecated and should no longer be used."
+        }
+      },
+      "additionalProperties": false
+    },
+    "spec": {
+      "type": "object",
+      "required": [
+        "plugin",
+        "pluginTypes",
+        "abiVersion"
+      ],
+      "additionalProperties": false,
+      "description": "The plugin's content-addressed OCI reference, the socket type(s) it implements, the ABI version it targets, an optional signature pointer, and an optional runtime block.",
+      "properties": {
+        "plugin": {
+          "type": "string",
+          "pattern": "^oci://[^@]+@sha256:[0-9a-f]{64}$",
+          "description": "The canonical content-addressed reference to the Wasm artifact, in the form `oci://<repository>@sha256:<digest>`. The reference is the plugin's identity; the digest is what the closure pins and the build verifies. A tag-form reference (`oci://<repository>:<tag>`) authored elsewhere resolves to its sha256 digest at pull and pins to this canonical form — the entity's `plugin` field carries the resolved, digest-pinned reference."
+        },
+        "pluginTypes": {
+          "type": "array",
+          "minItems": 1,
+          "description": "The socket type(s) this plugin implements. A plugin may implement more than one socket; entries are an ordered list and preserve author order. The value set matches the plugin-type taxonomy the runtime recognises: `provider` (renders IR nodes into provider-native artifacts), `linter` (inspects authored content and raises diagnostics), `frp_step` (a feature-recipe-pipeline step that transforms IR within a pipeline).",
+          "items": {
+            "type": "string",
+            "enum": ["provider", "linter", "frp_step"]
+          }
+        },
+        "abiVersion": {
+          "type": "string",
+          "enum": ["v1alpha1"],
+          "description": "The host/guest ABI version the plugin targets. `v1alpha1` is the only accepted value in this iteration; a future ABI revision adds an accepted value."
+        },
+        "signature": {
+          "type": "object",
+          "x-aggrega-go-type": "*WasmPluginSignature",
+          "additionalProperties": false,
+          "required": ["type"],
+          "description": "An optional descriptive pointer to the plugin's attached signature. This block is documentation only — it records where the signature lives and how it was produced for catalog readers; it does not itself gate or admit the plugin. The enforcing check is the per-registry trust policy applied at pull: a signature is fetched as an OCI referrer, verified against the registry's trusted identities or pinned key, and recorded as a verified fact in the lockfile. A registry that requires signatures halts the pull when a required signature is missing, untrusted, or invalid.",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "sigstore-cosign",
+              "description": "The signature scheme. `sigstore-cosign` is the supported scheme."
+            },
+            "signatureRef": {
+              "type": "string",
+              "description": "The OCI referrer reference of the attached signature bundle, for documentation and discovery. Absent when the signature is discovered by referrer enumeration at pull rather than pinned here."
+            },
+            "publicKeyRef": {
+              "type": "string",
+              "description": "A pointer to the public key the signature was produced with, for a keyed signature. Absent indicates a keyless (OIDC-identity) signature, verified against the registry's trusted identities."
+            }
+          }
+        },
+        "runtime": {
+          "type": "object",
+          "x-aggrega-go-type": "*WasmPluginRuntime",
+          "additionalProperties": false,
+          "description": "Optional execution constraints the host applies when loading and running the plugin. The fields are field-aligned with the loader's plugin input so a catalog-loaded entity maps to the loader's runtime block without field reinvention. Outbound network access is not an authoring field: a plugin never reaches the network at build time (the ahead-of-time boundary), so there is no host-allowlist field to author here.",
+          "properties": {
+            "maxMemoryPages": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Caps the plugin's linear memory in Wasm pages (64 KiB per page). Zero or absent leaves the runtime's default memory policy in effect."
+            },
+            "timeoutMs": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Caps per-call execution wall time in milliseconds. Zero or absent leaves the call unbounded; production attachments set a non-zero ceiling."
+            },
+            "declaredHostFunctions": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "The host function names the plugin imports. The host validates every entry against the curated allowlist and registers only the declared functions, giving each plugin the least-privilege host surface it actually needs. A declared function outside the allowlist is rejected loudly at load."
+            },
+            "configKV": {
+              "type": "object",
+              "x-aggrega-go-type": "OrderedMap[string]",
+              "additionalProperties": { "type": "string" },
+              "description": "Plugin-specific configuration the runtime hands to the plugin at start, as string-to-string key/value pairs. Entries preserve author order so the emitted record is byte-identical across runs. Absent leaves the runtime's default empty configuration in effect."
+            }
+          }
+        }
+      }
+    }
+  }
+}

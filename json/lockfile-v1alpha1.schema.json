@@ -120,6 +120,31 @@
             "default": [],
             "items": { "type": "string" },
             "description": "Authoring-site origins — dotted paths recording why this URI is in the closure (e.g. `.aggrega-config.yaml.plugins.policy`)."
+          },
+          "signature": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["bundle_digest", "mode"],
+            "description": "Verified-signature fact recorded when this plugin's signature was verified at pull time, against the same per-registry trust policy as catalog entities. Records the verification mode, the keyless identity/issuer that matched (when keyless), and the content-addressed digest of the signature bundle cached in the closure for air-gapped re-verification. Build does not re-run verification; it re-verifies the cached bundle's digest only.",
+            "properties": {
+              "bundle_digest": {
+                "type": "string",
+                "description": "SHA-256 digest (`sha256:...`) of the cached signature bundle blob. Names the cache blob and is the integrity gate for an air-gapped re-verify."
+              },
+              "identity": {
+                "type": "string",
+                "description": "Verified certificate subject for a keyless signature (which trusted identity matched). Empty for a keyed signature."
+              },
+              "issuer": {
+                "type": "string",
+                "description": "Verified OIDC issuer for a keyless signature. Empty for a keyed signature."
+              },
+              "mode": {
+                "type": "string",
+                "enum": ["keyless", "keyed"],
+                "description": "Verification mode that admitted the signature."
+              }
+            }
           }
         }
       }
