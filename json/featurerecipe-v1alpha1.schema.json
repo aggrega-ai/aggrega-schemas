@@ -242,6 +242,10 @@
               "with": {
                 "type": "string",
                 "description": "Inline Go template evaluating to a JSON/YAML map that strictly satisfies this plugin's explicit input schema."
+              },
+              "optional": {
+                "type": "boolean",
+                "description": "When true, a failure of this step (a guest trap, a patch targeting a document not present in the set, a malformed patch, or an error-severity diagnostic) is downgraded to a loud warning: the pre-step document set is restored, this step's output is discarded, and the pipeline continues. When false or absent, any step failure halts the build after restoring the pre-step document set."
               }
             },
             "additionalProperties": false
