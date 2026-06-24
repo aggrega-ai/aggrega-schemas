@@ -108,6 +108,11 @@
           "enum": ["v1alpha1"],
           "description": "The host/guest ABI version the plugin targets. `v1alpha1` is the only accepted value in this iteration; a future ABI revision adds an accepted value."
         },
+        "compatibleProviders": {
+          "type": "array",
+          "description": "The provider engines this plugin is tested-compatible with (provider names such as `helm` or `compose`). A plugin is generic across artifacts that share a provider's output shape, not across all providers; this list is an explicit, tested-compatibility claim. Entries preserve author order. The runtime consults the list when a pipeline step touches a scope: the provider rendering that scope's documents must appear here, or the build halts. An empty or absent list declares no compatibility claim.",
+          "items": { "type": "string" }
+        },
         "signature": {
           "type": "object",
           "x-aggrega-go-type": "*WasmPluginSignature",
