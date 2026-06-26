@@ -89,6 +89,9 @@ var WasmMutatorV1alpha1 string
 //go:embed json/wasm-policy-validator-v1alpha1.schema.json
 var WasmPolicyValidatorV1alpha1 string
 
+//go:embed json/wasm-frp-step-v1alpha1.schema.json
+var WasmFrpStepV1alpha1 string
+
 //go:embed json/wasmplugin-v1alpha1.schema.json
 var WasmPluginV1alpha1 string
 
