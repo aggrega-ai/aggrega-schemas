@@ -38,15 +38,18 @@
         },
         "proposed": {
           "description": "Parsed structure of the entity being classified. YAML → JSON conversion happens host-side; the plugin consumes the structured value via serde_json.",
-          "type": "object"
+          "type": "object",
+          "x-aggrega-go-type": "json.RawMessage"
         },
         "previous": {
           "description": "Parsed structure of the previous-version entity, for rules that perform pairwise comparison (schema-evolution). Omitted when the rule does not need a previous-version reference (e.g., first publication, structural-only rules).",
-          "type": "object"
+          "type": "object",
+          "x-aggrega-go-type": "json.RawMessage"
         },
         "parent": {
           "description": "Parsed structure of the resolved parent entity in the extends chain, for rules that perform child-vs-parent comparison (narrowing). The host caller resolves the entity's spec.extends URI before invocation. Omitted when no parent exists or the rule does not need parent context.",
-          "type": "object"
+          "type": "object",
+          "x-aggrega-go-type": "json.RawMessage"
         },
         "source_path": {
           "description": "Filesystem path the entity was loaded from. Populated by host callers walking the catalog filesystem; consumed by path-aware rules (e.g., category-matches-directory). Omitted when the caller has no path context.",

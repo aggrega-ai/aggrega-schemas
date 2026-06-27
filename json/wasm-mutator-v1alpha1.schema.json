@@ -36,7 +36,9 @@
         "patches": {
           "type": "array",
           "description": "Opaque JSON Patch documents to apply to the topology graph, in order.",
-          "items": {}
+          "items": {
+            "x-aggrega-go-type": "json.RawMessage"
+          }
         }
       }
     },
@@ -74,6 +76,7 @@
       "properties": {
         "nodes": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[MutatorNode]",
           "description": "Nodes keyed by absolute node ID.",
           "additionalProperties": {
             "$ref": "#/$defs/MutatorNode"
@@ -101,6 +104,7 @@
         },
         "labels": {
           "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
           "description": "The node's duck-typing and ontology labels.",
           "additionalProperties": {
             "type": "string"
