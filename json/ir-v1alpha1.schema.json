@@ -12,10 +12,26 @@
   ],
   "additionalProperties": false,
   "$defs": {
-    "field_provenance": {
+    "Maintainer": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "FieldProvenance": {
       "type": "object",
       "description": "Origin of one leaf in an attachment's values or infra payload.",
-      "required": ["origin"],
+      "required": [
+        "origin"
+      ],
       "properties": {
         "origin": {
           "type": "string",
@@ -34,13 +50,14 @@
           "description": "Source location of the annotation declaration as <file-path>:<dotted-yaml-key-path>; empty for explicit leaves."
         },
         "overrides_annotation": {
-          "$ref": "#/$defs/field_provenance",
-          "description": "When an explicit leaf overwrote an annotation-contributed leaf, the suppressed provenance it replaced."
+          "$ref": "#/$defs/FieldProvenance",
+          "description": "When an explicit leaf overwrote an annotation-contributed leaf, the suppressed provenance it replaced.",
+          "x-aggrega-go-type": "*FieldProvenance"
         }
       },
       "additionalProperties": false
     },
-    "attachment_entry": {
+    "IRFeatureEntry": {
       "type": "object",
       "description": "One resolved attachment for a node. Shared shape for a Feature (in feature_values_mapping) and a credential request (in the secrets bucket): a credential is a Feature labeled kind=secret, partitioned into the secrets bucket rather than given a lossier shape. Values carries vault pointers for credentials, never resolved plaintext.",
       "required": [
@@ -59,38 +76,65 @@
         "values": {
           "type": "object",
           "description": "Operational configuration payload for the attachment; vault pointers for credentials.",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "x-aggrega-go-type": "json.RawMessage"
         },
         "infra": {
           "type": "object",
           "description": "Per-instance physical sizing for this attachment.",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "x-aggrega-go-type": "json.RawMessage"
         },
         "inject": {
           "type": "object",
           "description": "Agnostic injection routing. Maps local variables to Target provides keys.",
           "properties": {
-            "env": { "type": "object", "additionalProperties": { "type": "string" } },
-            "file": { "type": "object", "additionalProperties": { "type": "string" } },
-            "arg": { "type": "object", "additionalProperties": { "type": "string" } }
+            "env": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "file": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "arg": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
           },
           "additionalProperties": {
             "type": "object",
-            "additionalProperties": { "type": "string" }
-          }
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "x-aggrega-go-type": "json.RawMessage"
         },
         "secrets": {
           "type": "object",
           "description": "Credentials scoped explicitly to this attachment.",
           "patternProperties": {
-            "^[a-zA-Z0-9_-]+$": { "$ref": "#/$defs/attachment_entry" }
+            "^[a-zA-Z0-9_-]+$": {
+              "$ref": "#/$defs/IRFeatureEntry"
+            }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "x-aggrega-go-type": "OrderedMap[IRFeatureEntry]"
         },
         "origin": {
           "type": "string",
-          "enum": ["explicit", "annotation"],
-          "description": "Distinguishes attachments authored in a features: block (explicit) from synthetic attachments produced by the annotation-driven expansion pass (annotation)."
+          "enum": [
+            "explicit",
+            "annotation",
+            "mixed"
+          ],
+          "description": "Distinguishes attachments authored in a features: block (explicit) from synthetic attachments produced by the annotation-driven expansion pass (annotation), or mixed when the attachment's value/infra leaves carry a mix of both (per-leaf detail then lives in the provenance maps)."
         },
         "annotation_key": {
           "type": "string",
@@ -103,17 +147,23 @@
         "values_provenance": {
           "type": "object",
           "description": "Per-leaf origin for the values payload, keyed by dotted leaf path.",
-          "additionalProperties": { "$ref": "#/$defs/field_provenance" }
+          "additionalProperties": {
+            "$ref": "#/$defs/FieldProvenance"
+          },
+          "x-aggrega-go-type": "OrderedMap[FieldProvenance]"
         },
         "infra_provenance": {
           "type": "object",
           "description": "Per-leaf origin for the infra payload, keyed by dotted leaf path.",
-          "additionalProperties": { "$ref": "#/$defs/field_provenance" }
+          "additionalProperties": {
+            "$ref": "#/$defs/FieldProvenance"
+          },
+          "x-aggrega-go-type": "OrderedMap[FieldProvenance]"
         }
       },
       "additionalProperties": false
     },
-    "boundary_feature": {
+    "IRBoundaryFeature": {
       "type": "object",
       "description": "A boundary-level Feature attachment projected into the IR: the Feature type URI plus the boundary infra a boundary-scope FeatureRecipe renders and resolves its source against. Boundary-level attachments carry no values payload.",
       "required": [
@@ -127,10 +177,395 @@
         "infra": {
           "type": "object",
           "description": "Physical sizing for the boundary attachment; the infra a boundary-scope FeatureRecipe evaluates its templates and source against.",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "x-aggrega-go-type": "json.RawMessage"
         }
       },
       "additionalProperties": false
+    },
+    "CatalogMetadata": {
+      "type": "object",
+      "description": "The Enterprise Metadata Suite explicitly extracted from the Catalog entity, exposing lifecycle and ownership data to Wasm linters.",
+      "properties": {
+        "maintainers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Maintainer"
+          }
+        },
+        "license": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string"
+        },
+        "home": {
+          "type": "string"
+        },
+        "keywords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deprecated": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "IRNode": {
+      "type": "object",
+      "required": [
+        "labels",
+        "component",
+        "resolved_version"
+      ],
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Optional developer-authored documentation describing this component instance's role in the application. Passed through from the Aggregate for augmenting rendering and linting diagnostics."
+        },
+        "labels": {
+          "type": "object",
+          "description": "The entity's duck-typing and ontology labels.",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-aggrega-go-type": "OrderedMap[string]"
+        },
+        "component": {
+          "type": "string",
+          "description": "The name of the underlying Component."
+        },
+        "resolved_version": {
+          "type": "string",
+          "description": "The exact Semantic Version of the Component resolved during compilation."
+        },
+        "sync_wave": {
+          "type": "integer",
+          "description": "The deployment wave inherited from the IRNode's containing boundary's syncWave field (default 0; negative permitted). Renderers translate the integer to provider-native sequencing artifacts (argocd.argoproj.io/sync-wave for K8s/Helm; depends_on for Terraform; DependsOn for CloudFormation; no-op for Compose)."
+        },
+        "boundary_path": {
+          "type": "string",
+          "description": "The physical spatial hierarchy mapped from the Release boundaries (e.g., 'aws-prod/eks-main/payments'). Allows rendering plugins to generate boundary-aware unique identifiers."
+        },
+        "subsystem_path": {
+          "type": "string",
+          "description": "The logical spatial hierarchy mapped from the Aggregate subsystems (e.g., 'finance-module/ledger-api'). Allows rendering plugins to generate logical metadata tags."
+        },
+        "synthesized_subsystem": {
+          "type": "boolean",
+          "description": "True when this node's subsystem was synthesized by the compiler \u2014 the `default` subsystem created for an Aggregate that declares top-level `components` rather than named `subsystems`. Derived provenance, never authored: it distinguishes the synthesized `default` from a subsystem a user explicitly named `default`. Independent of `synthesized_boundary` (a node may be synthesized on either axis or both). Absent (false) for every authored subsystem."
+        },
+        "synthesized_boundary": {
+          "type": "boolean",
+          "description": "True when this node's boundary was synthesized by the compiler \u2014 the `default` boundary created for a Release that declares top-level `components` rather than named `boundaries`. Derived provenance, never authored: it distinguishes the synthesized `default` from a boundary a user explicitly named `default`, and routes the node's artifacts to `dist/` flat instead of `dist/boundaries/default/`. Absent (false) for every authored boundary."
+        },
+        "source_file": {
+          "type": "string",
+          "description": "Workspace-relative path of the Aggregate file where this node was authored. Root-tier nodes carry the root Aggregate's path; sub-aggregate nodes carry the imported Aggregate's file path. The emitter normalizes against the workspace root (the directory containing .aggrega-config.yaml) so the IR wire shape stays byte-identical across developer machines whose workspaces live at different absolute paths. Consumers that filter diagnostics per file resolve the field against the same workspace root before comparison. Empty when the emitter has no workspace concept (e.g., synthetic test fixtures); the field is omitted from the JSON when empty."
+        },
+        "catalog_metadata": {
+          "x-aggrega-go-type": "*CatalogMetadata",
+          "$ref": "#/$defs/CatalogMetadata"
+        },
+        "catalog_annotations": {
+          "type": "object",
+          "description": "Immutable, intrinsic component characteristics authored by the Platform Architect in Domain 2.",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-aggrega-go-type": "OrderedMap[string]"
+        },
+        "release_annotations": {
+          "type": "object",
+          "description": "Physical topology strings and Ops realities cascading from boundaries in the Release.",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-aggrega-go-type": "OrderedMap[string]"
+        },
+        "aggregate_annotations": {
+          "type": "object",
+          "description": "Cognitive metadata, developer intent, and FinOps cascading from subsystems in the Aggregate.",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-aggrega-go-type": "OrderedMap[string]"
+        },
+        "self_inject": {
+          "description": "Component-level self-inject block carried from the Aggregate; the agnostic injection routing the node declares for itself. Opaque at this schema layer; a policy plugin that reads it parses the bytes.",
+          "x-aggrega-go-type": "json.RawMessage",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    "IREdge": {
+      "type": "object",
+      "required": [
+        "source",
+        "target"
+      ],
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "socket": {
+          "type": "string",
+          "description": "The usesSchema category this edge belongs to (e.g., 'databases', 'tools')."
+        },
+        "alias": {
+          "type": "string",
+          "description": "The developer-defined alias for this connection (e.g., 'primary_db')."
+        },
+        "origin_feature": {
+          "type": "string",
+          "description": "If this edge was autonomously declared by a Feature (including credential Features labeled feature.aggrega.ai/kind: secret), this identifies the Feature type URI. Allows Wasm plugins to isolate their own topology."
+        },
+        "origin_feature_instance": {
+          "type": "string",
+          "description": "The per-attachment instance name of the Feature that declared this edge. Locates a boundary-scope FeatureRecipe's resolved provides by instance, disambiguating two attachments of the same Feature type on one boundary."
+        },
+        "origin_release": {
+          "type": "boolean",
+          "description": "True when this edge was created by a Release wiring a declared-but-unbound socket to an existing component. Marks edge AUTHORSHIP, not configuration: a developer-declared edge that a Release merely supplied infra for stays Aggregate-origin (origin_release unset; its Release infra appears in the edge's infra map). origin_feature set => Feature-origin; origin_release true => Release-origin; neither => Aggregate-origin."
+        },
+        "values": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Resolved per-connection developer values for this edge (from the Aggregate edge), validated against the target socket's valueSchema at Step 1 and projected into the consuming node's render context at .uses.<socket>.<alias>.values.",
+          "x-aggrega-go-type": "json.RawMessage"
+        },
+        "infra": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Resolved per-connection infra for this edge (Aggregate-seeded and/or Release-supplied), validated against the target socket's infraSchema at Step 1 and projected at .uses.<socket>.<alias>.infra.",
+          "x-aggrega-go-type": "json.RawMessage"
+        },
+        "inject": {
+          "type": "object",
+          "description": "Agnostic injection routing. Maps local variables to Target provides keys.",
+          "properties": {
+            "env": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "file": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "arg": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "x-aggrega-go-type": "json.RawMessage"
+        }
+      },
+      "additionalProperties": false
+    },
+    "IRMetadata": {
+      "type": "object",
+      "required": [
+        "aggregate_name"
+      ],
+      "properties": {
+        "aggregate_name": {
+          "type": "string",
+          "description": "The Aggregate's metadata.name. Follows IR snake_case convention."
+        }
+      },
+      "additionalProperties": false
+    },
+    "IRProvenance": {
+      "type": "object",
+      "description": "Traceability metadata for diagnostics and auditing.",
+      "required": [
+        "schema_version",
+        "compiler_version",
+        "aggregate_version",
+        "manifest_version",
+        "release_version",
+        "source_identifiers"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "string"
+        },
+        "compiler_version": {
+          "type": "string",
+          "description": "Mandatory compliance stamp. Identifies the specific Go compiler binary used to generate this graph."
+        },
+        "aggregate_version": {
+          "type": "string",
+          "description": "The exact semantic version of the root Aggregate intent used during compilation."
+        },
+        "manifest_version": {
+          "type": "string",
+          "description": "The exact semantic version of the Manifest lockfile used during compilation."
+        },
+        "release_version": {
+          "type": "string",
+          "description": "The exact semantic version of the Release routing file used during compilation."
+        },
+        "source_identifiers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "IRSpec": {
+      "type": "object",
+      "required": [
+        "nodes",
+        "edges",
+        "feature_markers",
+        "values_mapping",
+        "infra_mapping",
+        "feature_values_mapping",
+        "secrets",
+        "provenance"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "nodes": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[IRNode]",
+          "description": "Dictionary of all application nodes, keyed by their absolute ID. Purely topological.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_.-]+$": {
+              "$ref": "#/$defs/IRNode"
+            }
+          },
+          "additionalProperties": false
+        },
+        "edges": {
+          "type": "array",
+          "description": "Explicit logical network paths and dependencies between nodes.",
+          "items": {
+            "$ref": "#/$defs/IREdge"
+          }
+        },
+        "feature_markers": {
+          "type": "array",
+          "description": "Explicit canonical strings (e.g., semantic_routing, data_masking) derived from annotations, utilized for downstream Feature Negotiation.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "values_mapping": {
+          "type": "object",
+          "description": "The single source of truth for opaque pass-through cognitive payloads, mapped by node ID.",
+          "additionalProperties": true,
+          "x-aggrega-go-type": "OrderedMap[any]"
+        },
+        "infra_mapping": {
+          "type": "object",
+          "description": "The physical sizing payload injected from the Release, mapped by node ID.",
+          "additionalProperties": true,
+          "x-aggrega-go-type": "OrderedMap[any]"
+        },
+        "feature_values_mapping": {
+          "type": "object",
+          "description": "Normalized map of Node IDs to their attached Feature configurations.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_.-]+$": {
+              "type": "object",
+              "patternProperties": {
+                "^[a-zA-Z0-9_-]+$": {
+                  "$ref": "#/$defs/IRFeatureEntry"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false,
+          "x-aggrega-go-type": "OrderedMap[OrderedMap[IRFeatureEntry]]"
+        },
+        "secrets": {
+          "type": "object",
+          "description": "Validated credential requests mapped by component node ID, cleanly separated from the standard payload.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_.-]+$": {
+              "type": "object",
+              "patternProperties": {
+                "^[a-zA-Z0-9_-]+$": {
+                  "$ref": "#/$defs/IRFeatureEntry"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false,
+          "x-aggrega-go-type": "OrderedMap[OrderedMap[IRFeatureEntry]]"
+        },
+        "boundary_features": {
+          "type": "object",
+          "description": "Un-folded projection of each boundary's Feature attachments, keyed by boundary path then by instance name. Mirrors the boundaries' feature attachments as the single source both lock-time source resolution and the render-time boundary-scope dispatch read, so neither re-walks the routing tree. Present only when the graph has boundary-level Feature attachments.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_./-]+$": {
+              "type": "object",
+              "patternProperties": {
+                "^[a-zA-Z0-9_-]+$": {
+                  "$ref": "#/$defs/IRBoundaryFeature"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false,
+          "x-aggrega-go-type": "OrderedMap[OrderedMap[IRBoundaryFeature]]"
+        },
+        "provenance": {
+          "$ref": "#/$defs/IRProvenance"
+        }
+      }
+    },
+    "IRGraph": {
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "metadata",
+        "spec"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "apiVersion": {
+          "type": "string",
+          "const": "aggrega.ai/v1alpha1"
+        },
+        "kind": {
+          "type": "string",
+          "const": "IR"
+        },
+        "metadata": {
+          "$ref": "#/$defs/IRMetadata"
+        },
+        "spec": {
+          "$ref": "#/$defs/IRSpec"
+        }
+      }
     }
   },
   "properties": {
@@ -189,7 +624,8 @@
                   "description": "The entity's duck-typing and ontology labels.",
                   "additionalProperties": {
                     "type": "string"
-                  }
+                  },
+                  "x-aggrega-go-type": "OrderedMap[string]"
                 },
                 "component": {
                   "type": "string",
@@ -213,62 +649,48 @@
                 },
                 "synthesized_subsystem": {
                   "type": "boolean",
-                  "description": "True when this node's subsystem was synthesized by the compiler — the `default` subsystem created for an Aggregate that declares top-level `components` rather than named `subsystems`. Derived provenance, never authored: it distinguishes the synthesized `default` from a subsystem a user explicitly named `default`. Independent of `synthesized_boundary` (a node may be synthesized on either axis or both). Absent (false) for every authored subsystem."
+                  "description": "True when this node's subsystem was synthesized by the compiler \u2014 the `default` subsystem created for an Aggregate that declares top-level `components` rather than named `subsystems`. Derived provenance, never authored: it distinguishes the synthesized `default` from a subsystem a user explicitly named `default`. Independent of `synthesized_boundary` (a node may be synthesized on either axis or both). Absent (false) for every authored subsystem."
                 },
                 "synthesized_boundary": {
                   "type": "boolean",
-                  "description": "True when this node's boundary was synthesized by the compiler — the `default` boundary created for a Release that declares top-level `components` rather than named `boundaries`. Derived provenance, never authored: it distinguishes the synthesized `default` from a boundary a user explicitly named `default`, and routes the node's artifacts to `dist/` flat instead of `dist/boundaries/default/`. Absent (false) for every authored boundary."
+                  "description": "True when this node's boundary was synthesized by the compiler \u2014 the `default` boundary created for a Release that declares top-level `components` rather than named `boundaries`. Derived provenance, never authored: it distinguishes the synthesized `default` from a boundary a user explicitly named `default`, and routes the node's artifacts to `dist/` flat instead of `dist/boundaries/default/`. Absent (false) for every authored boundary."
                 },
                 "source_file": {
                   "type": "string",
                   "description": "Workspace-relative path of the Aggregate file where this node was authored. Root-tier nodes carry the root Aggregate's path; sub-aggregate nodes carry the imported Aggregate's file path. The emitter normalizes against the workspace root (the directory containing .aggrega-config.yaml) so the IR wire shape stays byte-identical across developer machines whose workspaces live at different absolute paths. Consumers that filter diagnostics per file resolve the field against the same workspace root before comparison. Empty when the emitter has no workspace concept (e.g., synthetic test fixtures); the field is omitted from the JSON when empty."
                 },
                 "catalog_metadata": {
-                  "type": "object",
-                  "description": "The Enterprise Metadata Suite explicitly extracted from the Catalog entity, exposing lifecycle and ownership data to Wasm linters.",
-                  "properties": {
-                    "maintainers": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "name": { "type": "string" },
-                          "email": { "type": "string" },
-                          "url": { "type": "string" }
-                        }
-                      }
-                    },
-                    "license": { "type": "string" },
-                    "repository": { "type": "string" },
-                    "home": { "type": "string" },
-                    "keywords": {
-                      "type": "array",
-                      "items": { "type": "string" }
-                    },
-                    "deprecated": { "type": "boolean" }
-                  },
-                  "additionalProperties": false
+                  "x-aggrega-go-type": "*CatalogMetadata",
+                  "$ref": "#/$defs/CatalogMetadata"
                 },
                 "catalog_annotations": {
                   "type": "object",
                   "description": "Immutable, intrinsic component characteristics authored by the Platform Architect in Domain 2.",
                   "additionalProperties": {
                     "type": "string"
-                  }
+                  },
+                  "x-aggrega-go-type": "OrderedMap[string]"
                 },
                 "release_annotations": {
                   "type": "object",
                   "description": "Physical topology strings and Ops realities cascading from boundaries in the Release.",
                   "additionalProperties": {
                     "type": "string"
-                  }
+                  },
+                  "x-aggrega-go-type": "OrderedMap[string]"
                 },
                 "aggregate_annotations": {
                   "type": "object",
                   "description": "Cognitive metadata, developer intent, and FinOps cascading from subsystems in the Aggregate.",
                   "additionalProperties": {
                     "type": "string"
-                  }
+                  },
+                  "x-aggrega-go-type": "OrderedMap[string]"
+                },
+                "self_inject": {
+                  "description": "Component-level self-inject block carried from the Aggregate; the agnostic injection routing the node declares for itself. Opaque at this schema layer; a policy plugin that reads it parses the bytes.",
+                  "x-aggrega-go-type": "json.RawMessage",
+                  "type": "object"
                 }
               },
               "additionalProperties": false
@@ -286,8 +708,12 @@
               "target"
             ],
             "properties": {
-              "source": { "type": "string" },
-              "target": { "type": "string" },
+              "source": {
+                "type": "string"
+              },
+              "target": {
+                "type": "string"
+              },
               "socket": {
                 "type": "string",
                 "description": "The usesSchema category this edge belongs to (e.g., 'databases', 'tools')."
@@ -311,25 +737,45 @@
               "values": {
                 "type": "object",
                 "additionalProperties": true,
-                "description": "Resolved per-connection developer values for this edge (from the Aggregate edge), validated against the target socket's valueSchema at Step 1 and projected into the consuming node's render context at .uses.<socket>.<alias>.values."
+                "description": "Resolved per-connection developer values for this edge (from the Aggregate edge), validated against the target socket's valueSchema at Step 1 and projected into the consuming node's render context at .uses.<socket>.<alias>.values.",
+                "x-aggrega-go-type": "json.RawMessage"
               },
               "infra": {
                 "type": "object",
                 "additionalProperties": true,
-                "description": "Resolved per-connection infra for this edge (Aggregate-seeded and/or Release-supplied), validated against the target socket's infraSchema at Step 1 and projected at .uses.<socket>.<alias>.infra."
+                "description": "Resolved per-connection infra for this edge (Aggregate-seeded and/or Release-supplied), validated against the target socket's infraSchema at Step 1 and projected at .uses.<socket>.<alias>.infra.",
+                "x-aggrega-go-type": "json.RawMessage"
               },
               "inject": {
                 "type": "object",
                 "description": "Agnostic injection routing. Maps local variables to Target provides keys.",
                 "properties": {
-                  "env": { "type": "object", "additionalProperties": { "type": "string" } },
-                  "file": { "type": "object", "additionalProperties": { "type": "string" } },
-                  "arg": { "type": "object", "additionalProperties": { "type": "string" } }
+                  "env": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "file": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "arg": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  }
                 },
                 "additionalProperties": {
                   "type": "object",
-                  "additionalProperties": { "type": "string" }
-                }
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "x-aggrega-go-type": "json.RawMessage"
               }
             },
             "additionalProperties": false
@@ -345,12 +791,14 @@
         "values_mapping": {
           "type": "object",
           "description": "The single source of truth for opaque pass-through cognitive payloads, mapped by node ID.",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "x-aggrega-go-type": "OrderedMap[any]"
         },
         "infra_mapping": {
           "type": "object",
           "description": "The physical sizing payload injected from the Release, mapped by node ID.",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "x-aggrega-go-type": "OrderedMap[any]"
         },
         "feature_values_mapping": {
           "type": "object",
@@ -359,12 +807,15 @@
             "^[a-zA-Z0-9_.-]+$": {
               "type": "object",
               "patternProperties": {
-                "^[a-zA-Z0-9_-]+$": { "$ref": "#/$defs/attachment_entry" }
+                "^[a-zA-Z0-9_-]+$": {
+                  "$ref": "#/$defs/IRFeatureEntry"
+                }
               },
               "additionalProperties": false
             }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "x-aggrega-go-type": "OrderedMap[OrderedMap[IRFeatureEntry]]"
         },
         "secrets": {
           "type": "object",
@@ -373,12 +824,15 @@
             "^[a-zA-Z0-9_.-]+$": {
               "type": "object",
               "patternProperties": {
-                "^[a-zA-Z0-9_-]+$": { "$ref": "#/$defs/attachment_entry" }
+                "^[a-zA-Z0-9_-]+$": {
+                  "$ref": "#/$defs/IRFeatureEntry"
+                }
               },
               "additionalProperties": false
             }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "x-aggrega-go-type": "OrderedMap[OrderedMap[IRFeatureEntry]]"
         },
         "boundary_features": {
           "type": "object",
@@ -387,12 +841,15 @@
             "^[a-zA-Z0-9_./-]+$": {
               "type": "object",
               "patternProperties": {
-                "^[a-zA-Z0-9_-]+$": { "$ref": "#/$defs/boundary_feature" }
+                "^[a-zA-Z0-9_-]+$": {
+                  "$ref": "#/$defs/IRBoundaryFeature"
+                }
               },
               "additionalProperties": false
             }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "x-aggrega-go-type": "OrderedMap[OrderedMap[IRBoundaryFeature]]"
         },
         "provenance": {
           "type": "object",
@@ -409,9 +866,9 @@
             "schema_version": {
               "type": "string"
             },
-            "compiler_version": { 
+            "compiler_version": {
               "type": "string",
-              "description": "Mandatory compliance stamp. Identifies the specific Go compiler binary used to generate this graph." 
+              "description": "Mandatory compliance stamp. Identifies the specific Go compiler binary used to generate this graph."
             },
             "aggregate_version": {
               "type": "string",
