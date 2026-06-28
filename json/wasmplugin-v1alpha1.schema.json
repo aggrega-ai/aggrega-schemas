@@ -163,6 +163,37 @@
               "description": "Plugin-specific configuration the runtime hands to the plugin at start, as string-to-string key/value pairs. Entries preserve author order so the emitted record is byte-identical across runs. Absent leaves the runtime's default empty configuration in effect."
             }
           }
+        },
+        "exports": {
+          "type": "array",
+          "description": "The exports this plugin offers, each with its declared capability. An export is one named entry point the host dispatches to (for example `render_node`, `lint_naming`, `step`); the per-export capability block is the authored claim of what that export does, which the host cross-checks against the plugin's self-report at publish and at load. Entries preserve author order. Absent declares no authored export surface.",
+          "items": {
+            "type": "object",
+            "x-aggrega-go-type": "WasmPluginExport",
+            "required": ["name"],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The export's ABI name — the name the host dispatches to (for example `render_node`, `lint_naming`, `step`)."
+              },
+              "operates": {
+                "type": "string",
+                "enum": ["patch", "emit"],
+                "description": "The pipeline operation this export performs: `patch` (modify an existing rendered document) or `emit` (add a new document). Absent carries no operation claim."
+              },
+              "scope": {
+                "type": "string",
+                "enum": ["own", "host"],
+                "description": "The document root this export operates on: `own` (the node's own rendered documents) or `host` (the documents of the component a component-scope FeatureRecipe is attached to). Absent carries no scope claim."
+              },
+              "selector": {
+                "type": "string",
+                "description": "A free-form, human-readable description of what the export acts on (for example `workloads carrying a pod template`). Documentation for catalog readers; the compiler does not interpret it."
+              }
+            }
+          }
         }
       }
     }
