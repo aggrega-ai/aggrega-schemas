@@ -233,7 +233,7 @@
               },
               "plugin": {
                 "type": "string",
-                "description": "The Universal URI of the executable Go plugin."
+                "description": "The URI of the WasmPlugin entity this step runs (e.g. `name:version` or `provider/name:version`). The entity's spec.plugin is the content-addressed .wasm artifact; the build resolves the entity to its artifact and loads the bytes. A bare .wasm or artifact reference is not accepted here."
               },
               "function": {
                 "type": "string",
