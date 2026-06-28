@@ -144,12 +144,12 @@
             "maxMemoryPages": {
               "type": "integer",
               "minimum": 0,
-              "description": "Caps the plugin's linear memory in Wasm pages (64 KiB per page). Zero or absent leaves the runtime's default memory policy in effect."
+              "description": "Caps the plugin's linear memory in Wasm pages (64 KiB per page). Zero or absent applies the platform default cap, so a load is never unbounded; an attachment that needs more raises this value."
             },
             "timeoutMs": {
               "type": "integer",
               "minimum": 0,
-              "description": "Caps per-call execution wall time in milliseconds. Zero or absent leaves the call unbounded; production attachments set a non-zero ceiling."
+              "description": "Caps per-call execution wall time in milliseconds. Zero or absent applies the platform default cap, so a call is never uncancellable; an attachment that runs longer raises this value."
             },
             "declaredHostFunctions": {
               "type": "array",
