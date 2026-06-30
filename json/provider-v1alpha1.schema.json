@@ -85,7 +85,7 @@
       "properties": {
         "plugin": {
           "type": "string",
-          "description": "Reserved. Names the Wasm rendering plugin intended to render this format (e.g., 'hub.aggrega.ai/providers/helm-renderer:1.0.0'). The compiler does not consume this field today — provider dispatch is by provider name; the Wasm binding belongs to the future plugin entity."
+          "description": "Reserved. Names the Wasm rendering plugin intended to render this format (e.g., 'hub.aggrega.ai/providers/helm-renderer:1.0.0'). The compiler does not consume this field today — provider dispatch is by provider name, and the per-provider rendering engine is built into the compiler. The field is documentation-only and becomes runtime-driven when the Wasm translator ships, binding the named Plugin entity instead of the built-in engine."
         },
         "baseSchema": {
           "type": "string",
