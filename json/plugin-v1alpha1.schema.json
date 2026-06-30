@@ -151,10 +151,11 @@
               "minimum": 0,
               "description": "Caps per-call execution wall time in milliseconds. Zero or absent applies the platform default cap, so a call is never uncancellable; an attachment that runs longer raises this value."
             },
-            "declaredHostFunctions": {
+            "hostFunctions": {
               "type": "array",
               "items": { "type": "string" },
-              "description": "The host function names the plugin imports. The host validates every entry against the curated allowlist and registers only the declared functions, giving each plugin the least-privilege host surface it actually needs. A declared function outside the allowlist is rejected loudly at load."
+              "readOnly": true,
+              "description": "Derived from the published .wasm at publish, stamped, verified at pull; machine-owned, do not author. The host functions the plugin imports are read from the .wasm import section at publish time and stamped here in canonical (sorted, de-duplicated) form; the value reflects the published binary. Pull re-derives from the verified binary and halts if the stamp diverges. The host registers exactly this derived set and validates every entry against the curated allowlist."
             },
             "configKV": {
               "type": "object",
