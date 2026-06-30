@@ -28,6 +28,10 @@
             "type": "string",
             "description": "Content digest of the resolved artifact (e.g. `sha256:...`)."
           },
+          "manifest_digest": {
+            "type": "string",
+            "description": "OCI manifest digest of the resolved artifact (e.g. `sha256:...`). The signature commits to this digest; the content `digest` above is the portable identity used for the cache pin and integrity check. Present only for a registry-resolved entity."
+          },
           "referenced_from": {
             "type": "array",
             "default": [],
@@ -93,6 +97,10 @@
           "digest": {
             "type": "string",
             "description": "Content digest of the resolved Wasm artifact (e.g. `sha256:...`)."
+          },
+          "manifest_digest": {
+            "type": "string",
+            "description": "OCI manifest digest of the resolved Wasm artifact (e.g. `sha256:...`). The signature commits to this digest; the content `digest` above is the portable identity used for the cache pin and integrity check. Present only for a registry-resolved artifact."
           },
           "referenced_from": {
             "type": "array",
