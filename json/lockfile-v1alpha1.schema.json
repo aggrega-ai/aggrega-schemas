@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/lockfile-v1alpha1.schema.json",
   "title": "Aggrega Per-Release Lockfile",
-  "description": "Machine-generated lockfile pinning every URI resolved from a Release for deterministic future builds. Lives at `<release-stem>.lock` next to `<release-stem>.yaml`; produced by `aggrega pull <release>`; consumed by `aggrega build <release>`. Two provenance shapes serve two distinct closure-graph relationships: `referenced_from` (list of strings — dotted authoring-site paths) appears on `entities` and `wasm_plugins` to record where in the Release / Aggregate / Manifest / `.aggrega-config.yaml` each URI was pulled in from; `consumers` (list of `{consumer_uri, fragments}` records) appears on `schema_libraries` and `mapping_libraries` to record which catalog entity references which `<entry-name>` fragments of a library — the structured shape makes consumer-affected-by-library-bump diffs traceable without re-running closure. Schema evolution discipline: adding a new top-level section is SemVer-MINOR (additive); adding a new field inside an existing section is SemVer-MINOR; removing a key or tightening a constraint is SemVer-MAJOR. A future additive `source_artifacts` section is reserved for the source-resolution amendment.",
+  "description": "Machine-generated lockfile pinning every URI resolved from a Release for deterministic future builds. Lives at `<release-stem>.lock` next to `<release-stem>.yaml`; produced by `aggrega pull <release>`; consumed by `aggrega build <release>`. Two provenance shapes serve two distinct closure-graph relationships: `referenced_from` (list of strings — dotted authoring-site paths) appears on `entities` and `plugins` to record where in the Release / Aggregate / Manifest / `.aggrega-config.yaml` each URI was pulled in from; `consumers` (list of `{consumer_uri, fragments}` records) appears on `schema_libraries` and `mapping_libraries` to record which catalog entity references which `<entry-name>` fragments of a library — the structured shape makes consumer-affected-by-library-bump diffs traceable without re-running closure. Schema evolution discipline: adding a new top-level section is SemVer-MINOR (additive); adding a new field inside an existing section is SemVer-MINOR; removing a key or tightening a constraint is SemVer-MAJOR. A future additive `source_artifacts` section is reserved for the source-resolution amendment.",
   "type": "object",
   "additionalProperties": false,
   "required": ["version", "release", "generated_at"],
@@ -73,28 +73,7 @@
       "description": "MappingLibrary entries the closure references via Recipe / FeatureRecipe `valuesMapping: { $import: ... }` sites. Each entry's `consumers` list records which catalog entity references which `<entry-name>` fragments of the library — a structured record that makes library-version-bump impact diffs traceable without re-running closure.",
       "items": { "$ref": "#/$defs/LibraryEntry" }
     },
-    "release": {
-      "type": "string",
-      "description": "Path to the Release this lockfile corresponds to, resolved relative to the lockfile's own directory (e.g. `./release-prod.yaml`). The per-Release naming convention places `<release-stem>.lock` next to `<release-stem>.yaml`; the relative path makes the lockfile self-describing without machine-specific absolute paths."
-    },
-    "schema_libraries": {
-      "type": "array",
-      "default": [],
-      "description": "SchemaLibrary entries the closure references via `$ref` and `$import:` sites in entity `schema:` / `usesSchema:` / `secretsSchema:` content. Each entry's `consumers` list records which catalog entity references which `<entry-name>` fragments of the library — a structured record that makes library-version-bump impact diffs traceable without re-running closure.",
-      "items": { "$ref": "#/$defs/LibraryEntry" }
-    },
-    "source_artifacts": {
-      "type": "array",
-      "default": [],
-      "description": "Source artifacts pulled from Recipe / FeatureRecipe `spec.source` fields at pull time. Each entry identifies a unique `{kind, url, pinned_version}` triple with content digest, mediatype, and the structured `referenced_by:` back-pointers naming every catalog entity that resolved to this artifact. Multiple Recipes pinning the same chart at the same version dedupe to a single entry with multiple `referenced_by:` records. The kind enum covers the four currently-supported source kinds plus one reserved (terraform-module-oci) for the future terraform engine.",
-      "items": { "$ref": "#/$defs/SourceArtifactEntry" }
-    },
-    "version": {
-      "type": "integer",
-      "const": 1,
-      "description": "Lockfile schema version. Currently 1; future SemVer-MAJOR breaks of the schema increment this integer."
-    },
-    "wasm_plugins": {
+    "plugins": {
       "type": "array",
       "default": [],
       "description": "Wasm plugins the closure references — workspace-level plugin pins from `.aggrega-config.yaml` `plugins.{mutator,policy,linter,importer}[]:` plus any embedded plugin URIs from referenced Recipes / FeatureRecipes / Providers.",
@@ -148,6 +127,27 @@
           }
         }
       }
+    },
+    "release": {
+      "type": "string",
+      "description": "Path to the Release this lockfile corresponds to, resolved relative to the lockfile's own directory (e.g. `./release-prod.yaml`). The per-Release naming convention places `<release-stem>.lock` next to `<release-stem>.yaml`; the relative path makes the lockfile self-describing without machine-specific absolute paths."
+    },
+    "schema_libraries": {
+      "type": "array",
+      "default": [],
+      "description": "SchemaLibrary entries the closure references via `$ref` and `$import:` sites in entity `schema:` / `usesSchema:` / `secretsSchema:` content. Each entry's `consumers` list records which catalog entity references which `<entry-name>` fragments of the library — a structured record that makes library-version-bump impact diffs traceable without re-running closure.",
+      "items": { "$ref": "#/$defs/LibraryEntry" }
+    },
+    "source_artifacts": {
+      "type": "array",
+      "default": [],
+      "description": "Source artifacts pulled from Recipe / FeatureRecipe `spec.source` fields at pull time. Each entry identifies a unique `{kind, url, pinned_version}` triple with content digest, mediatype, and the structured `referenced_by:` back-pointers naming every catalog entity that resolved to this artifact. Multiple Recipes pinning the same chart at the same version dedupe to a single entry with multiple `referenced_by:` records. The kind enum covers the four currently-supported source kinds plus one reserved (terraform-module-oci) for the future terraform engine.",
+      "items": { "$ref": "#/$defs/SourceArtifactEntry" }
+    },
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Lockfile schema version. Currently 1; future SemVer-MAJOR breaks of the schema increment this integer."
     }
   },
   "$defs": {

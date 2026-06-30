@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aggrega.ai/schemas/wasmplugin-v1alpha1.schema.json",
-  "title": "Aggrega Core (WasmPlugin)",
+  "$id": "https://aggrega.ai/schemas/plugin-v1alpha1.schema.json",
+  "title": "Aggrega Core (Plugin)",
   "description": "A content-addressed Wasm plugin: an OCI-hosted WebAssembly artifact pinned by sha256 digest, declaring the socket type(s) it implements, the ABI version it targets, an optional signature pointer, and an optional runtime block. The entity is the authoring and metadata surface for a plugin; the closure pins the artifact by digest and the per-registry trust policy verifies its signature at pull. The compiler is blind to the plugin's behavior — it routes the pinned reference; the WebAssembly runtime executes the bytes.",
   "type": "object",
   "required": [
@@ -18,7 +18,7 @@
     },
     "kind": {
       "type": "string",
-      "const": "WasmPlugin"
+      "const": "Plugin"
     },
     "metadata": {
       "type": "object",
@@ -34,7 +34,7 @@
         "version": {
           "type": "string",
           "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
-          "description": "Strict Semantic Versioning of the WasmPlugin entity (e.g., 1.0.0)."
+          "description": "Strict Semantic Versioning of the Plugin entity (e.g., 1.0.0)."
         },
         "description": {
           "type": "string",
@@ -115,7 +115,7 @@
         },
         "signature": {
           "type": "object",
-          "x-aggrega-go-type": "*WasmPluginSignature",
+          "x-aggrega-go-type": "*PluginSignature",
           "additionalProperties": false,
           "required": ["type"],
           "description": "An optional descriptive pointer to the plugin's attached signature. This block is documentation only — it records where the signature lives and how it was produced for catalog readers; it does not itself gate or admit the plugin. The enforcing check is the per-registry trust policy applied at pull: a signature is fetched as an OCI referrer, verified against the registry's trusted identities or pinned key, and recorded as a verified fact in the lockfile. A registry that requires signatures halts the pull when a required signature is missing, untrusted, or invalid.",
@@ -137,7 +137,7 @@
         },
         "runtime": {
           "type": "object",
-          "x-aggrega-go-type": "*WasmPluginRuntime",
+          "x-aggrega-go-type": "*PluginRuntime",
           "additionalProperties": false,
           "description": "Optional execution constraints the host applies when loading and running the plugin. The fields are field-aligned with the loader's plugin input so a catalog-loaded entity maps to the loader's runtime block without field reinvention. Outbound network access is not an authoring field: a plugin never reaches the network at build time (the ahead-of-time boundary), so there is no host-allowlist field to author here.",
           "properties": {
@@ -169,7 +169,7 @@
           "description": "The exports this plugin offers, each with its declared capability. An export is one named entry point the host dispatches to (for example `render_node`, `lint_naming`, `step`); the per-export capability block is the authored claim of what that export does, which the host cross-checks against the plugin's self-report at publish and at load. Entries preserve author order. Absent declares no authored export surface.",
           "items": {
             "type": "object",
-            "x-aggrega-go-type": "WasmPluginExport",
+            "x-aggrega-go-type": "PluginExport",
             "required": ["name"],
             "additionalProperties": false,
             "properties": {

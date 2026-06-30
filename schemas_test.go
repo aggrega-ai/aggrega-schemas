@@ -38,6 +38,7 @@ var allSchemas = []struct {
 	{"ManifestV1alpha1", ManifestV1alpha1, "https://aggrega.ai/schemas/manifest-v1alpha1.schema.json"},
 	{"MappingLibraryV1alpha1", MappingLibraryV1alpha1, "https://aggrega.ai/schemas/mappinglibrary-v1alpha1.schema.json"},
 	{"PathTemplateContextV1alpha1", PathTemplateContextV1alpha1, "https://aggrega.ai/schemas/path-template-context-v1alpha1.schema.json"},
+	{"PluginV1alpha1", PluginV1alpha1, "https://aggrega.ai/schemas/plugin-v1alpha1.schema.json"},
 	{"ProviderV1alpha1", ProviderV1alpha1, "https://aggrega.ai/schemas/provider-v1alpha1.schema.json"},
 	{"RecipeV1alpha1", RecipeV1alpha1, "https://aggrega.ai/schemas/recipe-v1alpha1.schema.json"},
 	{"ReleaseV1alpha1", ReleaseV1alpha1, "https://aggrega.ai/schemas/release-v1alpha1.schema.json"},
@@ -47,7 +48,6 @@ var allSchemas = []struct {
 	{"WasmMutatorV1alpha1", WasmMutatorV1alpha1, "https://aggrega.ai/schemas/wasm-mutator-v1alpha1.schema.json"},
 	{"WasmPolicyValidatorV1alpha1", WasmPolicyValidatorV1alpha1, "https://aggrega.ai/schemas/wasm-policy-validator-v1alpha1.schema.json"},
 	{"WasmFrpStepV1alpha1", WasmFrpStepV1alpha1, "https://aggrega.ai/schemas/wasm-frp-step-v1alpha1.schema.json"},
-	{"WasmPluginV1alpha1", WasmPluginV1alpha1, "https://aggrega.ai/schemas/wasmplugin-v1alpha1.schema.json"},
 	{"WorkloadV1alpha1", WorkloadV1alpha1, "https://aggrega.ai/schemas/workload-v1alpha1.schema.json"},
 }
 
