@@ -81,15 +81,11 @@
     },
     "spec": {
       "type": "object",
-      "description": "The plugin URI for the rendering engine, the baseSchema used to validate valuesMapping output in sourceless mode, and the workloadSchema declaring how this provider materialises a Workload. A Provider whose engine supports workload synthesis renders Recipes that use the synthesized input kind (the workload: block); the standard-library catalog declares a non-empty workloadSchema on such providers as the documented contract. A synthesized-mode Recipe bound to a provider whose engine cannot synthesize halts loudly at render time.",
+      "description": "The plugin URI for the rendering engine and the workloadSchema declaring how this provider materialises a Workload. A Provider whose engine supports workload synthesis renders Recipes that use the synthesized input kind (the workload: block); the standard-library catalog declares a non-empty workloadSchema on such providers as the documented contract. A synthesized-mode Recipe bound to a provider whose engine cannot synthesize halts loudly at render time.",
       "properties": {
         "plugin": {
           "type": "string",
           "description": "Reserved. Names the Wasm rendering plugin intended to render this format (e.g., 'hub.aggrega.ai/providers/helm-renderer:1.0.0'). The compiler does not consume this field today — provider dispatch is by provider name, and the per-provider rendering engine is built into the compiler. The field is documentation-only and becomes runtime-driven when the Wasm translator ships, binding the named Plugin entity instead of the built-in engine."
-        },
-        "baseSchema": {
-          "type": "string",
-          "description": "JSON Schema 2020-12 defining the keys this provider understands in generative (sourceless) mode. When a Recipe omits the source field, the compiler validates the valuesMapping output against this schema. The IDE/LSP reads it for autocomplete. If absent, the provider does not support generative mode — all Recipes must have a source. See vocabulary/compact-form-authoring.md for the authoring surface."
         },
         "workloadSchema": {
           "type": "string",
