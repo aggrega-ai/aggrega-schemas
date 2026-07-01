@@ -57,7 +57,7 @@
     "build": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Build-time strictness dials and authoring hints. `authoring_release` provides the LSP a `current Release` hint for inline diagnostics; `halt_on_deprecated` and `halt_on_deprecated_severity` (reserved for the deprecation-policy rule) control how the build reacts to deprecated-entity consumption; `yaml_indent` sets the indentation width of every rendered YAML artifact.",
+      "description": "Build-time strictness dials and authoring hints. `authoring_release` provides the LSP a `current Release` hint for inline diagnostics; `halt_on_deprecated` and `halt_on_deprecated_severity` control how the build reacts to deprecated-entity consumption; `yaml_indent` sets the indentation width of every rendered YAML artifact.",
       "properties": {
         "authoring_release": {
           "type": "string",
@@ -73,13 +73,13 @@
         "halt_on_deprecated": {
           "type": "boolean",
           "default": false,
-          "description": "When true, consuming a deprecated entity halts the build (instead of emitting a warning). Reserved for the upcoming deprecation-policy rule; today the loader accepts the key but no rule consumes it yet."
+          "description": "When true, consuming an entity its author marked `metadata.deprecated: true` halts the build instead of emitting an advisory."
         },
         "halt_on_deprecated_severity": {
           "type": "string",
-          "enum": ["error", "warning"],
+          "enum": ["warning", "error", "retracted"],
           "default": "error",
-          "description": "Severity level the deprecation-policy rule emits when `halt_on_deprecated` is true: `error` halts the build, `warning` emits a diagnostic but lets the build proceed. Reserved for the upcoming deprecation-policy rule."
+          "description": "Threshold, in the ordered set `warning` < `error` < `retracted`, at or above which a retroactive deprecation marker recorded in the lockfile halts the build; below it the marker emits an advisory and the build proceeds. Defaults to `error`."
         }
       }
     },

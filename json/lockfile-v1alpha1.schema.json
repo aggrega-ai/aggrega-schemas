@@ -62,7 +62,8 @@
                 "description": "Verification mode that admitted the signature."
               }
             }
-          }
+          },
+          "deprecation": { "$ref": "#/$defs/DeprecationRecord" }
         }
       }
     },
@@ -132,7 +133,8 @@
                 "description": "Verification mode that admitted the signature."
               }
             }
-          }
+          },
+          "deprecation": { "$ref": "#/$defs/DeprecationRecord" }
         }
       }
     },
@@ -159,6 +161,48 @@
     }
   },
   "$defs": {
+    "DeprecationRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["severity", "message"],
+      "description": "Verified retroactive deprecation marker recorded when a signed, trusted deprecation marker was discovered on this artifact at pull time. A marker is a signed OCI referrer of the artifact it deprecates, attached after publication without re-publishing the artifact. Records the marker's severity and message plus the verified signer that authored it. Build reads this fact and enforces the deprecation policy from the lockfile alone; it never re-discovers or re-verifies the marker.",
+      "properties": {
+        "message": {
+          "type": "string",
+          "description": "Human-readable deprecation message carried by the marker — typically a migration pointer."
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["warning", "error", "retracted"],
+          "description": "Marker severity, ordered warning < error < retracted. The build halts when this severity meets or exceeds the configured halt threshold, and emits an advisory otherwise."
+        },
+        "signer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["bundle_digest", "mode"],
+          "description": "Verified signer of the marker, recorded the same way an artifact signature's signer is: the certificate subject/issuer for keyless, or the pinned-key fingerprint for keyed.",
+          "properties": {
+            "bundle_digest": {
+              "type": "string",
+              "description": "SHA-256 digest (`sha256:...`) of the marker's signature bundle."
+            },
+            "identity": {
+              "type": "string",
+              "description": "Verified certificate subject for a keyless marker signature (which trusted identity matched). Empty for a keyed signature."
+            },
+            "issuer": {
+              "type": "string",
+              "description": "Verified OIDC issuer for a keyless marker signature. Empty for a keyed signature."
+            },
+            "mode": {
+              "type": "string",
+              "enum": ["keyless", "keyed"],
+              "description": "Verification mode that admitted the marker's signature."
+            }
+          }
+        }
+      }
+    },
     "LibraryEntry": {
       "type": "object",
       "additionalProperties": false,
