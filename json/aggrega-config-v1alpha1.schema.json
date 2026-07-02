@@ -269,6 +269,12 @@
           "items": { "$ref": "#/$defs/TrustedIdentity" },
           "description": "OR-set of keyless signing identities accepted for artifacts pulled from this registry. A signature verifies when its certificate matches any one entry. Used by the keyless verification path."
         },
+        "trusted_deprecation_identities": {
+          "type": "array",
+          "default": [],
+          "items": { "$ref": "#/$defs/TrustedIdentity" },
+          "description": "OR-set of keyless identities additionally accepted to sign a retroactive deprecation marker for an artifact pulled from this registry. A deprecation marker is honored when its signature matches the original artifact's signer OR any entry here — so a registry owner or a security team can retract an artifact the original publisher can no longer reach, without being trusted to sign the artifacts themselves. Used only by the deprecation discovery path; it never widens the trust set for artifact signatures."
+        },
         "public_key": {
           "type": "string",
           "description": "Pinned cosign-compatible public-key PEM (inline) for a keyed-mode registry. When set, signatures from this registry are verified offline against this key rather than against keyless identities."
