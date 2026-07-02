@@ -1,0 +1,269 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/wasm-provider-v1alpha1.schema.json",
+  "title": "Aggrega Wasm Provider Render Socket",
+  "description": "The JSON wire shapes a Provider render plugin socket consumes and emits. A Provider guest renders one IR node into output files on its render_node export (RenderNodeInput to RenderNodeOutput), and optionally merges the per-node outputs at one boundary into a single assembled artifact on its assemble_boundary export (AssembleBoundaryInput to an AssembleBoundaryOutput of the same shape as RenderNodeOutput). The guest returns each output file's serialized bytes; the host writes them verbatim and runs no serializer, so determinism is the guest's responsibility: identical input must produce identical bytes. The wire shapes are co-canonical with the Go types in aggrega-cli/internal/compiler/renderer and with each per-language plugin-development-kit mirror; cross-language round-trip tests catch drift.",
+  "oneOf": [
+    { "$ref": "#/$defs/RenderNodeInput" },
+    { "$ref": "#/$defs/RenderNodeOutput" },
+    { "$ref": "#/$defs/AssembleBoundaryInput" }
+  ],
+  "$defs": {
+    "RenderNodeInput": {
+      "type": "object",
+      "description": "The payload a Provider guest receives on its render_node export: the per-node IR projection the guest renders, the render-time context, and an optional pre-packaged catalog projection. When the catalog projection is present the guest renders from the payload alone and needs no host round-trips for catalog content; when it is omitted the guest fetches catalog entries through the read-only host functions bound at load time.",
+      "required": [
+        "node",
+        "context"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "node": {
+          "$ref": "#/$defs/IRNodeProjection"
+        },
+        "context": {
+          "type": "object",
+          "x-aggrega-go-type": "renderctx.RenderContext",
+          "description": "The render-time context the host hands the guest. The guest reads it to resolve parameters, annotations, and boundary metadata; the schema does not interpret its internal shape (an opaque passthrough), so the provider socket schema does not rebind the cross-boundary render-context shape. The render context's own contract is the render-context wire shape; a guest that reads it consults that contract.",
+          "additionalProperties": true
+        },
+        "catalog_projection": {
+          "$ref": "#/$defs/CatalogProjection",
+          "x-aggrega-go-type": "*CatalogProjection",
+          "description": "The pre-packaged catalog content the guest renders against when the host supplies catalog entries in the payload rather than behind host functions. Absent when the guest fetches catalog entries through the read-only host functions instead."
+        },
+        "source_projection": {
+          "$ref": "#/$defs/SourceProjection",
+          "x-aggrega-go-type": "*SourceProjection",
+          "description": "The pre-packaged source content the host read at compile time from the local source and hands the guest, so the guest reconstructs the source in memory and touches no filesystem. Present for sourced providers; absent otherwise."
+        }
+      }
+    },
+    "IRNodeProjection": {
+      "type": "object",
+      "description": "The per-node IR data a Provider guest renders — a bounded projection of the full IR node: its id, type, resolved recipe, values, feature attachments, and outbound uses edges, narrower than the complete node surface which also carries provenance and source-file metadata the guest does not need to render. Values, features, and uses preserve author order so the wire payload is byte-identical across runs of identical input.",
+      "required": [
+        "id",
+        "type",
+        "resolved_recipe"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The node's absolute id within the topology graph."
+        },
+        "type": {
+          "type": "string",
+          "description": "The node's component-type label — opaque metadata for the guest, not a behavior switch."
+        },
+        "resolved_recipe": {
+          "type": "string",
+          "description": "The Universal URI of the Recipe the resolver pinned for this node."
+        },
+        "values": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[any]",
+          "description": "The node's rendered values dictionary, an author-ordered key set the guest renders from. Preserves author order so the payload is byte-identical across runs of identical input.",
+          "additionalProperties": true
+        },
+        "features": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[types.IRFeatureEntry]",
+          "description": "The node's feature attachments keyed by feature alias, carrying the same per-node feature-attachment shape the IR carries. Preserves author order so the payload is byte-identical across runs of identical input. Opaque at this schema layer; the guest reads the feature-entry shape through the IR wire contract.",
+          "additionalProperties": true
+        },
+        "uses": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[[]string]",
+          "description": "The node's outbound uses edges keyed by socket alias, each carrying the ordered target node ids bound to that socket. Preserves author order so the payload is byte-identical across runs of identical input.",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "CatalogProjection": {
+      "type": "object",
+      "description": "The pre-packaged catalog content a Provider guest renders against when the host supplies catalog entries in the payload rather than behind host functions. It is a closure walk outward from the IR node: only the catalog entries transitively referenced by the node being rendered are included, not the whole catalog. Each map is keyed by catalog URI and preserves key order so the payload is byte-identical across runs of identical input. Opaque at this schema layer; the guest reads each entry through the catalog entity's own wire contract.",
+      "required": [],
+      "additionalProperties": false,
+      "properties": {
+        "components": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[types.Component]",
+          "description": "The Component entries the node transitively references, keyed by catalog URI.",
+          "additionalProperties": true
+        },
+        "features": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[types.Feature]",
+          "description": "The Feature entries the node transitively references, keyed by catalog URI.",
+          "additionalProperties": true
+        },
+        "recipes": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[types.Recipe]",
+          "description": "The Recipe entries the node transitively references, keyed by catalog URI.",
+          "additionalProperties": true
+        },
+        "feature_recipes": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[types.FeatureRecipe]",
+          "description": "The FeatureRecipe entries the node transitively references, keyed by catalog URI.",
+          "additionalProperties": true
+        },
+        "providers": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[types.Provider]",
+          "description": "The Provider entries the node transitively references, keyed by catalog URI.",
+          "additionalProperties": true
+        },
+        "mapping_libraries": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[types.MappingLibrary]",
+          "description": "The MappingLibrary entries the node transitively references, keyed by catalog URI.",
+          "additionalProperties": true
+        }
+      }
+    },
+    "RenderNodeOutput": {
+      "type": "object",
+      "description": "The payload a Provider guest returns from its render_node export: the serialized bytes of each output file the guest emitted, and any diagnostics the guest raised while rendering. The guest returns each file's serialized bytes; the host writes them verbatim and runs no serializer. Determinism is the guest's responsibility: identical input must produce identical bytes.",
+      "required": [
+        "files"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "files": {
+          "type": "array",
+          "description": "The output files the guest emitted, in emission order. Each names its on-disk path and carries the serialized bytes the host writes verbatim.",
+          "items": {
+            "$ref": "#/$defs/RenderedFile"
+          }
+        },
+        "diagnostics": {
+          "type": "array",
+          "description": "Diagnostics the guest raised while rendering. Each element carries the shared Wasm-plugin diagnostic shape; the element shape is opaque at this schema layer so a guest emits the shared diagnostic without the provider socket schema rebinding it.",
+          "items": {
+            "x-aggrega-go-type": "renderctx.Diagnostic"
+          }
+        }
+      }
+    },
+    "RenderedFile": {
+      "type": "object",
+      "description": "One output file a Provider guest emitted: its on-disk path relative to the node's output root, and its serialized bytes exactly as the guest produced them. The host writes these bytes verbatim and runs no serializer, so the on-disk output is byte-identical to what the guest emitted.",
+      "required": [
+        "path",
+        "content"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "The output file's path relative to the node's output root (for example Chart.yaml or templates/deployment.yaml)."
+        },
+        "content": {
+          "type": "string",
+          "x-aggrega-go-type": "[]byte",
+          "description": "The file's serialized bytes exactly as the guest produced them; the host writes these bytes verbatim and runs no serializer, so output is byte-identical to what the guest emitted (base64 on the JSON wire)."
+        }
+      }
+    },
+    "SourceFile": {
+      "type": "object",
+      "description": "One file of a pre-packaged source projection: its chart-root-relative path and its raw bytes, exactly as the host read them from the local source at compile time.",
+      "required": [
+        "path",
+        "content"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "The file's path relative to the source root (for example Chart.yaml or templates/deployment.yaml)."
+        },
+        "content": {
+          "type": "string",
+          "x-aggrega-go-type": "[]byte",
+          "description": "The file's raw bytes exactly as the host read them from the local source (base64 on the JSON wire)."
+        }
+      }
+    },
+    "SourceProjection": {
+      "type": "object",
+      "description": "The pre-packaged source content (e.g. a Helm chart's files, keyed by chart-root-relative path, in walk order) the host reads at compile time from the local source and hands the guest, so the guest reconstructs the source in memory and touches no filesystem. Present for sourced providers; absent otherwise.",
+      "required": [
+        "files"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "files": {
+          "type": "array",
+          "description": "The source files, keyed by source-root-relative path, in the host's deterministic walk order.",
+          "items": {
+            "$ref": "#/$defs/SourceFile"
+          }
+        }
+      }
+    },
+    "AssembleBoundaryInput": {
+      "type": "object",
+      "description": "The payload a Provider guest receives on its assemble_boundary export — the export that merges the per-node render outputs at one boundary into a single assembled artifact (an umbrella chart, a merged compose file). It carries the boundary metadata, the per-node render outputs that fed the boundary, and the render-time context. Not every provider declares the export: providers that emit only flat per-node output omit it.",
+      "required": [
+        "boundary",
+        "rendered_nodes",
+        "context"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "boundary": {
+          "type": "object",
+          "x-aggrega-go-type": "renderctx.BoundaryContext",
+          "description": "The per-render boundary metadata the guest assembles into. Opaque at this schema layer; the guest reads the boundary-context shape through the render-context wire contract.",
+          "additionalProperties": true
+        },
+        "rendered_nodes": {
+          "type": "array",
+          "description": "The per-node render outputs that fed this boundary, in node order.",
+          "items": {
+            "$ref": "#/$defs/RenderedNode"
+          }
+        },
+        "context": {
+          "type": "object",
+          "x-aggrega-go-type": "renderctx.RenderContext",
+          "description": "The render-time context the host hands the guest, the same opaque render-context passthrough the render_node export receives.",
+          "additionalProperties": true
+        }
+      }
+    },
+    "RenderedNode": {
+      "type": "object",
+      "description": "One node's render output as it appears in an assemble_boundary input: the node id, its type, and the render output the render_node export produced for it.",
+      "required": [
+        "id",
+        "type",
+        "rendered"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The node's absolute id within the topology graph."
+        },
+        "type": {
+          "type": "string",
+          "description": "The node's component-type label."
+        },
+        "rendered": {
+          "$ref": "#/$defs/RenderNodeOutput"
+        }
+      }
+    }
+  }
+}
