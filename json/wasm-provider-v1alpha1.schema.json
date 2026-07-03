@@ -36,6 +36,11 @@
           "$ref": "#/$defs/SourceProjection",
           "x-aggrega-go-type": "*SourceProjection",
           "description": "The pre-packaged source content the host read at compile time from the local source and hands the guest, so the guest reconstructs the source in memory and touches no filesystem. Present for sourced providers; absent otherwise."
+        },
+        "workload_projection": {
+          "$ref": "#/$defs/WorkloadProjection",
+          "x-aggrega-go-type": "*WorkloadProjection",
+          "description": "The pre-evaluated workload the host hands the guest to synthesize provider-native manifests from; present when the bound Recipe declares a workload rather than a chart source, absent otherwise."
         }
       }
     },
@@ -208,6 +213,28 @@
           "items": {
             "$ref": "#/$defs/SourceFile"
           }
+        }
+      }
+    },
+    "WorkloadProjection": {
+      "type": "object",
+      "description": "The pre-evaluated workload content the host hands a Provider guest so the guest synthesizes provider-native manifests from it in memory, present when the bound Recipe declares a workload rather than a chart source. Determinism is the guest's responsibility: identical input must produce identical bytes.",
+      "required": [
+        "workload"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "workload": {
+          "type": "object",
+          "x-aggrega-go-type": "types.Workload",
+          "additionalProperties": true,
+          "description": "The host-evaluated, post-validation Workload the guest synthesizes; opaque at this schema layer so the socket schema does not rebind the Workload entity contract."
+        },
+        "secrets": {
+          "type": "object",
+          "x-aggrega-go-type": "map[string]types.OrderedMap[string]",
+          "additionalProperties": true,
+          "description": "The per-slot secret provides the synthesis consumes, keyed by secret slot; each slot's provides carries the generated Secret's identity a workload secret reference resolves to."
         }
       }
     },
