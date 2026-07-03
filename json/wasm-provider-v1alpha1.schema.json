@@ -2,11 +2,12 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/wasm-provider-v1alpha1.schema.json",
   "title": "Aggrega Wasm Provider Render Socket",
-  "description": "The JSON wire shapes a Provider render plugin socket consumes and emits. A Provider guest renders one IR node into output files on its render_node export (RenderNodeInput to RenderNodeOutput), and optionally merges the per-node outputs at one boundary into a single assembled artifact on its assemble_boundary export (AssembleBoundaryInput to an AssembleBoundaryOutput of the same shape as RenderNodeOutput). The guest returns each output file's serialized bytes; the host writes them verbatim and runs no serializer, so determinism is the guest's responsibility: identical input must produce identical bytes. The wire shapes are co-canonical with the Go types in aggrega-cli/internal/compiler/renderer and with each per-language plugin-development-kit mirror; cross-language round-trip tests catch drift.",
+  "description": "The JSON wire shapes a Provider render plugin socket consumes and emits. A Provider guest renders one IR node into output files on its render_node export (RenderNodeInput to RenderNodeOutput), and optionally merges the per-node outputs at one boundary into a single assembled artifact on its assemble_boundary export (AssembleBoundaryInput to AssembleBoundaryOutput). AssembleBoundaryOutput carries the assembled files and diagnostics like RenderNodeOutput, plus a nest-per-node signal telling the orchestrator whether to nest each contributor's per-node files under a per-node sub-directory. The guest returns each output file's serialized bytes; the host writes them verbatim and runs no serializer, so determinism is the guest's responsibility: identical input must produce identical bytes. The wire shapes are co-canonical with the Go types in aggrega-cli/internal/compiler/renderer and with each per-language plugin-development-kit mirror; cross-language round-trip tests catch drift.",
   "oneOf": [
     { "$ref": "#/$defs/RenderNodeInput" },
     { "$ref": "#/$defs/RenderNodeOutput" },
-    { "$ref": "#/$defs/AssembleBoundaryInput" }
+    { "$ref": "#/$defs/AssembleBoundaryInput" },
+    { "$ref": "#/$defs/AssembleBoundaryOutput" }
   ],
   "$defs": {
     "RenderNodeInput": {
@@ -284,23 +285,23 @@
     },
     "AssembleBoundaryInput": {
       "type": "object",
-      "description": "The payload a Provider guest receives on its assemble_boundary export — the export that merges the per-node render outputs at one boundary into a single assembled artifact (an umbrella chart, a merged compose file). It carries the boundary metadata, the per-node render outputs that fed the boundary, and the render-time context. Not every provider declares the export: providers that emit only flat per-node output omit it.",
+      "description": "The payload a Provider guest receives on its assemble_boundary export — the export that merges the per-node render outputs at one dispatch group into a single assembled artifact (an umbrella chart, a merged compose file). It carries the per-node render outputs and their merged annotations, the dispatch-group output path the assembled artifact lands at, the graph's uses edges for per-service dependency inference, and the render-time context. Not every provider declares the export: providers that emit only flat per-node output omit it.",
       "required": [
-        "boundary",
         "rendered_nodes",
-        "context"
+        "context",
+        "boundary_path"
       ],
       "additionalProperties": false,
       "properties": {
         "boundary": {
           "type": "object",
           "x-aggrega-go-type": "renderctx.BoundaryContext",
-          "description": "The per-render boundary metadata the guest assembles into. Opaque at this schema layer; the guest reads the boundary-context shape through the render-context wire contract.",
+          "description": "Optional per-render boundary metadata a guest may consult. A dispatch group can merge contributors from multiple boundaries, so there is no single boundary; the field is carry-only-consumed and absent when the host merges across boundaries. Opaque at this schema layer; the guest reads the boundary-context shape through the render-context wire contract.",
           "additionalProperties": true
         },
         "rendered_nodes": {
           "type": "array",
-          "description": "The per-node render outputs that fed this boundary, in node order.",
+          "description": "The per-node render outputs that fed this dispatch group, in node order.",
           "items": {
             "$ref": "#/$defs/RenderedNode"
           }
@@ -310,12 +311,23 @@
           "x-aggrega-go-type": "renderctx.RenderContext",
           "description": "The render-time context the host hands the guest, the same opaque render-context passthrough the render_node export receives.",
           "additionalProperties": true
+        },
+        "boundary_path": {
+          "type": "string",
+          "description": "The evaluated dispatch-group output path the assembled artifact lands at; a boundary assembler uses it as the boundary-level fallback identity (e.g. the compose network name for a node carrying no namespace annotation)."
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RenderEdge"
+          },
+          "description": "The graph's directed uses edges, so a boundary assembler can infer per-service ordering/dependencies across the dispatch group's contributors (e.g. compose depends_on)."
         }
       }
     },
     "RenderedNode": {
       "type": "object",
-      "description": "One node's render output as it appears in an assemble_boundary input: the node id, its type, and the render output the render_node export produced for it.",
+      "description": "One node's render output as it appears in an assemble_boundary input: the node id, its type, its merged annotations, and the render output the render_node export produced for it.",
       "required": [
         "id",
         "type",
@@ -333,6 +345,60 @@
         },
         "rendered": {
           "$ref": "#/$defs/RenderNodeOutput"
+        },
+        "annotations": {
+          "type": "object",
+          "x-aggrega-go-type": "types.OrderedMap[string]",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The node's merged annotations, so a boundary assembler can attribute per-node placement (e.g. the compose network derived from the aggrega.ai/namespace annotation)."
+        }
+      }
+    },
+    "RenderEdge": {
+      "type": "object",
+      "required": [
+        "source",
+        "target"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "The consuming node's id — the source end of a directed uses edge."
+        },
+        "target": {
+          "type": "string",
+          "description": "The consumed node's id — the target end a directed uses edge points at."
+        }
+      }
+    },
+    "AssembleBoundaryOutput": {
+      "type": "object",
+      "description": "The payload a Provider guest returns from its assemble_boundary export: the serialized bytes of each assembled file, any diagnostics the guest raised while assembling, and whether the orchestrator nests each contributor's per-node files under a per-node sub-directory. The guest returns each file's serialized bytes; the host writes them verbatim and runs no serializer. Determinism is the guest's responsibility: identical input must produce identical bytes.",
+      "required": [
+        "files"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "files": {
+          "type": "array",
+          "description": "The assembled output files the guest emitted, in emission order. Each names its on-disk path and carries the serialized bytes the host writes verbatim.",
+          "items": {
+            "$ref": "#/$defs/RenderedFile"
+          }
+        },
+        "diagnostics": {
+          "type": "array",
+          "description": "Diagnostics the guest raised while assembling. Each element carries the shared Wasm-plugin diagnostic shape; the element shape is opaque at this schema layer so a guest emits the shared diagnostic without the provider socket schema rebinding it.",
+          "items": {
+            "x-aggrega-go-type": "renderctx.Diagnostic"
+          }
+        },
+        "nest_per_node": {
+          "type": "boolean",
+          "description": "Whether the orchestrator nests each contributor's per-node files under charts/<nodeID>/ rather than emitting them flat; the assembler signals this per provider (compose emits flat, so false; an umbrella-chart assembler nests, so true)."
         }
       }
     }
