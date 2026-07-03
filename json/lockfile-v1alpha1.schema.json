@@ -67,6 +67,12 @@
         }
       }
     },
+    "external_inputs": {
+      "type": "array",
+      "default": [],
+      "description": "Remote inputs pinned into the content-addressed input store at acquisition time — content a provider plugin's render consumes from beyond the workspace, such as remote schema documents or non-vendored chart dependencies. Each entry pins one URL to the digest that names its bytes in the store. Build serves pinned inputs from the store and reads this section without network access.",
+      "items": { "$ref": "#/$defs/ExternalInput" }
+    },
     "generated_at": {
       "type": "string",
       "format": "date-time",
@@ -200,6 +206,32 @@
               "description": "Verification mode that admitted the marker's signature."
             }
           }
+        }
+      }
+    },
+    "ExternalInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required_by", "sha256", "size", "url"],
+      "description": "A single pinned external input: the URL a render requested, the SHA-256 pin naming its bytes in the content-addressed input store (`sha256/<digest>`), the payload size, and the provenance of the consumers that required it. The pin is authoritative — a pinned URL is always served from the store, and a store refill is verified against this digest before the bytes reach a render.",
+      "properties": {
+        "required_by": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Provenance — the render sites that requested this input. Sorted and deduplicated by the lockfile writer."
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "Lowercase hex SHA-256 pin. For an https input, the digest of the payload bytes; for an oci input, the manifest digest the reference resolved to. Names the store blob at `sha256/<digest>`."
+        },
+        "size": {
+          "type": "integer",
+          "description": "Size in bytes of the pinned payload."
+        },
+        "url": {
+          "type": "string",
+          "description": "The input URL as authored at the render site — the lookup key matching a render-time request to its pin."
         }
       }
     },
