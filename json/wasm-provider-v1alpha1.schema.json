@@ -322,6 +322,21 @@
             "$ref": "#/$defs/RenderEdge"
           },
           "description": "The graph's directed uses edges, so a boundary assembler can infer per-service ordering/dependencies across the dispatch group's contributors (e.g. compose depends_on)."
+        },
+        "sub_charts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SubChart"
+          },
+          "description": "The per-sub-chart payload an umbrella-chart assembler consumes to emit one dependency and one values scope per contributor. Each entry carries the sub-chart's identity, per-instance values, and, for a sub-chart vendored from a chart source, the pristine bytes of that chart's Chart.yaml file. Present for umbrella-chart assembly; a flat-merging assembler omits it."
+        },
+        "chart_name": {
+          "type": "string",
+          "description": "The chart name an umbrella-chart assembler uses for the assembled chart when a name is supplied for the dispatch group; empty when the assembler derives the name from the dispatch-group output path."
+        },
+        "aggregate_name": {
+          "type": "string",
+          "description": "The top-level aggregate name an umbrella-chart assembler folds into the assembled chart's derived name; empty when no aggregate identity contributes to the name."
         }
       }
     },
@@ -371,6 +386,35 @@
         "target": {
           "type": "string",
           "description": "The consumed node's id — the target end a directed uses edge points at."
+        }
+      }
+    },
+    "SubChart": {
+      "type": "object",
+      "description": "One sub-chart contributing to an umbrella chart: its instance identity, the version the umbrella pins, the per-instance values the umbrella scopes under the sub-chart's alias, and, for a sub-chart vendored from a chart source, the pristine bytes of that chart's Chart.yaml file. An umbrella-chart assembler builds the umbrella's dependencies and values file from these pure-data views alone and touches no filesystem.",
+      "required": [
+        "instance_id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "instance_id": {
+          "type": "string",
+          "description": "The sub-chart's instance identity within the dispatch group; the umbrella scopes the sub-chart's dependency alias and its values under it, so multiple instances of one source chart stay distinct."
+        },
+        "version": {
+          "type": "string",
+          "description": "The version the umbrella pins for the sub-chart. A sub-chart vendored from a chart source instead draws its dependency name and version from that chart's Chart.yaml file so the dependency binds; this value applies to a generative sub-chart that carries no vendored chart."
+        },
+        "values": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[any]",
+          "description": "The per-instance values the umbrella scopes under the sub-chart's alias in the umbrella values.yaml, an author-ordered key set. Preserves author order so the payload is byte-identical across runs of identical input.",
+          "additionalProperties": true
+        },
+        "chart_yaml": {
+          "type": "string",
+          "x-aggrega-go-type": "[]byte",
+          "description": "The pristine bytes of the vendored chart's Chart.yaml, read from the local source at compile time, from which the umbrella draws the sub-chart dependency's name and version. Empty for a generative sub-chart that carries no vendored chart (base64 on the JSON wire)."
         }
       }
     },
