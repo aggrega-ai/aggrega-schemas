@@ -46,11 +46,12 @@
     },
     "IRNodeProjection": {
       "type": "object",
-      "description": "The per-node IR data a Provider guest renders — a bounded projection of the full IR node: its id, type, resolved recipe, values, feature attachments, and outbound uses edges, narrower than the complete node surface which also carries provenance and source-file metadata the guest does not need to render. Values, features, and uses preserve author order so the wire payload is byte-identical across runs of identical input.",
+      "description": "The per-node IR data a Provider guest renders — a bounded projection of the full IR node carrying the per-node identity and the provenance the guest stamps onto every emitted manifest: its id, type, resolved recipe, values, feature attachments, outbound uses edges, boundary path, deployment wave, Recipe identity, component-id override, and build provenance. Source-file content is not carried here; it travels separately in the source projection. Values, features, and uses preserve author order so the wire payload is byte-identical across runs of identical input.",
       "required": [
         "id",
         "type",
-        "resolved_recipe"
+        "resolved_recipe",
+        "provenance"
       ],
       "additionalProperties": false,
       "properties": {
@@ -88,6 +89,49 @@
               "type": "string"
             }
           }
+        },
+        "boundary_path": {
+          "type": "string",
+          "description": "The node's boundary path, stamped as the aggrega.ai/boundary-path annotation on every emitted manifest that carries a metadata block."
+        },
+        "sync_wave": {
+          "type": "integer",
+          "description": "The node's deployment wave, stamped as the aggrega.ai/sync-wave and argocd.argoproj.io/sync-wave annotations when non-zero. This is the per-node render-input carrier of the wave, distinct from the boundary context's sync wave that feeds the assemble export."
+        },
+        "recipe_name": {
+          "type": "string",
+          "description": "The bound Recipe's name, paired with recipe_version to form the aggrega.ai/recipe-uri annotation; when either half is empty the annotation is not stamped."
+        },
+        "recipe_version": {
+          "type": "string",
+          "description": "The bound Recipe's version, paired with recipe_name to form the aggrega.ai/recipe-uri annotation; when either half is empty the annotation is not stamped."
+        },
+        "label_component_id": {
+          "type": "string",
+          "description": "The Kubernetes-safe component identity. When non-empty it overrides the node id as the app.kubernetes.io/name and aggrega.ai/component-id label value, for resources whose node id carries marker syntax that needs sanitization; empty means the node id is already label-valid and is used directly."
+        },
+        "provenance": {
+          "$ref": "#/$defs/NodeProvenance",
+          "description": "The build-identity provenance the guest stamps onto every emitted manifest as aggrega.ai labels."
+        }
+      }
+    },
+    "NodeProvenance": {
+      "type": "object",
+      "description": "The build-identity provenance for one node — the compiler, aggregate, and environment identity the guest stamps onto every emitted manifest as aggrega.ai labels. Each field elides when empty, so a partial identity stamps only the labels it carries.",
+      "additionalProperties": false,
+      "properties": {
+        "compiler_version": {
+          "type": "string",
+          "description": "The compiler version, stamped as the aggrega.ai/compiler-version label when non-empty."
+        },
+        "aggregate_name": {
+          "type": "string",
+          "description": "The aggregate name, stamped as the aggrega.ai/aggregate-name label when non-empty."
+        },
+        "environment": {
+          "type": "string",
+          "description": "The environment name, stamped as the aggrega.ai/environment label when non-empty."
         }
       }
     },
