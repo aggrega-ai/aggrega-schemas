@@ -96,8 +96,8 @@
         },
         "pluginType": {
           "type": "string",
-          "enum": ["provider", "linter", "frp_step"],
-          "description": "The socket type this plugin implements. A plugin implements exactly one socket type, drawn from the plugin-type taxonomy the runtime recognises: `provider` (renders IR nodes into provider-native artifacts), `linter` (inspects authored content and raises diagnostics), `frp_step` (a feature-recipe-pipeline step that transforms IR within a pipeline)."
+          "enum": ["provider", "linter", "frp_step", "mutator", "policy-validator"],
+          "description": "The socket type this plugin implements. A plugin implements exactly one socket type, drawn from the plugin-type taxonomy the runtime recognises: `provider` (renders IR nodes into provider-native artifacts), `linter` (inspects authored content and raises diagnostics), `frp_step` (a feature-recipe-pipeline step that transforms IR within a pipeline), `mutator` (auto-tags topology-graph node labels at Step 2 via JSON Patch), `policy-validator` (evaluates the full IR graph at Step 4 and halts the build on a failed rule)."
         },
         "abiVersion": {
           "type": "string",
@@ -196,7 +196,7 @@
           "type": "object",
           "x-aggrega-go-type": "*PluginProvider",
           "additionalProperties": false,
-          "description": "The provider-socket metadata for a `pluginType: provider` plugin: how its rendering engine translates the aggrega.ai/v1alpha1 Workload kind and which platform-native annotations the engine reads. Present only on provider-rendering plugins; absent on `linter` and `frp_step` plugins, and on provider plugins whose engine renders only sourced or artifact content (no Workload synthesis).",
+          "description": "The provider-socket metadata for a `pluginType: provider` plugin: how its rendering engine translates the aggrega.ai/v1alpha1 Workload kind and which platform-native annotations the engine reads. Present only on provider-rendering plugins; absent on `linter`, `frp_step`, `mutator`, and `policy-validator` plugins, and on provider plugins whose engine renders only sourced or artifact content (no Workload synthesis).",
           "properties": {
             "workloadSchema": {
               "type": "string",
