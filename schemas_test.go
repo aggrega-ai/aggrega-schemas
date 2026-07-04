@@ -39,7 +39,6 @@ var allSchemas = []struct {
 	{"MappingLibraryV1alpha1", MappingLibraryV1alpha1, "https://aggrega.ai/schemas/mappinglibrary-v1alpha1.schema.json"},
 	{"PathTemplateContextV1alpha1", PathTemplateContextV1alpha1, "https://aggrega.ai/schemas/path-template-context-v1alpha1.schema.json"},
 	{"PluginV1alpha1", PluginV1alpha1, "https://aggrega.ai/schemas/plugin-v1alpha1.schema.json"},
-	{"ProviderV1alpha1", ProviderV1alpha1, "https://aggrega.ai/schemas/provider-v1alpha1.schema.json"},
 	{"RecipeV1alpha1", RecipeV1alpha1, "https://aggrega.ai/schemas/recipe-v1alpha1.schema.json"},
 	{"ReleaseV1alpha1", ReleaseV1alpha1, "https://aggrega.ai/schemas/release-v1alpha1.schema.json"},
 	{"SchemaLibraryV1alpha1", SchemaLibraryV1alpha1, "https://aggrega.ai/schemas/schemalibrary-v1alpha1.schema.json"},

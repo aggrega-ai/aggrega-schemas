@@ -15,12 +15,6 @@
       "url": "https://hub.aggrega.ai/schemas/feature-v1alpha1.schema.json"
     },
     {
-      "name": "Aggrega Provider",
-      "description": "Aggrega Provider entity.",
-      "fileMatch": ["**/provider/**/*.yaml", "**/provider.yaml"],
-      "url": "https://hub.aggrega.ai/schemas/provider-v1alpha1.schema.json"
-    },
-    {
       "name": "Aggrega Recipe",
       "description": "Aggrega Recipe entity (provider-scoped implementation).",
       "fileMatch": ["**/recipe/**/recipe.yaml"],

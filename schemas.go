@@ -68,9 +68,6 @@ var PathTemplateContextV1alpha1 string
 //go:embed json/plugin-v1alpha1.schema.json
 var PluginV1alpha1 string
 
-//go:embed json/provider-v1alpha1.schema.json
-var ProviderV1alpha1 string
-
 //go:embed json/recipe-v1alpha1.schema.json
 var RecipeV1alpha1 string
 
