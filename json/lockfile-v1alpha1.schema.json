@@ -10,7 +10,7 @@
     "entities": {
       "type": "array",
       "default": [],
-      "description": "Catalog entities reachable from this Release: Component, Feature, Recipe, FeatureRecipe, Provider, Aggregate. Each entry is keyed by canonical URI and records the resolved version, content digest, resolution path, and the authoring-site origins (`referenced_from`) that pulled the URI into closure.",
+      "description": "Catalog entities reachable from this Release: Component, Feature, Recipe, FeatureRecipe, Aggregate. Each entry is keyed by canonical URI and records the resolved version, content digest, resolution path, and the authoring-site origins (`referenced_from`) that pulled the URI into closure.",
       "items": {
         "type": "object",
         "additionalProperties": false,
