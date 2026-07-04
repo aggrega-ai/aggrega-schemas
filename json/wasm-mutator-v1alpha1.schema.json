@@ -46,16 +46,11 @@
       "type": "object",
       "description": "Release-level metadata the mutator reads when deciding which compliance, FinOps, or governance rules apply to the build.",
       "required": [
-        "release_destination",
         "release_name",
         "environment"
       ],
       "additionalProperties": false,
       "properties": {
-        "release_destination": {
-          "type": "string",
-          "description": "The boundary path or destination identifier the Release targets."
-        },
         "release_name": {
           "type": "string",
           "description": "The Release's metadata.name."
