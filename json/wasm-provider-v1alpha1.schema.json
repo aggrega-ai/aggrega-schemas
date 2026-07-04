@@ -166,12 +166,6 @@
           "description": "The FeatureRecipe entries the node transitively references, keyed by catalog URI.",
           "additionalProperties": true
         },
-        "providers": {
-          "type": "object",
-          "x-aggrega-go-type": "OrderedMap[types.Provider]",
-          "description": "The Provider entries the node transitively references, keyed by catalog URI.",
-          "additionalProperties": true
-        },
         "mapping_libraries": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[types.MappingLibrary]",
