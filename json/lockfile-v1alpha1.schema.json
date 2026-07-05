@@ -298,6 +298,10 @@
           "type": "string",
           "description": "Content digest of the resolved .tar.gz archive (e.g. `sha256:...`). Build-time verification reads the cache slot's bytes, recomputes the digest, and compares against this field; mismatch halts with ErrFetchIntegrity."
         },
+        "manifest_digest": {
+          "type": "string",
+          "description": "OCI manifest digest of the resolved artifact (e.g. `sha256:...`). The manifest is the independent root of trust the cached archive is verified against; the content `digest` above is the portable identity used for the cache pin and integrity check. Present only for an OCI-distributed source (a helm-oci-chart)."
+        },
         "mediatype": {
           "type": "string",
           "description": "Canonical media type the registry advertised (or the kind's default for kinds without registry metadata). Recorded for diagnostic provenance and forward-compatibility with future kind-mediatype enrichments."
