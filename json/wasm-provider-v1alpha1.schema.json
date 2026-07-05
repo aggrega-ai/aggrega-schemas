@@ -133,6 +133,14 @@
         "environment": {
           "type": "string",
           "description": "The environment name, stamped as the aggrega.ai/environment label when non-empty."
+        },
+        "provider_name": {
+          "type": "string",
+          "description": "The bare provider engine kind, stamped as the aggrega.ai/provider label when non-empty."
+        },
+        "provider_version": {
+          "type": "string",
+          "description": "The resolved provider-rendering plugin version, stamped as the aggrega.ai/provider-version label when non-empty."
         }
       }
     },
