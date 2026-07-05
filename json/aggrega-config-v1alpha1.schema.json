@@ -236,6 +236,18 @@
         }
       }
     },
+    "serve": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Daemon (`aggrega serve`) behavior settings for the compiler-as-service consumed by IDE integrations.",
+      "properties": {
+        "render_diagnostics": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the IR-graph inspection request runs the render pass to surface render-time diagnostics. Default false skips render: the daemon returns the intermediate graph without loading rendering plugins, which is faster and drops only render-stage advisory warnings (those warnings are not part of the client-facing diagnostics, which come from the earlier resolution and analysis stages; the returned graph is identical either way). Set true to run render on the inspection path so render-time warnings are produced, at the cost of loading rendering plugins and the extra work."
+        }
+      }
+    },
     "registries": {
       "type": "array",
       "default": [],
