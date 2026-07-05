@@ -114,7 +114,7 @@
       "properties": {
         "provider": {
           "type": "string",
-          "description": "The explicit execution engine this recipe targets (e.g., 'helm', 'terraform', 'compose', 'eval')."
+          "description": "The explicit execution engine this recipe targets (e.g., 'helm', 'terraform', 'compose', 'eval'). Accepts an optional version pin, in the same three forms as 'implements': unversioned ('helm'), exact ('helm:1.0.0'), or major-compatible range ('helm:^1.0.0'). The bare name selects the engine kind; the pin, when present, selects which version of the provider-rendering plugin serving that engine renders this recipe — highest available when unpinned, exact for an exact pin, highest-in-range for a caret. A pin that no serving plugin version satisfies halts the build loudly. Everything downstream of engine selection — output grouping, path segments, pipeline compatibility, and codec choice — keys on the bare engine kind, so two recipes pinning different plugin versions of the same engine coexist in one build."
         },
         "implements": {
           "type": "string",
