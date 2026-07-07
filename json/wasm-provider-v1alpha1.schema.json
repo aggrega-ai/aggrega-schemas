@@ -8,7 +8,9 @@
     { "$ref": "#/$defs/RenderNodeOutput" },
     { "$ref": "#/$defs/ValidateNodeOutput" },
     { "$ref": "#/$defs/AssembleBoundaryInput" },
-    { "$ref": "#/$defs/AssembleBoundaryOutput" }
+    { "$ref": "#/$defs/AssembleBoundaryOutput" },
+    { "$ref": "#/$defs/BoundaryEnvOverridesInput" },
+    { "$ref": "#/$defs/BoundaryEnvOverridesOutput" }
   ],
   "$defs": {
     "RenderNodeInput": {
@@ -639,6 +641,141 @@
         "nest_per_node": {
           "type": "boolean",
           "description": "Whether the orchestrator nests each contributor's per-node files under charts/<nodeID>/ rather than emitting them flat; the assembler signals this per provider (compose emits flat, so false; an umbrella-chart assembler nests, so true)."
+        }
+      }
+    },
+    "CarveInput": {
+      "type": "object",
+      "description": "The payload a Provider guest receives on its optional carve export: one named output file the pipeline carves into addressable units before a FeatureRecipe step edits some of them. A provider whose output shape the stock YAML codec cannot carve directly (a templated chart, for instance) advertises carve and reassemble so its own output-shape knowledge lives in the guest; a provider that omits the exports borrows the host's stock YAML codec.",
+      "required": [
+        "name",
+        "body"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The output file's name, so the codec can apply any name-scoped carving rule."
+        },
+        "body": {
+          "type": "string",
+          "x-aggrega-go-type": "[]byte",
+          "description": "The output file's bytes to carve into addressable units (base64 on the JSON wire)."
+        },
+        "yaml_indent": {
+          "type": "integer",
+          "description": "The indentation width the codec uses when it must synthesize new structured text; carried so the guest's carving matches the render-wide indentation."
+        }
+      }
+    },
+    "CarveOutput": {
+      "type": "object",
+      "description": "The payload a Provider guest returns from its carve export: the ordered addressable units it carved the file into. A structured unit carries a tree (a PATCH target); an opaque unit carries only its media type and bytes.",
+      "required": [
+        "units"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "units": {
+          "type": "array",
+          "description": "The ordered addressable units the guest carved the file into.",
+          "items": {
+            "type": "object",
+            "x-aggrega-go-type": "Unit",
+            "additionalProperties": true
+          }
+        }
+      }
+    },
+    "ReassembleInput": {
+      "type": "object",
+      "description": "The payload a Provider guest receives on its optional reassemble export: the original file plus its carved units and the patched units a pipeline step produced, so the guest splices the changes back into the original bytes surgically. A token absent from the patched set is re-joined from its original bytes verbatim; a patched token has only its addressed byte-spans edited.",
+      "required": [
+        "name",
+        "body"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The output file's name, matching the name the same file was carved under."
+        },
+        "body": {
+          "type": "string",
+          "x-aggrega-go-type": "[]byte",
+          "description": "The original file bytes the reassembly splices the patched units back into (base64 on the JSON wire)."
+        },
+        "segs": {
+          "type": "array",
+          "description": "The units the file was carved into, as carve returned them.",
+          "items": {
+            "type": "object",
+            "x-aggrega-go-type": "Unit",
+            "additionalProperties": true
+          }
+        },
+        "patched": {
+          "type": "array",
+          "description": "The units a pipeline step changed, each carrying its token, patched tree, and the ops that produced the change.",
+          "items": {
+            "type": "object",
+            "x-aggrega-go-type": "PatchedUnit",
+            "additionalProperties": true
+          }
+        },
+        "yaml_indent": {
+          "type": "integer",
+          "description": "The indentation width the codec uses when an op must synthesize new structured text; carried so the reassembly matches the render-wide indentation."
+        }
+      }
+    },
+    "ReassembleOutput": {
+      "type": "object",
+      "description": "The payload a Provider guest returns from its reassemble export: the file's bytes with the patched units spliced back in. Reassembly is byte-faithful — every byte the ops did not touch survives verbatim.",
+      "required": [
+        "body"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "body": {
+          "type": "string",
+          "x-aggrega-go-type": "[]byte",
+          "description": "The reassembled file bytes the host writes verbatim (base64 on the JSON wire)."
+        }
+      }
+    },
+    "BoundaryEnvOverridesInput": {
+      "type": "object",
+      "description": "The payload a Provider guest receives on its optional boundary_env_overrides export: a boundary's internal uses edges and the driving feature's resolved infra, from which the guest computes per-consumer environment overrides for the boundary-to-consumer env channel. A guest whose provider drives that channel (a compose guest bridging cross-network endpoints) advertises the export; a provider that drives no such channel omits it, and the host applies no overrides for it. The edges and infra are opaque at this schema layer — the guest reads their shapes through the template-context wire contract; the schema does not interpret them.",
+      "additionalProperties": false,
+      "properties": {
+        "internal_uses_edges": {
+          "type": "array",
+          "description": "The boundary's internal uses edges — the directed edges whose endpoints both live inside the boundary's subtree, each enriched with the producer's provides and the consumer's inject mapping. The guest reads them to decide which consumers need an env override and what value to write. Opaque at this schema layer; the guest reads the enriched-edge shape through the template-context wire contract.",
+          "items": {
+            "type": "object",
+            "x-aggrega-go-type": "types.EnrichedEdge",
+            "additionalProperties": true
+          }
+        },
+        "infra": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[any]",
+          "additionalProperties": true,
+          "description": "The driving feature's resolved infra, an author-ordered key set the guest reads for the channel's tunables (for a compose bridge, the listen-port base and the upstream host provides-field selector). Preserves author order so the payload is byte-identical across runs of identical input."
+        }
+      }
+    },
+    "BoundaryEnvOverridesOutput": {
+      "type": "object",
+      "description": "The payload a Provider guest returns from its boundary_env_overrides export: the per-consumer environment overrides the host applies to each named consumer's injected env after the per-node render pass. The values are opaque strings the host carries without interpretation; a consumer absent from the map is left untouched.",
+      "additionalProperties": false,
+      "properties": {
+        "overrides": {
+          "type": "object",
+          "x-aggrega-go-type": "map[string]map[string]string",
+          "additionalProperties": true,
+          "description": "The per-consumer environment overrides, keyed by consumer node id to a map of environment-variable name to override value. An empty or absent map means the guest computed no overrides."
         }
       }
     }
