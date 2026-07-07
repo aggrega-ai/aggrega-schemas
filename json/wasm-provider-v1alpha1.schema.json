@@ -2,10 +2,11 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/wasm-provider-v1alpha1.schema.json",
   "title": "Aggrega Wasm Provider Render Socket",
-  "description": "The JSON wire shapes a Provider render plugin socket consumes and emits. A Provider guest renders one IR node into output files on its render_node export (RenderNodeInput to RenderNodeOutput), and optionally merges the per-node outputs at one boundary into a single assembled artifact on its assemble_boundary export (AssembleBoundaryInput to AssembleBoundaryOutput). AssembleBoundaryOutput carries the assembled files and diagnostics like RenderNodeOutput, plus a nest-per-node signal telling the orchestrator whether to nest each contributor's per-node files under a per-node sub-directory. The guest returns each output file's serialized bytes; the host writes them verbatim and runs no serializer, so determinism is the guest's responsibility: identical input must produce identical bytes. The wire shapes are co-canonical with the Go types in aggrega-cli/internal/compiler/renderer and with each per-language plugin-development-kit mirror; cross-language round-trip tests catch drift.",
+  "description": "The JSON wire shapes a Provider render plugin socket consumes and emits. A Provider guest renders one IR node into output files on its render_node export (RenderNodeInput to RenderNodeOutput), and optionally merges the per-node outputs at one boundary into a single assembled artifact on its assemble_boundary export (AssembleBoundaryInput to AssembleBoundaryOutput). AssembleBoundaryOutput carries the assembled files and diagnostics like RenderNodeOutput, plus a nest-per-node signal telling the orchestrator whether to nest each contributor's per-node files under a per-node sub-directory. A guest may also declare an optional validate_node_input export that structurally checks a node's resolved input before render dispatch: it consumes the same RenderNodeInput projection render_node receives and returns a ValidateNodeOutput carrying only diagnostics — an error-severity diagnostic halts the build loudly, a warning surfaces to the build result. The guest returns each output file's serialized bytes; the host writes them verbatim and runs no serializer, so determinism is the guest's responsibility: identical input must produce identical bytes. The wire shapes are co-canonical with the Go types in aggrega-cli/internal/compiler/renderer and with each per-language plugin-development-kit mirror; cross-language round-trip tests catch drift.",
   "oneOf": [
     { "$ref": "#/$defs/RenderNodeInput" },
     { "$ref": "#/$defs/RenderNodeOutput" },
+    { "$ref": "#/$defs/ValidateNodeOutput" },
     { "$ref": "#/$defs/AssembleBoundaryInput" },
     { "$ref": "#/$defs/AssembleBoundaryOutput" }
   ],
@@ -205,6 +206,21 @@
         "diagnostics": {
           "type": "array",
           "description": "Diagnostics the guest raised while rendering. Each element carries the shared Wasm-plugin diagnostic shape; the element shape is opaque at this schema layer so a guest emits the shared diagnostic without the provider socket schema rebinding it.",
+          "items": {
+            "x-aggrega-go-type": "renderctx.Diagnostic"
+          }
+        }
+      }
+    },
+    "ValidateNodeOutput": {
+      "type": "object",
+      "description": "The payload a Provider guest returns from its optional validate_node_input export: the diagnostics raised by a structural check of the node's resolved input. The export consumes the same RenderNodeInput projection render_node receives and emits no files — it only reports diagnostics. An error-severity diagnostic halts the build loudly, naming the node and provider; a warning or info diagnostic surfaces to the build result without changing rendered output. An empty diagnostics list means the input passed the structural check.",
+      "required": [],
+      "additionalProperties": false,
+      "properties": {
+        "diagnostics": {
+          "type": "array",
+          "description": "Diagnostics the guest raised while validating the node's input. Each element carries the shared Wasm-plugin diagnostic shape; the element shape is opaque at this schema layer so a guest emits the shared diagnostic without the provider socket schema rebinding it. Empty when the input passed the structural check.",
           "items": {
             "x-aggrega-go-type": "renderctx.Diagnostic"
           }
