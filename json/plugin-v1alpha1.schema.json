@@ -228,6 +228,61 @@
               }
             }
           }
+        },
+        "capabilities": {
+          "type": "object",
+          "x-aggrega-go-type": "*PluginCapabilities",
+          "additionalProperties": false,
+          "description": "The plugin's self-declared compile-time render behaviors, authored as the claim the host cross-checks against the plugin's own self-report at publish and at load: the input kinds it renders, how it assembles a dispatch group's per-node output, the template-delimiter pair it applies to imported artifact files, and any restriction on which source files it consumes. Absent declares no plugin-level capability claim, and the cross-check compares only the per-export claims.",
+          "properties": {
+            "inputKinds": {
+              "type": "object",
+              "x-aggrega-go-type": "PluginInputKinds",
+              "additionalProperties": false,
+              "description": "Which of the three Recipe input kinds this plugin renders: a sourced file set, a synthesized workload, and a standalone artifacts-only node. Each field is an independent claim.",
+              "properties": {
+                "sourced": {
+                  "type": "boolean",
+                  "description": "Renders a sourced file set (a chart, a module, a compose file)."
+                },
+                "synthesized": {
+                  "type": "boolean",
+                  "description": "Renders a synthesized workload into provider-native artifacts."
+                },
+                "artifactsStandalone": {
+                  "type": "boolean",
+                  "description": "Renders a standalone artifacts-only node — one carrying imported artifact documents and no source or workload."
+                }
+              }
+            },
+            "boundaryAssembly": {
+              "type": "string",
+              "enum": ["none", "merge", "nest"],
+              "description": "How the plugin combines a dispatch group's per-node render output: `none` writes each node's output directly at the dispatch path; `merge` folds the per-node fragments into one document; `nest` places each node's output under its own position in an umbrella structure. Absent carries no assembly claim."
+            },
+            "artifactDelimiters": {
+              "type": "object",
+              "x-aggrega-go-type": "*PluginArtifactDelimiters",
+              "additionalProperties": false,
+              "required": ["left", "right"],
+              "description": "The Go-template delimiter pair the plugin applies to imported artifact files. Absent means the default `{{`/`}}` pair; a plugin whose target syntax collides with that pair declares an alternate pair here.",
+              "properties": {
+                "left": {
+                  "type": "string",
+                  "description": "The opening delimiter."
+                },
+                "right": {
+                  "type": "string",
+                  "description": "The closing delimiter."
+                }
+              }
+            },
+            "sourceFilter": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "The source-file paths the plugin consumes when a node supplies a file set. Absent means the plugin consumes every file in the set."
+            }
+          }
         }
       }
     }
