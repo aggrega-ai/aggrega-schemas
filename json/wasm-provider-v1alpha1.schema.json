@@ -33,15 +33,20 @@
           "x-aggrega-go-type": "*CatalogProjection",
           "description": "The pre-packaged catalog content the guest renders against when the host supplies catalog entries in the payload rather than behind host functions. Absent when the guest fetches catalog entries through the read-only host functions instead."
         },
-        "source_projection": {
-          "$ref": "#/$defs/SourceProjection",
-          "x-aggrega-go-type": "*SourceProjection",
-          "description": "The pre-packaged source content the host read at compile time from the local source and hands the guest, so the guest reconstructs the source in memory and touches no filesystem. Present for sourced providers; absent otherwise."
+        "source_listing": {
+          "$ref": "#/$defs/SourceListing",
+          "x-aggrega-go-type": "*SourceListing",
+          "description": "The generic enumeration of the acquired source the host hands the guest for a sourced provider: the source root, whether that root is a directory, and the sorted root-relative entries under it. The host reads no file content here — it lists names only. The guest applies its own resolution logic over the listing and asks the host to pack a chosen selection through the pack-source host function, so all per-provider source-resolution intelligence lives in the guest. Present for sourced providers; absent otherwise."
         },
         "workload_projection": {
           "$ref": "#/$defs/WorkloadProjection",
           "x-aggrega-go-type": "*WorkloadProjection",
           "description": "The pre-evaluated workload the host hands the guest to synthesize provider-native manifests from; present when the bound Recipe declares a workload rather than a chart source, absent otherwise."
+        },
+        "artifacts_projection": {
+          "$ref": "#/$defs/ArtifactsProjection",
+          "x-aggrega-go-type": "*ArtifactsProjection",
+          "description": "The pre-evaluated artifact set the host hands the guest to place into the node's output, present when the bound Recipe declares artifacts. The host has already read each entry's source, evaluated it as a Go template against the render context, and computed the build-provenance key sets; the guest decides the output format, the provenance placement, the on-disk path, and the final bytes. Absent when the node declares no artifacts."
         }
       }
     },
@@ -248,7 +253,7 @@
     },
     "SourceProjection": {
       "type": "object",
-      "description": "The pre-packaged source content (e.g. a Helm chart's files, keyed by chart-root-relative path, in walk order) the host reads at compile time from the local source and hands the guest, so the guest reconstructs the source in memory and touches no filesystem. Present for sourced providers; absent otherwise.",
+      "description": "The packed source content (e.g. a Helm chart's files, keyed by source-root-relative path, in walk order) the host reads and returns to the guest in response to a pack-source request, so the guest reconstructs the selected source in memory and touches no filesystem. It is the pack-source host function's success payload.",
       "required": [
         "files"
       ],
@@ -260,6 +265,121 @@
           "items": {
             "$ref": "#/$defs/SourceFile"
           }
+        }
+      }
+    },
+    "SourceEntry": {
+      "type": "object",
+      "description": "One entry of a source listing: its path relative to the source root, and whether it is a directory. The host lists names only and reads no content, so an entry carries no bytes.",
+      "required": [
+        "path",
+        "is_dir"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "The entry's path relative to the source root, slash-separated (for example Chart.yaml or templates/deployment.yaml)."
+        },
+        "is_dir": {
+          "type": "boolean",
+          "description": "Whether the entry is a directory. A guest that resolves a chart root or a single source file among the listing reads this to distinguish directories from files without touching the filesystem."
+        }
+      }
+    },
+    "SourceListing": {
+      "type": "object",
+      "description": "The generic enumeration of an acquired source the host hands a sourced provider guest: the source root, whether that root is a directory, and the sorted root-relative entries under it. The host walks the acquired source with no domain knowledge and reads no file content — it lists names only. The guest applies its own resolution logic over the listing (locating a chart root, selecting a single compose document, vendoring a module tree) and asks the host to pack a chosen selection through the pack-source host function. Entries are sorted by path so the listing is byte-identical across runs of identical input.",
+      "required": [
+        "root",
+        "entries"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "root": {
+          "type": "string",
+          "description": "The acquired source location the host enumerated. The guest carries it into its own diagnostics when it cannot resolve the source, so a resolution halt names the source the author supplied."
+        },
+        "root_is_dir": {
+          "type": "boolean",
+          "description": "Whether the acquired source root is a directory. False for a single-file source (a lone compose document, a single module file, an archive), in which case entries is empty and the guest packs the root itself."
+        },
+        "entries": {
+          "type": "array",
+          "description": "The root-relative entries under a directory source root, sorted by path. Empty for a single-file source root.",
+          "items": {
+            "$ref": "#/$defs/SourceEntry"
+          }
+        }
+      }
+    },
+    "SourcePackRequest": {
+      "type": "object",
+      "description": "The selection a guest asks the host to pack from the acquired source through the pack-source host function. The op names the shape of the selection and the path names it relative to the source root; the host resolves the path under the source root, rejecting any escape above it, and returns the packed bytes as a SourceProjection.",
+      "required": [
+        "op",
+        "path"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "op": {
+          "type": "string",
+          "enum": [
+            "file",
+            "dir",
+            "tree"
+          ],
+          "description": "The selection shape: file packs the single file at path; dir packs the immediate files of the directory at path; tree packs the whole subtree rooted at path, recursively, in the host's deterministic walk order."
+        },
+        "path": {
+          "type": "string",
+          "description": "The selection location relative to the source root, slash-separated. The empty string (or \".\") names the source root itself, so a single-file source is packed with an empty path."
+        }
+      }
+    },
+    "SourcePackResponse": {
+      "type": "object",
+      "description": "The pack-source host function's reply: on success the packed source, on failure an error message. Exactly one of the two fields is populated. Failure is delivered in-band rather than by trapping, so a guest carries a sandbox rejection or a read failure into its own diagnostics as a deterministic render failure.",
+      "additionalProperties": false,
+      "properties": {
+        "source_projection": {
+          "$ref": "#/$defs/SourceProjection",
+          "x-aggrega-go-type": "*SourceProjection",
+          "description": "The packed source on success; absent on failure."
+        },
+        "error": {
+          "type": "string",
+          "description": "The failure message on failure, naming the selection and the reason; absent on success."
+        }
+      }
+    },
+    "SourceFileRequest": {
+      "type": "object",
+      "description": "The single-file content read a guest asks the host to perform through the read-source-file host function, for a guest whose resolution logic must inspect a file's content before choosing what to pack. The host resolves the path under the source root, rejecting any escape above it, and returns the file's bytes.",
+      "required": [
+        "path"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "The file location relative to the source root, slash-separated."
+        }
+      }
+    },
+    "SourceFileResponse": {
+      "type": "object",
+      "description": "The read-source-file host function's reply: on success the file's bytes, on failure an error message. Exactly one of the two fields is populated. Failure is delivered in-band rather than by trapping, so a guest carries a sandbox rejection or a read failure into its own diagnostics as a deterministic render failure.",
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "type": "string",
+          "x-aggrega-go-type": "[]byte",
+          "description": "The file's raw bytes on success; absent on failure (base64 on the JSON wire)."
+        },
+        "error": {
+          "type": "string",
+          "description": "The failure message on failure, naming the file and the reason; absent on success."
         }
       }
     },
@@ -282,6 +402,64 @@
           "x-aggrega-go-type": "map[string]types.OrderedMap[string]",
           "additionalProperties": true,
           "description": "The per-slot secret provides the synthesis consumes, keyed by secret slot; each slot's provides carries the generated Secret's identity a workload secret reference resolves to."
+        }
+      }
+    },
+    "ArtifactsProjection": {
+      "type": "object",
+      "description": "The pre-evaluated artifact set the host hands a Provider guest to place into the node's output. The host has already resolved each entry's source (inline content or an imported file it read), evaluated it as a Go template against the render context using the guest's declared artifact-template delimiter pair, and computed the build-provenance label and annotation key sets. The guest owns the format decision, the provenance placement, the on-disk path, and the final bytes. Entries preserve author order so the placed output is byte-identical across runs of identical input.",
+      "required": [
+        "entries"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "entries": {
+          "type": "array",
+          "description": "The artifact entries the guest places, in author order.",
+          "items": {
+            "$ref": "#/$defs/ArtifactProjectionEntry"
+          }
+        }
+      }
+    },
+    "ArtifactProjectionEntry": {
+      "type": "object",
+      "description": "One pre-evaluated artifact entry the host hands a Provider guest to place: its host-resolved output base name, its origin, the already-template-evaluated content bytes, and the build-provenance label and annotation key sets the host computed for the node. The guest decides how to place the provenance (splicing it into a manifest's metadata, prepending it as a comment, or emitting a companion file) and where the file lands.",
+      "required": [
+        "name",
+        "origin",
+        "content"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The host-resolved output base name for the entry: the author-declared map key for an inline entry, or the imported file's base name for an imported entry. The guest places the entry at this name or under a provider-specific sub-path derived from it."
+        },
+        "origin": {
+          "type": "string",
+          "enum": [
+            "inline",
+            "import"
+          ],
+          "description": "Whether the entry was authored as inline content or as an imported file. A guest that rejects one form (an umbrella-chart provider rejects inline content) reads this to halt loudly."
+        },
+        "content": {
+          "type": "string",
+          "x-aggrega-go-type": "[]byte",
+          "description": "The already-template-evaluated content bytes the host produced from the entry's inline content or imported file, evaluated against the render context using the guest's declared artifact-template delimiter pair (base64 on the JSON wire)."
+        },
+        "labels": {
+          "type": "object",
+          "x-aggrega-go-type": "map[string]string",
+          "additionalProperties": true,
+          "description": "The Kubernetes-label-safe build-provenance key set the host computed for the node, keyed by label name. A guest that stamps provenance into a manifest's metadata.labels splices these; a guest whose output is not Kubernetes YAML ignores them."
+        },
+        "annotations": {
+          "type": "object",
+          "x-aggrega-go-type": "map[string]string",
+          "additionalProperties": true,
+          "description": "The build-provenance key set the host computed for the node that a Kubernetes label cannot represent, keyed by annotation name. A guest that stamps provenance into a manifest's metadata.annotations splices these; a guest whose output is not Kubernetes YAML ignores them."
         }
       }
     },
