@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/aggrega-config-v1alpha1.schema.json",
   "title": "Aggrega Workspace Config",
-  "description": "Per-workspace configuration file consumed by the aggrega CLI. Lives at `.aggrega-config.yaml`. The `workspace` block is the root marker (its presence marks the workspace root; it holds only `catalog_dirs`). Pure settings live at the top level: `default_registry`, `offline`, `auto_pull`, `artifact_cache_dir`, plus the `build` (authoring-release hint + deprecation strictness dials), `plugins` (workspace-level Wasm plugin attachments: mutator, policy, linter, importer), `lint` (per-rule strictness dials), and `parse_cache` (daemon parse-cache eviction caps) blocks. Flat top-level shape, no apiVersion/kind envelope, distinct from catalog content. Schema evolution discipline: adding a new top-level key is a SemVer-MINOR bump (additive); removing or relocating a key, or tightening a constraint, is a SemVer-MAJOR break.",
+  "description": "Per-workspace configuration file consumed by the aggrega CLI. Lives at `.aggrega-config.yaml`. The `workspace` block is the root marker (its presence marks the workspace root; it holds only `catalog_dirs`). Pure settings live at the top level: `default_registry`, `offline`, `auto_pull`, `artifact_cache_dir`, plus the `build` (authoring-release hint + deprecation strictness dials), `plugins` (workspace-level Wasm plugin attachments: mutator, policy, linter, importer), `provider_bindings` (per-target render-engine selection), `lint` (per-rule strictness dials), and `parse_cache` (daemon parse-cache eviction caps) blocks. Flat top-level shape, no apiVersion/kind envelope, distinct from catalog content. Schema evolution discipline: adding a new top-level key is a SemVer-MINOR bump (additive); removing or relocating a key, or tightening a constraint, is a SemVer-MAJOR break.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
@@ -137,6 +137,12 @@
           "description": "Append-only addition to the effective `importer` list. Same compose-don't-shadow semantic as `mutator_append`."
         }
       }
+    },
+    "provider_bindings": {
+      "type": "object",
+      "default": {},
+      "additionalProperties": { "type": "string" },
+      "description": "Per-target render-engine selection: a flat map from a render target kind (the bare engine name a Recipe binds through `spec.target`, e.g. `helm` or `compose`) to the digest-free OCI identity of the provider-rendering plugin that serves it (matching a Plugin entity's `spec.plugin`, e.g. `oci://hub.aggrega.ai/plugins/core/helm`), with an optional trailing `:version` in the same three forms as a version pin (bare, exact `:1.0.0`, or major-compatible range `:^1.0.0`). This is the disambiguation and override surface for a federated catalog where more than one provider plugin serves the same target: the binding selects which publisher's plugin renders that target. When a target is served by exactly one provider plugin no entry is needed. Resolution is at pull: the pull records the resolved binding into the per-Release lockfile, and the build reads the lockfile — a change to this map after a pull is not adopted until the next pull, so build output is invariant to it (deterministic output). A missing entry for an unambiguously-served target is not an error; a missing entry for an ambiguously-served target halts the pull loudly, listing the candidate plugins. Version coexistence is preserved: the binding selects the plugin repository per target, and each Recipe's own `spec.target` version pin selects the version within that repository, so two Recipes pinning different versions of one engine still coexist."
     },
     "lint": {
       "type": "object",
