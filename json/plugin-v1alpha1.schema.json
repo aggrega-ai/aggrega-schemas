@@ -104,9 +104,9 @@
           "enum": ["v1alpha1"],
           "description": "The host/guest ABI version the plugin targets. `v1alpha1` is the only accepted value in this iteration; a future ABI revision adds an accepted value."
         },
-        "compatibleProviders": {
+        "targets": {
           "type": "array",
-          "description": "The provider engines this plugin is tested-compatible with (provider names such as `helm` or `compose`). A plugin is generic across artifacts that share a provider's output shape, not across all providers; this list is an explicit, tested-compatibility claim. Entries preserve author order. The runtime consults the list when a pipeline step touches a scope: the provider rendering that scope's documents must appear here, or the build halts. An empty or absent list declares no compatibility claim, so it matches no provider and the runtime halts any pipeline step that uses the plugin.",
+          "description": "What this plugin applies to, interpreted per pluginType. A `provider` plugin lists the render targets — provider engine names such as `helm` or `compose` — whose output shape it renders; an `frp_step` plugin lists the provider scopes its pipeline step is compatible with; the cross-cutting sockets (`linter`, `mutator`, `policy-validator`) leave it empty. A plugin is generic across artifacts that share a target's output shape, not across all targets; this list is an explicit, tested-compatibility claim. Entries preserve author order. The runtime consults the list when a pipeline step touches a scope: the provider rendering that scope's documents must appear here, or the build halts. An empty or absent list declares no target claim, so it matches nothing and the runtime halts any pipeline step that uses the plugin.",
           "items": { "type": "string" }
         },
         "signature": {

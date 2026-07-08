@@ -83,13 +83,13 @@
       "type": "object",
       "description": "The provider binding, source, value mapping, and pipeline for a Recipe. Supports three input kinds composed by addition: sourced (source plus valuesMapping overlay), synthesized (workload), and artifacts (named output files).",
       "required": [
-        "provider",
+        "target",
         "implements"
       ],
       "allOf": [
         {
           "if": {
-            "properties": { "provider": { "const": "eval" } }
+            "properties": { "target": { "const": "eval" } }
           },
           "then": {
             "properties": {
@@ -112,9 +112,9 @@
         }
       ],
       "properties": {
-        "provider": {
+        "target": {
           "type": "string",
-          "description": "The explicit execution engine this recipe targets (e.g., 'helm', 'terraform', 'compose', 'eval'). Accepts an optional version pin, in the same three forms as 'implements': unversioned ('helm'), exact ('helm:1.0.0'), or major-compatible range ('helm:^1.0.0'). The bare name selects the engine kind; the pin, when present, selects which version of the provider-rendering plugin serving that engine renders this recipe — highest available when unpinned, exact for an exact pin, highest-in-range for a caret. A pin that no serving plugin version satisfies halts the build loudly. Everything downstream of engine selection — output grouping, path segments, pipeline compatibility, and codec choice — keys on the bare engine kind, so two recipes pinning different plugin versions of the same engine coexist in one build."
+          "description": "The explicit render-engine target this recipe binds to (e.g., 'helm', 'terraform', 'compose', 'eval') — the provider engine kind that renders it. Accepts an optional version pin, in the same three forms as 'implements': unversioned ('helm'), exact ('helm:1.0.0'), or major-compatible range ('helm:^1.0.0'). The bare name selects the engine kind; the pin, when present, selects which version of the provider-rendering plugin serving that engine renders this recipe — highest available when unpinned, exact for an exact pin, highest-in-range for a caret. A pin that no serving plugin version satisfies halts the build loudly. Everything downstream of engine selection — output grouping, path segments, pipeline compatibility, and codec choice — keys on the bare engine kind, so two recipes pinning different plugin versions of the same engine coexist in one build."
         },
         "implements": {
           "type": "string",

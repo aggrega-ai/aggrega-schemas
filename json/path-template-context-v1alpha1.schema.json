@@ -7,7 +7,7 @@
     "properties": {
       "provider": {
         "type": "string",
-        "description": "Available in directory: AND subDirectory:. The provider name resolved per-component from recipe.Spec.Provider. When directory: uses .provider, top-level boundaries with multiple providers in the subtree produce multiple evaluations (one per provider grouping)."
+        "description": "Available in directory: AND subDirectory:. The provider engine name resolved per-component from the recipe's target field. When directory: uses .provider, top-level boundaries with multiple providers in the subtree produce multiple evaluations (one per provider grouping)."
       },
       "boundary_name": {
         "type": "string",
