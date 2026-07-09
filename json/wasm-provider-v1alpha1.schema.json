@@ -10,7 +10,11 @@
     { "$ref": "#/$defs/AssembleBoundaryInput" },
     { "$ref": "#/$defs/AssembleBoundaryOutput" },
     { "$ref": "#/$defs/BoundaryEnvOverridesInput" },
-    { "$ref": "#/$defs/BoundaryEnvOverridesOutput" }
+    { "$ref": "#/$defs/BoundaryEnvOverridesOutput" },
+    { "$ref": "#/$defs/LinkPublishInput" },
+    { "$ref": "#/$defs/LinkPublishOutput" },
+    { "$ref": "#/$defs/LinkResolveInput" },
+    { "$ref": "#/$defs/LinkResolveOutput" }
   ],
   "$defs": {
     "RenderNodeInput": {
@@ -776,6 +780,180 @@
           "x-aggrega-go-type": "map[string]map[string]string",
           "additionalProperties": true,
           "description": "The per-consumer environment overrides, keyed by consumer node id to a map of environment-variable name to override value. An empty or absent map means the guest computed no overrides."
+        }
+      }
+    },
+    "LinkEndpoint": {
+      "type": "object",
+      "description": "One endpoint of a cross-boundary link: the node, the boundary path its rendered output assembles into, and the render target that rendered it. The two endpoints of a link name the consuming and consumed ends of a uses edge whose ends assemble into different dispatch groups.",
+      "required": [
+        "node",
+        "boundary",
+        "provider"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "node": {
+          "type": "string",
+          "description": "The endpoint node's absolute id within the topology graph."
+        },
+        "boundary": {
+          "type": "string",
+          "description": "The endpoint's boundary path — the dispatch group its rendered output assembles into."
+        },
+        "provider": {
+          "type": "string",
+          "description": "The render target that rendered the endpoint (the provider engine name). Both endpoints of a wired link name the same render target; the host does not route a link whose endpoints name different targets."
+        }
+      }
+    },
+    "LinkEdge": {
+      "type": "object",
+      "description": "The generalized, domain-blind per-edge payload the host assembles for a uses edge whose consuming and consumed ends assemble into different dispatch groups. It carries both endpoints, the consumed endpoint's placement annotations as an opaque scalar map the host does not interpret, the consumed endpoint's provides output, and the socket and inject mapping the edge wires. A render target reads it to produce the provider-native cross-reference wiring the two ends need; the host assembles it and passes the annotation map as opaque scalars, inferring no meaning from any value.",
+      "required": [
+        "source",
+        "target",
+        "socket",
+        "provides",
+        "inject"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/LinkEndpoint",
+          "description": "The consuming endpoint — the source end of the directed uses edge, whose assembled output the consumer-side wiring is injected into."
+        },
+        "target": {
+          "$ref": "#/$defs/LinkEndpoint",
+          "description": "The consumed endpoint — the target end the uses edge points at, whose assembled output the producer-side wiring publishes."
+        },
+        "target_annotations": {
+          "type": "object",
+          "x-aggrega-go-type": "map[string]string",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The consumed (target) endpoint's placement annotations as an opaque scalar map, keyed by annotation name. The host assembles them from the target's resolved annotations and passes them verbatim; it infers no meaning from any value. A render target reads them to decide how to shape a cross-reference (for example whether the two ends share a placement or need a cross-placement reference). Keys serialize in sorted order so the payload is byte-identical across runs of identical input."
+        },
+        "socket": {
+          "type": "string",
+          "description": "The socket alias the uses edge is bound under."
+        },
+        "provides": {
+          "type": "object",
+          "x-aggrega-go-type": "types.OrderedMap[string]",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The consumed endpoint's provides output, an author-ordered key set exposing the target's declared outputs. Preserves author order so the payload is byte-identical across runs of identical input."
+        },
+        "inject": {
+          "type": "object",
+          "x-aggrega-go-type": "types.OrderedMap[types.OrderedMap[string]]",
+          "additionalProperties": true,
+          "description": "The consuming endpoint's inject mapping, keyed by delivery mechanism to an author-ordered key set, describing how the consuming end receives the consumed endpoint's output. Preserves author order so the payload is byte-identical across runs of identical input."
+        }
+      }
+    },
+    "LinkPatch": {
+      "type": "object",
+      "description": "One per-file structural patch a render target returns as artifact wiring: the output file and the ordered structural operations to apply to it. A later host pass carves the named file, applies the operations, and reassembles it byte-faithfully. The operation shape is the shared pipeline patch-operation vocabulary; it is opaque at this schema layer, so a guest carries each operation verbatim while the host realizes the typed operation its pipeline applies.",
+      "required": [
+        "file",
+        "ops"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "The output file the operations apply to, named as the render target emitted it."
+        },
+        "ops": {
+          "type": "array",
+          "description": "The ordered structural operations to apply to the file, in application order.",
+          "items": {
+            "x-aggrega-go-type": "JSONPatchOp",
+            "description": "One structural operation carrying the shared pipeline patch-operation shape; opaque at this schema layer so a guest emits it verbatim without this schema rebinding the operation contract."
+          }
+        }
+      }
+    },
+    "LinkPublishInput": {
+      "type": "object",
+      "description": "The payload a render target receives on its link_publish export: one cross-boundary link whose consumed endpoint's output is referenced across a boundary. The export returns the published identity the consumer resolves against and any producer-side artifact wiring the consumed endpoint's output needs.",
+      "required": [
+        "edge"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "edge": {
+          "$ref": "#/$defs/LinkEdge",
+          "description": "The cross-boundary link being published, read from the consumed (target) endpoint's side."
+        }
+      }
+    },
+    "LinkPublishOutput": {
+      "type": "object",
+      "description": "The payload a render target returns from its link_publish export: the published identity handle the consumer resolves against, and the producer-side artifact wiring to apply to the consumed endpoint's assembled output.",
+      "required": [
+        "handle"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "handle": {
+          "type": "object",
+          "x-aggrega-go-type": "map[string]string",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The published identity the consumed endpoint exposes for the consumer to resolve against, an opaque deterministic-pointer string map keyed by field name (for example an export name, a stack name, a region, a role reference). The values are deterministic pointer strings the compiler pipes and never resolves; the runtime environment resolves them at deploy time. Keys serialize in sorted order so the payload is byte-identical across runs of identical input."
+        },
+        "patches": {
+          "type": "array",
+          "description": "The producer-side artifact wiring, one structural patch per consumed-endpoint output file the publish must edit. Empty when the consumed endpoint's output needs no change for the link.",
+          "items": {
+            "$ref": "#/$defs/LinkPatch"
+          }
+        }
+      }
+    },
+    "LinkResolveInput": {
+      "type": "object",
+      "description": "The payload a render target receives on its link_resolve export: one cross-boundary link and the published identity handle its consumed endpoint exposed. The export returns the consumer-side artifact wiring that injects the reference into the consuming endpoint's assembled output.",
+      "required": [
+        "edge",
+        "handle"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "edge": {
+          "$ref": "#/$defs/LinkEdge",
+          "description": "The cross-boundary link being resolved, read from the consuming (source) endpoint's side."
+        },
+        "handle": {
+          "type": "object",
+          "x-aggrega-go-type": "map[string]string",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The published identity handle the consumed endpoint's link_publish returned, which the consumer resolves its reference against. Opaque deterministic-pointer strings keyed by field name; the compiler pipes them and never resolves them. Keys serialize in sorted order so the payload is byte-identical across runs of identical input."
+        }
+      }
+    },
+    "LinkResolveOutput": {
+      "type": "object",
+      "description": "The payload a render target returns from its link_resolve export: the consumer-side artifact wiring to apply to the consuming endpoint's assembled output, injecting the reference to the consumed endpoint's published identity.",
+      "required": [
+        "patches"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "patches": {
+          "type": "array",
+          "description": "The consumer-side artifact wiring, one structural patch per consuming-endpoint output file the resolve must edit.",
+          "items": {
+            "$ref": "#/$defs/LinkPatch"
+          }
         }
       }
     }
