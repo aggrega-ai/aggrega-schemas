@@ -813,7 +813,7 @@
     },
     "LinkEdge": {
       "type": "object",
-      "description": "The generalized, domain-blind per-edge payload the host assembles for a uses edge whose consuming and consumed ends assemble into different dispatch groups. It carries both endpoints, the consumed endpoint's placement annotations as an opaque scalar map the host does not interpret, the consumed endpoint's provides output, and the socket and inject mapping the edge wires. A render target reads it to produce the provider-native cross-reference wiring the two ends need; the host assembles it and passes the annotation map as opaque scalars, inferring no meaning from any value.",
+      "description": "The generalized, domain-blind per-edge payload the host assembles for a uses edge whose consuming and consumed ends assemble into different dispatch groups. It carries both endpoints, both endpoints' placement annotations as opaque scalar maps the host does not interpret, the consumed endpoint's provides output, and the socket and inject mapping the edge wires. A render target reads it to produce the provider-native cross-reference wiring the two ends need; the host assembles it and passes the annotation map as opaque scalars, inferring no meaning from any value.",
       "required": [
         "source",
         "target",
@@ -838,6 +838,14 @@
             "type": "string"
           },
           "description": "The consumed (target) endpoint's placement annotations as an opaque scalar map, keyed by annotation name. The host assembles them from the target's resolved annotations and passes them verbatim; it infers no meaning from any value. A render target reads them to decide how to shape a cross-reference (for example whether the two ends share a placement or need a cross-placement reference). Keys serialize in sorted order so the payload is byte-identical across runs of identical input."
+        },
+        "source_annotations": {
+          "type": "object",
+          "x-aggrega-go-type": "map[string]string",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The consuming (source) endpoint's placement annotations as an opaque scalar map, keyed by annotation name. The host assembles them from the source's resolved annotations and passes them verbatim; it infers no meaning from any value. A render target reads them to compare the two ends' placement — for example whether the source and target share a placement or sit in different ones. Keys serialize in sorted order so the payload is byte-identical across runs of identical input."
         },
         "socket": {
           "type": "string",
