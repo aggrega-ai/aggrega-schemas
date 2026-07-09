@@ -302,6 +302,10 @@
             "reusableInstance": {
               "type": "boolean",
               "description": "Whether one loaded plugin instance may serve every render, assemble, and validate crossing of a build rather than a fresh instance per crossing. Declared true only when the plugin holds no state across crossings — a pure function of its per-crossing input — so a single instance produces byte-identical output whether reused or freshly loaded. Absent (false) loads a fresh instance per crossing, isolating a plugin that carries state by construction."
+            },
+            "crossBoundaryLinking": {
+              "type": "boolean",
+              "description": "Whether the plugin wires a cross-boundary uses edge — a uses edge whose consuming and consumed ends assemble into different dispatch groups — by emitting provider-native cross-reference wiring through a paired link_publish/link_resolve export contract. Declared true only when the plugin exports both; a claim that does not match the export pair halts at load. Absent (false) declares no cross-boundary linking, so the host routes no link crossing to the plugin."
             }
           }
         }
