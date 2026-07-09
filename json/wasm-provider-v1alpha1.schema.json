@@ -804,6 +804,10 @@
         "provider": {
           "type": "string",
           "description": "The render target that rendered the endpoint (the provider engine name). Both endpoints of a wired link name the same render target; the host does not route a link whose endpoints name different targets."
+        },
+        "deployment": {
+          "type": "string",
+          "description": "The deployment identity the endpoint's rendered output belongs to — the scope its assembled artifacts are named within. The host assembles it from the build's deployment identity and passes it verbatim; it infers no meaning from the value. A render target reads it to scope a cross-reference name to the deployment. An absent value is the empty string, which a render target treats as an unscoped name."
         }
       }
     },
