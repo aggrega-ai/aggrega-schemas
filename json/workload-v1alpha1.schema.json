@@ -35,6 +35,16 @@
         }
       }
     },
+    "form": {
+      "type": "string",
+      "enum": ["stateless", "stateful", "daemon", "scheduled", "task"],
+      "default": "stateless",
+      "description": "Abstract controller-shape intent for the workload. Chooses the kind of runtime lifecycle the workload has, independent of any target platform: stateless (interchangeable long-running replicas), stateful (replicas with stable per-replica identity and per-replica storage), daemon (one instance per eligible host), scheduled (recurring, time-triggered runs), task (a single run to completion). Empty is treated as stateless. Each target Engine maps the form to its own native shape; the form carries no platform-native resource kinds itself. A persistentTemplate volume is a companion of stateful and is only valid on a stateful workload."
+    },
+    "schedule": {
+      "type": "string",
+      "description": "Cron schedule for form: scheduled — a standard 5-field crontab expression (for example '0 0 * * *') or one of the macros @hourly, @daily, @weekly, @monthly, @yearly. Required when form is scheduled and only meaningful then; the target Engine pipes it verbatim into the scheduled resource's schedule field."
+    },
     "replicas": {
       "type": "integer",
       "minimum": 0,
@@ -326,7 +336,7 @@
           "type": "object",
           "required": ["size"],
           "additionalProperties": false,
-          "description": "Per-replica PVC. Helm emits StatefulSet.volumeClaimTemplates; compose degrades to a single named volume with a warning comment.",
+          "description": "Per-replica claim template. Requires form: stateful, because only the stateful shape gives each replica the stable identity a per-replica claim needs. On Kubernetes it becomes StatefulSet.volumeClaimTemplates; compose degrades to a single named volume with a warning comment.",
           "properties": {
             "size": { "type": "string" },
             "class": { "type": "string" }
