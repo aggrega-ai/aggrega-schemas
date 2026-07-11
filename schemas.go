@@ -14,7 +14,7 @@
 // (IRSchemaV1alpha1) to disambiguate the two-letter-initialism parse
 // ambiguity (`IRV1alpha1` reads as either `IR_V1alpha1` or
 // `IRV_1alpha1`). The package namespace `schemas.` already provides
-// "this is a schema" context for the other 17 identifiers.
+// "this is a schema" context for the other 22 identifiers.
 //
 // The string-vs-[]byte choice matches the pre-existing
 // WorkloadJSONSchema string convention at
@@ -28,9 +28,20 @@
 // compile-time error rather than a runtime error, and lets
 // consumers reference the var directly. Adding a new schema is one
 // extra line of Go.
+//
+// A companion embed.FS (schemaFiles) mirrors the same json/ tree for
+// callers that need to resolve a schema dynamically by kind token
+// rather than by a compile-time identifier — see SchemaByKind and
+// Kinds. The FS is the single source for the kind→schema mapping: the
+// kind token is the file stem (the file name minus the
+// "-v1alpha1.schema.json" suffix), so a new schema file joins the
+// resolvable set automatically with no lookup table to maintain.
 package schemas
 
-import _ "embed"
+import (
+	"embed"
+	"strings"
+)
 
 //go:embed json/aggrega-config-v1alpha1.schema.json
 var AggregaConfigV1alpha1 string
@@ -100,3 +111,49 @@ var WasmFrpStepV1alpha1 string
 
 //go:embed json/workload-v1alpha1.schema.json
 var WorkloadV1alpha1 string
+
+//go:embed json/*.schema.json
+var schemaFiles embed.FS
+
+// schemaFileSuffix is the common tail every schema file carries. Trimming
+// it from a file name yields the kind token; appending it to a kind token
+// yields the file name. The version segment is part of the suffix because
+// the served identity of every schema is version-pinned at v1alpha1.
+const schemaFileSuffix = "-v1alpha1.schema.json"
+
+// SchemaByKind returns the canonical JSON Schema for the given kind token
+// and true, or the empty string and false when no schema matches. The kind
+// token is the lowercase-hyphenated file stem — "component", "aggregate",
+// "ir", "template-context", "wasm-provider", and so on. The returned string
+// is byte-identical to the distributed schema file. Callers that already
+// know the kind at compile time should reference the exported string var
+// directly; SchemaByKind serves the dynamic-lookup path where the kind is
+// data.
+func SchemaByKind(kind string) (string, bool) {
+	data, err := schemaFiles.ReadFile("json/" + kind + schemaFileSuffix)
+	if err != nil {
+		return "", false
+	}
+	return string(data), true
+}
+
+// Kinds returns every resolvable kind token, sorted lexicographically. The
+// list is derived from the embedded json/ tree, so it always reflects the
+// schemas actually shipped in the binary. embed.FS.ReadDir yields entries
+// sorted by file name; because every file shares schemaFileSuffix, that
+// order is identical to the kind-token order, so the result is deterministic
+// by construction without an explicit sort.
+func Kinds() []string {
+	entries, err := schemaFiles.ReadDir("json")
+	if err != nil {
+		return nil
+	}
+	kinds := make([]string, 0, len(entries))
+	for _, e := range entries {
+		name := e.Name()
+		if strings.HasSuffix(name, schemaFileSuffix) {
+			kinds = append(kinds, strings.TrimSuffix(name, schemaFileSuffix))
+		}
+	}
+	return kinds
+}

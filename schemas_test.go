@@ -5,8 +5,76 @@ package schemas
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 )
+
+// kindFromID derives the kind token from a canonical $id URI by stripping
+// the served-path prefix and the file suffix, mirroring the file-stem rule
+// SchemaByKind and Kinds resolve against.
+func kindFromID(id string) string {
+	name := strings.TrimPrefix(id, "https://aggrega.ai/schemas/")
+	return strings.TrimSuffix(name, schemaFileSuffix)
+}
+
+// TestSchemaByKindMatchesExportedVars proves the FS-backed dynamic accessor
+// returns exactly the same bytes as the compile-time-bound exported var for
+// every schema. The two surfaces embed the same files independently; this
+// parity check is the guard that they cannot silently diverge.
+func TestSchemaByKindMatchesExportedVars(t *testing.T) {
+	t.Parallel()
+	for _, s := range allSchemas {
+		s := s
+		t.Run(s.name, func(t *testing.T) {
+			t.Parallel()
+			kind := kindFromID(s.expectedID)
+			got, ok := SchemaByKind(kind)
+			if !ok {
+				t.Fatalf("SchemaByKind(%q) reported not found; the FS accessor and the exported var disagree on availability", kind)
+			}
+			if got != s.source {
+				t.Errorf("SchemaByKind(%q) bytes differ from the exported var %s", kind, s.name)
+			}
+		})
+	}
+}
+
+// TestKindsCoversEveryExportedVar proves Kinds enumerates exactly the kind
+// set the exported vars cover — no missing kind, no extra kind — and that the
+// list is lexicographically ordered for deterministic output.
+func TestKindsCoversEveryExportedVar(t *testing.T) {
+	t.Parallel()
+	kinds := Kinds()
+
+	if len(kinds) != len(allSchemas) {
+		t.Fatalf("Kinds() returned %d kinds; expected %d (one per exported var)", len(kinds), len(allSchemas))
+	}
+
+	set := make(map[string]bool, len(kinds))
+	for _, k := range kinds {
+		set[k] = true
+	}
+	for _, s := range allSchemas {
+		if kind := kindFromID(s.expectedID); !set[kind] {
+			t.Errorf("Kinds() omits %q (exported var %s)", kind, s.name)
+		}
+	}
+
+	for i := 1; i < len(kinds); i++ {
+		if kinds[i-1] >= kinds[i] {
+			t.Errorf("Kinds() is not strictly lexicographically ordered at index %d: %q >= %q", i, kinds[i-1], kinds[i])
+		}
+	}
+}
+
+// TestSchemaByKindUnknownKind proves an unmatched kind is a clean miss, not a
+// panic or a stray empty-string hit.
+func TestSchemaByKindUnknownKind(t *testing.T) {
+	t.Parallel()
+	if got, ok := SchemaByKind("no-such-kind"); ok || got != "" {
+		t.Errorf("SchemaByKind(unknown) = (%q, %v); want (\"\", false)", got, ok)
+	}
+}
 
 // allSchemas enumerates every exported schema identifier paired
 // with its canonical `$id` URI. The three table-driven tests below
@@ -30,6 +98,7 @@ var allSchemas = []struct {
 }{
 	{"AggregaConfigV1alpha1", AggregaConfigV1alpha1, "https://aggrega.ai/schemas/aggrega-config-v1alpha1.schema.json"},
 	{"AggregateV1alpha1", AggregateV1alpha1, "https://aggrega.ai/schemas/aggregate-v1alpha1.schema.json"},
+	{"CacheMetadataV1alpha1", CacheMetadataV1alpha1, "https://aggrega.ai/schemas/cache-metadata-v1alpha1.schema.json"},
 	{"ComponentV1alpha1", ComponentV1alpha1, "https://aggrega.ai/schemas/component-v1alpha1.schema.json"},
 	{"FeatureV1alpha1", FeatureV1alpha1, "https://aggrega.ai/schemas/feature-v1alpha1.schema.json"},
 	{"FeatureRecipeV1alpha1", FeatureRecipeV1alpha1, "https://aggrega.ai/schemas/featurerecipe-v1alpha1.schema.json"},
