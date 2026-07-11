@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/wasm-cli-v1alpha1.schema.json",
+  "title": "Aggrega Wasm CLI Socket",
+  "description": "The JSON wire shape the cli.wasm plugin socket consumes (CLIRunInput). A CLI plugin extends the compiler's command surface: the host resolves a subcommand to a Wasm guest and hands it the invocation's argument vector; the guest executes and returns a process exit code as its integer return value. Standard output and standard error flow through host functions rather than a wire payload, so this socket declares an input shape only. The wire shape is generated into each ABI language from this schema, and per-language round-trip tests assert the three codecs produce one byte-identical wire.",
+  "oneOf": [
+    { "$ref": "#/$defs/CLIRunInput" }
+  ],
+  "$defs": {
+    "CLIRunInput": {
+      "type": "object",
+      "description": "The payload the host hands a CLI plugin on each invocation: the argument vector following the resolved subcommand name. The guest parses these tokens as its own flags and positional arguments, exactly as a standalone command-line program reads the arguments after its name.",
+      "required": [
+        "args"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "args": {
+          "type": "array",
+          "description": "The argument vector the guest receives, in invocation order — the tokens that follow the resolved subcommand name on the command line. Order is preserved so the payload is byte-identical across runs of identical input.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

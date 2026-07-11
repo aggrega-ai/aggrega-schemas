@@ -43,6 +43,7 @@ var allSchemas = []struct {
 	{"ReleaseV1alpha1", ReleaseV1alpha1, "https://aggrega.ai/schemas/release-v1alpha1.schema.json"},
 	{"SchemaLibraryV1alpha1", SchemaLibraryV1alpha1, "https://aggrega.ai/schemas/schemalibrary-v1alpha1.schema.json"},
 	{"TemplateContextV1alpha1", TemplateContextV1alpha1, "https://aggrega.ai/schemas/template-context-v1alpha1.schema.json"},
+	{"WasmCliV1alpha1", WasmCliV1alpha1, "https://aggrega.ai/schemas/wasm-cli-v1alpha1.schema.json"},
 	{"WasmLinterV1alpha1", WasmLinterV1alpha1, "https://aggrega.ai/schemas/wasm-linter-v1alpha1.schema.json"},
 	{"WasmMutatorV1alpha1", WasmMutatorV1alpha1, "https://aggrega.ai/schemas/wasm-mutator-v1alpha1.schema.json"},
 	{"WasmPolicyValidatorV1alpha1", WasmPolicyValidatorV1alpha1, "https://aggrega.ai/schemas/wasm-policy-validator-v1alpha1.schema.json"},
