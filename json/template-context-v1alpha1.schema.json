@@ -132,7 +132,12 @@
           "type": "object",
           "properties": {
             "type": { "type": "string", "description": "The Catalog credential Feature URI (labeled feature.aggrega.ai/kind: secret)." },
-            "values": { "type": "object", "additionalProperties": true }
+            "values": { "type": "object", "additionalProperties": true },
+            "provides": {
+              "type": "object",
+              "description": "The resolved public contract of the credential producer filling this slot — the generated Secret's name, its key, and any additional produced keys — exposed to the consumer as .secrets.<slot>.provides.<key>. The consumer reads these values instead of re-deriving the credential's physical identity.",
+              "additionalProperties": { "type": "string" }
+            }
           },
           "additionalProperties": false
         }
