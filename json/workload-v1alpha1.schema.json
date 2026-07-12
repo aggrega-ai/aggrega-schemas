@@ -211,6 +211,7 @@
       "properties": {
         "from": { "type": "string", "description": "Name of a slot declared in the Component's secretsSchema." },
         "as": { "type": "string", "enum": ["env", "file"], "description": "Delivery mechanism. Must be allowlisted in the slot's inject: array." },
+        "key": { "type": "string", "description": "For as: env, the specific data key of the referenced slot's secret this entry reads. Set it when the slot's secret carries several data keys, so this entry selects one of them by name; two entries may reference the same slot with different keys to read several keys from one secret. When omitted, the entry reads the slot's single published key. Ignored for as: file, which mounts the whole secret." },
         "path": { "type": "string", "description": "File path inside the container (required when as: file)." }
       },
       "allOf": [
