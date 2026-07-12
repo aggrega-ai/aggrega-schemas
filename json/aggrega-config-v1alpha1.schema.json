@@ -364,7 +364,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["uri"],
-      "description": "Reference to a Wasm plugin attached at a workspace-level socket. `uri` identifies the plugin (OCI reference, local path, or registry alias). `function` overrides the socket's default entry function (`mutate`, `validate`, `lint`, `import` per socket); when omitted, the socket's documented default applies.",
+      "description": "Reference to a Wasm plugin attached at a workspace-level socket. `uri` identifies the plugin (OCI reference, local path, or registry alias). `function` overrides the socket's default entry function (`mutate`, `validate`, `lint`, `import` per socket); when omitted, the socket's documented default applies. `with` carries optional attachment-time inputs the plugin reads.",
       "properties": {
         "uri": {
           "type": "string",
@@ -373,6 +373,26 @@
         "function": {
           "type": "string",
           "description": "Optional override for the socket's default entry function. When omitted, the socket's documented default applies (mutator → `mutate`, policy → `validate`, linter → `lint`, importer → `import`)."
+        },
+        "with": {
+          "$ref": "#/$defs/PluginRefWith",
+          "description": "Optional attachment-time inputs the plugin reads. Both members are optional and socket-agnostic, so any socket may reuse this surface."
+        }
+      }
+    },
+    "PluginRefWith": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional attachment-time inputs a plugin reads. Both members are optional and engine-agnostic — the surface is general so any socket may reuse it.",
+      "properties": {
+        "sources": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Definition file paths the host reads at compile time and hands to the plugin. Each entry is a filesystem path resolved against the declaring config file's directory."
+        },
+        "settings": {
+          "type": "object",
+          "description": "Free-form settings object handed to the plugin verbatim. The host does not interpret its shape; the plugin defines the keys it reads."
         }
       }
     },
