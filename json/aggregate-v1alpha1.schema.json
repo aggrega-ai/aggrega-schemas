@@ -144,6 +144,11 @@
                   "type": "string",
                   "description": "The abstract Aggregate requested (e.g., namespace/name:version, ./local/path). Resolved via the Three-Tier Entity Resolution Model (local path → workspace dir → registry)."
                 },
+                "active": {
+                  "anyOf": [{ "type": "boolean" }, { "type": "string" }],
+                  "default": true,
+                  "description": "Whether this imported module is present in the compiled topology. A boolean, or a string template over .parameters that must resolve to a boolean. When it resolves to false the entire module is pruned — none of its components, edges, or attachments are flattened. Driving the value from a parameter lets a Release toggle the module's presence by fulfilling that parameter. Defaults to true when omitted."
+                },
                 "parameters": {
                   "type": "object",
                   "description": "Parameters passed down to fulfill the nested aggregate's contract.",
@@ -326,6 +331,11 @@
         "type": {
           "type": "string",
           "description": "The abstract Component requested (e.g., core/api-server:1.0.0). Resolved via the Three-Tier Entity Resolution Model (local path → workspace dir → registry)."
+        },
+        "active": {
+          "anyOf": [{ "type": "boolean" }, { "type": "string" }],
+          "default": true,
+          "description": "Whether this component is present in the compiled topology. A boolean, or a string template over .parameters that must resolve to a boolean. When it resolves to false the component is pruned from the topology, cascading to its uses edges and its feature and secret attachments. Driving the value from a parameter lets a Release toggle the component's presence by fulfilling that parameter. Defaults to true when omitted."
         },
         "description": {
           "type": "string",
