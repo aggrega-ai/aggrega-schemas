@@ -13,7 +13,11 @@
     },
     "url": {
       "type": "string",
-      "description": "The canonical resolved URL. For helm-https when the input was a repo-root URL, this is the direct .tgz URL the index resolved to. For terraform-git, this is the cloneable repository URL. For helm-oci, the registry reference."
+      "description": "The authored URL — the identity URL as written in the Recipe's spec.source.url. For helm-https this is the repo root (repo-root form) or the direct .tgz (direct form) exactly as authored. For terraform-git, the cloneable repository URL. For helm-oci, the registry reference. The resolved artifact location for a repo-root helm source is recorded separately under `resolved_url:` as provenance."
+    },
+    "resolved_url": {
+      "type": "string",
+      "description": "Provenance only: the concrete artifact location the authored URL resolved to at pull time. For a repo-root helm source this is the direct .tgz URL the repository index resolved the chart+version to. Recorded for diagnostics; not part of any integrity contract. Absent when the resolved location equals the authored URL."
     },
     "version": {
       "type": "string",

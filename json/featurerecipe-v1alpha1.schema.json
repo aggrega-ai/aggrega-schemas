@@ -267,7 +267,7 @@
         },
         "sourceDigests": {
           "type": "array",
-          "description": "Content pins for the remote sources this feature recipe references, frozen at resolution from the fetched bytes and read back at build to verify the cached source has not drifted. Each entry mirrors the resolved-source identity {kind, url, version} plus the content digest (and, for an OCI-distributed source, the manifest digest). One entry per distinct resolved-source identity the recipe fetches. Local (filesystem-relative) sources are never pinned. Written by the resolution phase into a writable recipe file; a recipe fetched from a registry arrives pre-pinned.",
+          "description": "Content pins for the remote sources this feature recipe references, frozen at resolution from the fetched bytes and read back at build to verify the cached source has not drifted. Each entry mirrors the resolved-source identity {kind, url, chart, version} plus the content digest (and, for an OCI-distributed source, the manifest digest). One entry per distinct resolved-source identity the recipe fetches. Local (filesystem-relative) sources are never pinned. Written by the resolution phase into a writable recipe file; a recipe fetched from a registry arrives pre-pinned.",
           "items": {
             "type": "object",
             "x-aggrega-go-type": "SourceDigest",
@@ -280,7 +280,11 @@
               },
               "url": {
                 "type": "string",
-                "description": "The canonical resolved source URL the digest pins."
+                "description": "The authored source URL the digest pins — the identity URL as written in spec.source.url (a repo root or a direct .tgz for helm-https). Build reconstructs this same URL offline, so it is the stable identity the pin is keyed on, not a resolved artifact location."
+              },
+              "chart": {
+                "type": "string",
+                "description": "The chart name for a repo-root helm source (spec.source.chart), part of the resolved-source identity so two charts served from one repo root at the same version pin distinctly. Absent for a direct .tgz, OCI, compose, or git source, where the URL alone identifies the artifact."
               },
               "version": {
                 "type": "string",

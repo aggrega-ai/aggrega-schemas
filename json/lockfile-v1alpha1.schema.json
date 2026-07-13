@@ -177,7 +177,7 @@
     "source_artifacts": {
       "type": "array",
       "default": [],
-      "description": "Source artifacts pulled from Recipe / FeatureRecipe `spec.source` fields at pull time. Each entry identifies a unique `{kind, url, pinned_version}` triple with content digest, mediatype, and the structured `referenced_by:` back-pointers naming every catalog entity that resolved to this artifact. Multiple Recipes pinning the same chart at the same version dedupe to a single entry with multiple `referenced_by:` records. The kind enum covers the four currently-supported source kinds plus one reserved (terraform-module-oci) for the future terraform engine.",
+      "description": "Source artifacts pulled from Recipe / FeatureRecipe `spec.source` fields at pull time. Each entry identifies a unique `{kind, url, chart, pinned_version}` identity with content digest, mediatype, and the structured `referenced_by:` back-pointers naming every catalog entity that resolved to this artifact. `url` is the authored identity URL; the resolved artifact location for a repo-root helm source is recorded separately under `resolved_url:` as provenance. Multiple Recipes pinning the same chart at the same version dedupe to a single entry with multiple `referenced_by:` records. The kind enum covers the four currently-supported source kinds plus one reserved (terraform-module-oci) for the future terraform engine.",
       "items": { "$ref": "#/$defs/SourceArtifactEntry" }
     },
     "version": {
@@ -300,7 +300,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["kind", "url", "pinned_version", "digest", "mediatype", "referenced_by"],
-      "description": "A single source artifact pin: the {kind, url, pinned_version} identity, the content digest verifying the pull, the canonical mediatype, and the structured back-pointers to every catalog entity that resolved to this artifact.",
+      "description": "A single source artifact pin: the {kind, url, chart, pinned_version} identity, the content digest verifying the pull, the canonical mediatype, and the structured back-pointers to every catalog entity that resolved to this artifact.",
       "properties": {
         "kind": {
           "enum": ["helm-oci-chart", "helm-https-chart", "compose-https-fragment", "terraform-module-git", "terraform-module-oci"],
@@ -308,11 +308,19 @@
         },
         "url": {
           "type": "string",
-          "description": "The canonical resolved URL. For helm-https when the input was a repo-root URL, this is the direct .tgz URL the index resolved to (NOT the repo root). For terraform-git, this is the cloneable repository URL. For helm-oci, the registry reference."
+          "description": "The authored URL — the identity URL as written in the Recipe's spec.source.url. For helm-https this is the repo root (repo-root form) or the direct .tgz (direct form) exactly as authored; build reconstructs this same URL offline, so it is the stable identity the pin is keyed on. For terraform-git, the cloneable repository URL. For helm-oci, the registry reference. The resolved artifact location for a repo-root helm source is recorded separately under `resolved_url:` as provenance."
+        },
+        "chart": {
+          "type": "string",
+          "description": "The chart name for a repo-root helm source (the Recipe's spec.source.chart), part of the {kind, url, chart, pinned_version} identity so two charts served from one repo root at the same version pin to distinct entries. Absent for a direct .tgz, OCI, compose, or git source, where the URL alone identifies the artifact."
         },
         "pinned_version": {
           "type": "string",
           "description": "The concrete version the resolver pinned at pull time. For helm-* kinds, the chart version. For terraform-module-git, the resolved commit SHA (NOT the original tag/branch ref — that is recorded under `requested_ref:` on each `referenced_by:` entry when it differs from the SHA)."
+        },
+        "resolved_url": {
+          "type": "string",
+          "description": "Provenance only: the concrete artifact location the authored URL resolved to at pull time. For a repo-root helm source this is the direct .tgz URL the repository index resolved the chart+version to; it is recorded for diagnostics and is NOT part of the artifact identity. Absent when the resolved location equals the authored URL (a direct .tgz, OCI, compose, or git source)."
         },
         "digest": {
           "type": "string",
