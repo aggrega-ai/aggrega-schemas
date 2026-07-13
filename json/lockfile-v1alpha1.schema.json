@@ -144,10 +144,10 @@
         }
       }
     },
-    "provider_bindings": {
+    "providers": {
       "type": "array",
       "default": [],
-      "description": "Resolved per-target render-engine selections. Each entry pins one render target kind (e.g. `helm`) to the digest-free OCI identity of the provider-rendering plugin that renders it, resolved at pull from the `.aggrega-config.yaml` `provider_bindings` map (when the target is ambiguously served) or from the sole serving plugin (when unambiguous). Build reads this section — never `.aggrega-config.yaml` — to select the render engine, so build output is invariant to workspace-config changes made after the pull. The plugin's content digest is NOT duplicated here: it is single-sourced in the `plugins` and `entities` sections, which this record points into by identity. Version coexistence is preserved: this record selects the plugin repository per target; the concrete versions live in `entities` (one entry per resolved plugin version), and each Recipe's `spec.target` version pin selects among them at render.",
+      "description": "Resolved per-target render-engine selections. Each entry pins one render target kind (e.g. `helm`) to the digest-free OCI identity of the provider-rendering plugin that renders it, resolved at pull from the `.aggrega-config.yaml` `plugins.providers` list (when the target is ambiguously served) or from the sole serving plugin (when unambiguous). Build reads this section — never `.aggrega-config.yaml` — to select the render engine, so build output is invariant to workspace-config changes made after the pull. The plugin's content digest is NOT duplicated here: it is single-sourced in the `plugins` and `entities` sections, which this record points into by identity. Version coexistence is preserved: this record selects the plugin repository per target; the concrete versions live in `entities` (one entry per resolved plugin version), and each Recipe's `spec.target` version pin selects among them at render.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -155,7 +155,7 @@
         "properties": {
           "plugin": {
             "type": "string",
-            "description": "Digest-free OCI identity of the resolved provider-rendering plugin (matching a Plugin entity's `spec.plugin`, e.g. `oci://hub.aggrega.ai/plugins/core/helm`). Joins by identity into the `plugins` and `entities` sections for the pinned digest and version set."
+            "description": "Digest-free OCI identity of the resolved provider-rendering plugin (matching a Plugin entity's `spec.plugin`, e.g. `oci://hub.aggrega.ai/plugin/provider/helm`). Joins by identity into the `plugins` and `entities` sections for the pinned digest and version set."
           },
           "target": {
             "type": "string",

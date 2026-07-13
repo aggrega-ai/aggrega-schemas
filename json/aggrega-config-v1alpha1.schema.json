@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/aggrega-config-v1alpha1.schema.json",
   "title": "Aggrega Workspace Config",
-  "description": "Per-workspace configuration file consumed by the aggrega CLI. Lives at `.aggrega-config.yaml`. The `workspace` block is the root marker (its presence marks the workspace root; it holds only `catalog_dirs`). Pure settings live at the top level: `default_registry`, `offline`, `auto_pull`, `artifact_cache_dir`, plus the `build` (authoring-release hint + deprecation strictness dials), `plugins` (workspace-level Wasm plugin attachments: mutator, policy, linter, importer), `provider_bindings` (per-target render-engine selection), `lint` (per-rule strictness dials), and `parse_cache` (daemon parse-cache eviction caps) blocks. Flat top-level shape, no apiVersion/kind envelope, distinct from catalog content. Schema evolution discipline: adding a new top-level key is a SemVer-MINOR bump (additive); removing or relocating a key, or tightening a constraint, is a SemVer-MAJOR break.",
+  "description": "Per-workspace configuration file consumed by the aggrega CLI. Lives at `.aggrega-config.yaml`. The `workspace` block is the root marker (its presence marks the workspace root; it holds only `catalog_dirs`). Pure settings live at the top level: `default_registry`, `offline`, `auto_pull`, `artifact_cache_dir`, plus the `build` (authoring-release hint + deprecation strictness dials), `plugins` (workspace-level Wasm plugin attachments: mutator, policy, linter, importer, and per-target provider-rendering bindings), `lint` (per-rule strictness dials), and `parse_cache` (daemon parse-cache eviction caps) blocks. Flat top-level shape, no apiVersion/kind envelope, distinct from catalog content. Schema evolution discipline: adding a new top-level key is a SemVer-MINOR bump (additive); removing or relocating a key, or tightening a constraint, is a SemVer-MAJOR break.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
@@ -86,7 +86,7 @@
     "plugins": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Workspace-level Wasm plugin attachments. Each socket (mutator, policy, linter, importer) takes an array of plugin references; the build invokes each plugin's documented entry function per its socket contract.",
+      "description": "Workspace-level Wasm plugin attachments. Each socket (mutator, policy, linter, importer) takes an array of plugin references; the build invokes each plugin's documented entry function per its socket contract. The `providers` list binds render targets to the provider-rendering plugins that serve them.",
       "properties": {
         "mutator": {
           "type": "array",
@@ -135,14 +135,20 @@
           "default": [],
           "items": { "$ref": "#/$defs/PluginRef" },
           "description": "Append-only addition to the effective `importer` list. Same compose-don't-shadow semantic as `mutator_append`."
+        },
+        "providers": {
+          "type": "array",
+          "default": [],
+          "items": { "$ref": "#/$defs/ProviderRef" },
+          "description": "Per-target render-engine selections. Each entry binds one render target kind (the bare engine name a Recipe binds through `spec.target`, e.g. `helm` or `compose`) to the digest-free OCI identity of the provider-rendering plugin that serves it (matching a Plugin entity's `spec.plugin`, e.g. `oci://hub.aggrega.ai/plugin/provider/helm`), with an optional trailing `:version` in the same three forms as a version pin (bare, exact `:1.0.0`, or major-compatible range `:^1.0.0`). This is the disambiguation and override surface for a federated catalog where more than one provider plugin serves the same target: the binding selects which publisher's plugin renders that target. When a target is served by exactly one provider plugin no entry is needed. Exactly one entry per target is permitted across the composed list; a duplicate target halts resolution loudly. Resolution is at pull: the pull records the resolved binding into the per-Release lockfile, and the build reads the lockfile — a change here after a pull is not adopted until the next pull, so build output is invariant to it (deterministic output). A missing entry for an unambiguously-served target is not an error; a missing entry for an ambiguously-served target halts the pull loudly, listing the candidate plugins. Version coexistence is preserved: the binding selects the plugin repository per target, and each Recipe's own `spec.target` version pin selects the version within that repository, so two Recipes pinning different versions of one engine still coexist."
+        },
+        "providers_append": {
+          "type": "array",
+          "default": [],
+          "items": { "$ref": "#/$defs/ProviderRef" },
+          "description": "Append-only addition to the effective `providers` list. Entries here are concatenated onto the resolved base list at each precedence layer, letting workspace and global configs compose provider bindings rather than shadow them. Same compose-don't-shadow semantic as `mutator_append`. The one-entry-per-target rule applies to the composed list, so an appended entry naming a target already bound by a lower layer halts resolution loudly."
         }
       }
-    },
-    "provider_bindings": {
-      "type": "object",
-      "default": {},
-      "additionalProperties": { "type": "string" },
-      "description": "Per-target render-engine selection: a flat map from a render target kind (the bare engine name a Recipe binds through `spec.target`, e.g. `helm` or `compose`) to the digest-free OCI identity of the provider-rendering plugin that serves it (matching a Plugin entity's `spec.plugin`, e.g. `oci://hub.aggrega.ai/plugins/core/helm`), with an optional trailing `:version` in the same three forms as a version pin (bare, exact `:1.0.0`, or major-compatible range `:^1.0.0`). This is the disambiguation and override surface for a federated catalog where more than one provider plugin serves the same target: the binding selects which publisher's plugin renders that target. When a target is served by exactly one provider plugin no entry is needed. Resolution is at pull: the pull records the resolved binding into the per-Release lockfile, and the build reads the lockfile — a change to this map after a pull is not adopted until the next pull, so build output is invariant to it (deterministic output). A missing entry for an unambiguously-served target is not an error; a missing entry for an ambiguously-served target halts the pull loudly, listing the candidate plugins. Version coexistence is preserved: the binding selects the plugin repository per target, and each Recipe's own `spec.target` version pin selects the version within that repository, so two Recipes pinning different versions of one engine still coexist."
     },
     "lint": {
       "type": "object",
@@ -368,7 +374,7 @@
       "properties": {
         "uri": {
           "type": "string",
-          "description": "Plugin identifier: OCI reference (e.g. `oci://hub.aggrega.ai/aggrega-team/mutator-bundle@v1`), local filesystem path, or registry alias."
+          "description": "Plugin identifier: OCI reference (e.g. `oci://hub.aggrega.ai/plugin/mutator/redact`), local filesystem path, or registry alias."
         },
         "function": {
           "type": "string",
@@ -393,6 +399,30 @@
         "settings": {
           "type": "object",
           "description": "Free-form settings object handed to the plugin verbatim. The host does not interpret its shape; the plugin defines the keys it reads."
+        }
+      }
+    },
+    "ProviderRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "uri"],
+      "description": "Per-target provider-rendering plugin binding. `target` names the render target kind this entry selects an engine for (the bare engine name a Recipe binds through `spec.target`, e.g. `helm`). `uri` is the digest-free OCI identity of the serving provider-rendering plugin (matching a Plugin entity's `spec.plugin`, e.g. `oci://hub.aggrega.ai/plugin/provider/helm`), with an optional trailing `:version` in the same three forms as a version pin. `function` and `with` mirror the plugin-socket reference shape so the provider list is homogeneous with the other plugin sockets.",
+      "properties": {
+        "target": {
+          "type": "string",
+          "description": "The render target kind this binding selects an engine for — the bare engine name a Recipe binds through `spec.target` (e.g. `helm`, `compose`)."
+        },
+        "uri": {
+          "type": "string",
+          "description": "Digest-free OCI identity of the serving provider-rendering plugin (matching a Plugin entity's `spec.plugin`, e.g. `oci://hub.aggrega.ai/plugin/provider/helm`), with an optional trailing `:version` (bare, exact `:1.0.0`, or major-compatible range `:^1.0.0`)."
+        },
+        "function": {
+          "type": "string",
+          "description": "Optional override for the provider plugin's default render entry function. When omitted, the plugin's documented default applies."
+        },
+        "with": {
+          "$ref": "#/$defs/PluginRefWith",
+          "description": "Optional attachment-time inputs the provider plugin reads. Both members are optional and socket-agnostic, so any socket may reuse this surface."
         }
       }
     },
