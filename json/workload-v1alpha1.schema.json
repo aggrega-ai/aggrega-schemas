@@ -107,6 +107,10 @@
       "required": ["image"],
       "additionalProperties": false,
       "properties": {
+        "name": {
+          "type": "string",
+          "description": "Optional container name. For a positional initContainers entry it sets the emitted container name, falling back to a generated init-<index> name (the entry's position in the list) when omitted. For a containers map entry the map key is the container name and this field is ignored."
+        },
         "image": {
           "type": "string",
           "description": "Container image reference (e.g., 'nginx:1.27-alpine', 'ghcr.io/example/app:v1.2.3')."
