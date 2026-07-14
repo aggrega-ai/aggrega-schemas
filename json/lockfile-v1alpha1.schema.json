@@ -95,7 +95,7 @@
         "properties": {
           "uri": {
             "type": "string",
-            "description": "Canonical URI of the Wasm plugin (e.g. `hub.aggrega.ai/wasm/policy-validator/aggrega-security-baseline`). The path segment after `wasm/` is the plugin's socket (`linter`, `policy-validator`, `mutator`, `formatter`, `importer`, `security`, `pipeline`); the segment after that is the plugin name. Socket + name together form the plugin's identity — same name in different sockets is a different plugin."
+            "description": "Bare identity of the Wasm plugin's `.wasm` artifact — the `<socket>/<name>` path (e.g. `policy-validator/aggrega-security-baseline`). The first segment is the plugin's socket (`linter`, `policy-validator`, `mutator`, `formatter`, `importer`, `security`, `pipeline`, `provider`); the segment after that is the plugin name. Socket + name together form the plugin's identity — same name in different sockets is a different plugin. The physical fetch location is derived from this identity plus the configured registry, never carried in the lockfile."
           },
           "resolved_version": {
             "type": "string",
@@ -155,7 +155,7 @@
         "properties": {
           "plugin": {
             "type": "string",
-            "description": "Digest-free OCI identity of the resolved provider-rendering plugin (matching a Plugin entity's `spec.plugin`, e.g. `oci://hub.aggrega.ai/plugin/provider/helm`). Joins by identity into the `plugins` and `entities` sections for the pinned digest and version set."
+            "description": "Bare identity of the resolved provider-rendering plugin (a Plugin entity's `metadata.name`, the `<socket>/<name>` path, e.g. `provider/helm`). Joins by identity into the `plugins` and `entities` sections for the pinned digest and version set."
           },
           "target": {
             "type": "string",

@@ -140,7 +140,7 @@
           "type": "array",
           "default": [],
           "items": { "$ref": "#/$defs/ProviderRef" },
-          "description": "Per-target render-engine selections. Each entry binds one render target kind (the bare engine name a Recipe binds through `spec.target`, e.g. `helm` or `compose`) to the digest-free OCI identity of the provider-rendering plugin that serves it (matching a Plugin entity's `spec.plugin`, e.g. `oci://hub.aggrega.ai/plugin/provider/helm`), with an optional trailing `:version` in the same three forms as a version pin (bare, exact `:1.0.0`, or major-compatible range `:^1.0.0`). This is the disambiguation and override surface for a federated catalog where more than one provider plugin serves the same target: the binding selects which publisher's plugin renders that target. When a target is served by exactly one provider plugin no entry is needed. Exactly one entry per target is permitted across the composed list; a duplicate target halts resolution loudly. Resolution is at pull: the pull records the resolved binding into the per-Release lockfile, and the build reads the lockfile — a change here after a pull is not adopted until the next pull, so build output is invariant to it (deterministic output). A missing entry for an unambiguously-served target is not an error; a missing entry for an ambiguously-served target halts the pull loudly, listing the candidate plugins. Version coexistence is preserved: the binding selects the plugin repository per target, and each Recipe's own `spec.target` version pin selects the version within that repository, so two Recipes pinning different versions of one engine still coexist."
+          "description": "Per-target render-engine selections. Each entry binds one render target kind (the bare engine name a Recipe binds through `spec.target`, e.g. `helm` or `compose`) to the bare identity of the provider-rendering plugin that serves it (a Plugin entity's `metadata.name`, the `<socket>/<name>` path, e.g. `provider/helm`), with an optional trailing `:version` in the same three forms as a version pin (bare, exact `:1.0.0`, or major-compatible range `:^1.0.0`). This is the disambiguation and override surface for a federated catalog where more than one provider plugin serves the same target: the binding selects which publisher's plugin renders that target. When a target is served by exactly one provider plugin no entry is needed. Exactly one entry per target is permitted across the composed list; a duplicate target halts resolution loudly. Resolution is at pull: the pull records the resolved binding into the per-Release lockfile, and the build reads the lockfile — a change here after a pull is not adopted until the next pull, so build output is invariant to it (deterministic output). A missing entry for an unambiguously-served target is not an error; a missing entry for an ambiguously-served target halts the pull loudly, listing the candidate plugins. Version coexistence is preserved: the binding selects the plugin repository per target, and each Recipe's own `spec.target` version pin selects the version within that repository, so two Recipes pinning different versions of one engine still coexist."
         },
         "providers_append": {
           "type": "array",
@@ -381,11 +381,11 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["uri"],
-      "description": "Reference to a Wasm plugin attached at a workspace-level socket. `uri` identifies the plugin (OCI reference, local path, or registry alias). `function` overrides the socket's default entry function (`mutate`, `validate`, `lint`, `import` per socket); when omitted, the socket's documented default applies. `with` carries optional attachment-time inputs the plugin reads.",
+      "description": "Reference to a Wasm plugin attached at a workspace-level socket. `uri` identifies the plugin (a Plugin entity's bare identity, a local path, or a registry alias). `function` overrides the socket's default entry function (`mutate`, `validate`, `lint`, `import` per socket); when omitted, the socket's documented default applies. `with` carries optional attachment-time inputs the plugin reads.",
       "properties": {
         "uri": {
           "type": "string",
-          "description": "Plugin identifier: OCI reference (e.g. `oci://hub.aggrega.ai/plugin/mutator/redact`), local filesystem path, or registry alias."
+          "description": "Plugin identifier: a Plugin entity's bare identity — the `<socket>/<name>` path, e.g. `mutator/redact` — a local filesystem path, or a registry alias."
         },
         "function": {
           "type": "string",
@@ -417,7 +417,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["target", "uri"],
-      "description": "Per-target provider-rendering plugin binding. `target` names the render target kind this entry selects an engine for (the bare engine name a Recipe binds through `spec.target`, e.g. `helm`). `uri` is the digest-free OCI identity of the serving provider-rendering plugin (matching a Plugin entity's `spec.plugin`, e.g. `oci://hub.aggrega.ai/plugin/provider/helm`), with an optional trailing `:version` in the same three forms as a version pin. `function` and `with` mirror the plugin-socket reference shape so the provider list is homogeneous with the other plugin sockets.",
+      "description": "Per-target provider-rendering plugin binding. `target` names the render target kind this entry selects an engine for (the bare engine name a Recipe binds through `spec.target`, e.g. `helm`). `uri` is the bare identity of the serving provider-rendering plugin (a Plugin entity's `metadata.name`, the `<socket>/<name>` path, e.g. `provider/helm`), with an optional trailing `:version` in the same three forms as a version pin. `function` and `with` mirror the plugin-socket reference shape so the provider list is homogeneous with the other plugin sockets.",
       "properties": {
         "target": {
           "type": "string",
@@ -425,7 +425,7 @@
         },
         "uri": {
           "type": "string",
-          "description": "Digest-free OCI identity of the serving provider-rendering plugin (matching a Plugin entity's `spec.plugin`, e.g. `oci://hub.aggrega.ai/plugin/provider/helm`), with an optional trailing `:version` (bare, exact `:1.0.0`, or major-compatible range `:^1.0.0`)."
+          "description": "Bare identity of the serving provider-rendering plugin (a Plugin entity's `metadata.name`, the `<socket>/<name>` path, e.g. `provider/helm`), with an optional trailing `:version` (bare, exact `:1.0.0`, or major-compatible range `:^1.0.0`)."
         },
         "function": {
           "type": "string",
