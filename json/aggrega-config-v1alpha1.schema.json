@@ -268,7 +268,7 @@
     },
     "signing": {
       "$ref": "#/$defs/SigningConfig",
-      "description": "Global signing-side defaults: the keyless service URLs, an optional keyed-key path, and the org-wide signing policy (`required` and `kinds`). A per-registry `signing` block overrides the endpoint defaults for that host; a CLI flag overrides both. The `required`/`kinds` policy is read only from this top-level block and composes monotonically across the config cascade. SECURITY: this block holds no secret material — the OIDC identity token is never a config field (it is supplied at runtime via flag or the ambient OIDC environment) and `key_path` is a path to a key file, never inline key bytes."
+      "description": "Top-level signing block, applying to all registries: the keyless service URLs, an optional keyed-key path, and the all-registries trust stance (`required` and `kinds`). A per-registry `signing` block overrides the endpoint defaults for that host and carries the same `required`/`kinds` stance scoped to that host — one name, one job, scope from placement. The top-level `required`/`kinds` policy composes monotonically across the config cascade. SECURITY: this block holds no secret material — the OIDC identity token is never a config field (it is supplied at runtime via flag or the ambient OIDC environment) and `key_path` is a path to a key file, never inline key bytes."
     }
   },
   "$defs": {
@@ -281,11 +281,6 @@
         "host": {
           "type": "string",
           "description": "The registry host these settings apply to (e.g. `hub.aggrega.ai`). Matched against the registry host of the push/pull target."
-        },
-        "requires_signatures": {
-          "type": "boolean",
-          "default": false,
-          "description": "When true, pushing an unsigned artifact to this registry is refused outright, and a push to this registry signs by default. There is no override flag: an unsigned push to a signature-requiring registry always halts. Defaults to false."
         },
         "trusted_identities": {
           "type": "array",
@@ -312,21 +307,21 @@
           "default": false,
           "description": "When true, a signature verification failure for this registry is downgraded to a warning rather than halting the pull. Verification still runs and the failure is reported; the pull proceeds. Defaults to false."
         },
-        "skip_verification": {
+        "skip_signature_verification": {
           "type": "boolean",
           "default": false,
-          "description": "When true, signature verification is skipped for this registry entirely. Scoped to one host, unlike the global `skip_signature_verification` opt-out. Defaults to false."
+          "description": "Per-host break-glass opt-out from signature verification — the same `skip_signature_verification` switch as the global one, scoped by placement to this host. It does NOT defeat the top-level `signing.required` policy: an org-required signature is still verified on this host regardless of this switch; only the global switch can disable that. Setting this together with a per-registry `signing.required` on the same host is the allowed-but-perverse push-required + pull-skip combination — the skip wins on the verify side, since a per-host required stance (unlike the top-level one) is not immune to the per-host skip. Defaults to false."
         },
         "signing": {
           "$ref": "#/$defs/SigningConfig",
-          "description": "Signing-side defaults scoped to this registry: the keyless service URLs and an optional keyed-key path. Overrides the global `signing` block for pushes to this host; a CLI flag overrides both."
+          "description": "This registry's signing block: the keyless service URLs, an optional keyed-key path, and the per-host trust stance. The endpoint fields override the global `signing` block for pushes to this host; a CLI flag overrides both. `required` and `kinds` read from placement — under a registry entry they scope the one trust stance to this host (publishing an in-scope unsigned artifact is refused, and consuming an unsigned one is refused), the same concept the top-level `signing` block carries for all registries."
         }
       }
     },
     "SigningConfig": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Signing-side endpoint defaults: the keyless service URLs and an optional pointer to a keyed-key file. The sign counterpart of the verify-side trust policy. SECURITY: holds no secret material — the OIDC identity token is never a config field (short-lived, supplied at runtime), and `key_path` is a path to a key file, never inline key bytes. This mirrors the verify side's asymmetry: an inline `public_key` is allowed there, but the sign side carries only a key PATH.",
+      "description": "A signing block: the keyless service URLs, an optional pointer to a keyed-key file, and the trust stance (`required` and `kinds`). Placed at the top level it applies to all registries; placed under a `registries[]` entry it applies to that host — every field reads its scope from placement. `required` is one trust stance covering both directions (an unsigned in-scope push is refused and an unsigned in-scope pull is refused). SECURITY: holds no secret material — the OIDC identity token is never a config field (short-lived, supplied at runtime), and `key_path` is a path to a key file, never inline key bytes. This mirrors the verify side's asymmetry: an inline `public_key` is allowed there, but the sign side carries only a key PATH.",
       "properties": {
         "fulcio_url": {
           "type": "string",
@@ -347,13 +342,13 @@
         "required": {
           "type": "boolean",
           "default": false,
-          "description": "Org-wide signing policy, honored on the top-level `signing` block only: when true, publishing an in-scope artifact kind requires a signature. It composes monotonically across the config cascade — any layer that sets it true makes it effective true, and no lower-precedence layer can turn it back off — so the policy cannot be removed by an ordinary config edit. Ignored on a per-registry `signing` block, where the per-host lever is `requires_signatures`. Defaults to false."
+          "description": "The one trust stance for this block's scope: when true, publishing an in-scope artifact kind requires a signature (an unsigned in-scope push is refused) AND consuming one requires a signature (an unsigned in-scope pull is refused). Scope reads from placement — on the top-level `signing` block it covers every registry; under a `registries[]` entry's `signing` block it covers that one host. One name, one job, both scopes. The top-level policy composes monotonically across the config cascade — any layer that sets it true makes it effective true, and no lower-precedence layer can turn it back off — so it cannot be removed by an ordinary config edit. Defaults to false."
         },
         "kinds": {
           "type": "array",
           "default": [],
           "items": { "type": "string" },
-          "description": "Scopes the org signing policy to specific artifact kinds, honored on the top-level `signing` block only. Empty or a single `all` entry means every pushable kind; otherwise the policy applies to exactly the listed kinds, matching the entity `kind:` value (e.g. `Component`, `Feature`, `Recipe`, `FeatureRecipe`, `SchemaLibrary`, `MappingLibrary`, `Aggregate`, `Plugin`). It composes as a union across the cascade — a layer can widen the scope but never shrink it. Ignored on a per-registry `signing` block."
+          "description": "Scopes `required` to specific artifact kinds. Empty or a single `all` entry means every signable kind; otherwise the stance applies to exactly the listed kinds, matching the entity `kind:` value (e.g. `Component`, `Feature`, `Recipe`, `FeatureRecipe`, `SchemaLibrary`, `MappingLibrary`, `Aggregate`, `Plugin`). On the top-level `signing` block it composes as a union across the cascade — a layer can widen the scope but never shrink it. Scope reads from placement, the same as `required`."
         }
       }
     },
