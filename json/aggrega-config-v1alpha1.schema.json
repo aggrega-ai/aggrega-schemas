@@ -139,14 +139,14 @@
         "providers": {
           "type": "array",
           "default": [],
-          "items": { "$ref": "#/$defs/ProviderRef" },
-          "description": "Per-target render-engine selections. Each entry binds one render target kind (the bare engine name a Recipe binds through `spec.target`, e.g. `helm` or `compose`) to the bare identity of the provider-rendering plugin that serves it (a Plugin entity's `metadata.name`, the `<socket>/<name>` path, e.g. `provider/helm`), with an optional trailing `:version` in the same three forms as a version pin (bare, exact `:1.0.0`, or major-compatible range `:^1.0.0`). This is the disambiguation and override surface for a federated catalog where more than one provider plugin serves the same target: the binding selects which publisher's plugin renders that target. When a target is served by exactly one provider plugin no entry is needed. Exactly one entry per target is permitted across the composed list; a duplicate target halts resolution loudly. Resolution is at pull: the pull records the resolved binding into the per-Release lockfile, and the build reads the lockfile — a change here after a pull is not adopted until the next pull, so build output is invariant to it (deterministic output). A missing entry for an unambiguously-served target is not an error; a missing entry for an ambiguously-served target halts the pull loudly, listing the candidate plugins. Version coexistence is preserved: the binding selects the plugin repository per target, and each Recipe's own `spec.target` version pin selects the version within that repository, so two Recipes pinning different versions of one engine still coexist."
+          "items": { "$ref": "#/$defs/PluginRef" },
+          "description": "Per-capability render-engine selections. Each entry binds one render-engine capability (the bare engine name a Recipe binds through `spec.capability`, e.g. `helm` or `compose`) to the bare identity of the provider-rendering plugin that serves it (a Plugin entity's `metadata.name`, the `<socket>/<name>` path, e.g. `provider/helm`), with an optional trailing `:version` in the same three forms as a version pin (bare, exact `:1.0.0`, or major-compatible range `:^1.0.0`). This is the disambiguation and override surface for a federated catalog where more than one provider plugin serves the same capability: the binding selects which publisher's plugin renders that capability. When a capability is served by exactly one provider plugin no entry is needed. Exactly one entry per capability is permitted across the composed list; a duplicate capability halts resolution loudly. Resolution is at pull: the pull records the resolved binding into the per-Release lockfile, and the build reads the lockfile — a change here after a pull is not adopted until the next pull, so build output is invariant to it (deterministic output). A missing entry for an unambiguously-served capability is not an error; a missing entry for an ambiguously-served capability halts the pull loudly, listing the candidate plugins. Version coexistence is preserved: the binding selects the plugin repository per capability, and each Recipe's own `spec.capability` version pin selects the version within that repository, so two Recipes pinning different versions of one engine still coexist."
         },
         "providers_append": {
           "type": "array",
           "default": [],
-          "items": { "$ref": "#/$defs/ProviderRef" },
-          "description": "Append-only addition to the effective `providers` list. Entries here are concatenated onto the resolved base list at each precedence layer, letting workspace and global configs compose provider bindings rather than shadow them. Same compose-don't-shadow semantic as `mutator_append`. The one-entry-per-target rule applies to the composed list, so an appended entry naming a target already bound by a lower layer halts resolution loudly."
+          "items": { "$ref": "#/$defs/PluginRef" },
+          "description": "Append-only addition to the effective `providers` list. Entries here are concatenated onto the resolved base list at each precedence layer, letting workspace and global configs compose provider bindings rather than shadow them. Same compose-don't-shadow semantic as `mutator_append`. The one-entry-per-capability rule applies to the composed list, so an appended entry naming a capability already bound by a lower layer halts resolution loudly."
         }
       }
     },
@@ -375,12 +375,15 @@
     "PluginRef": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["uri"],
-      "description": "Reference to a Wasm plugin attached at a workspace-level socket. `uri` identifies the plugin (a Plugin entity's bare identity, a local path, or a registry alias). `function` overrides the socket's default entry function (`mutate`, `validate`, `lint`, `import` per socket); when omitted, the socket's documented default applies. `with` carries optional attachment-time inputs the plugin reads.",
+      "description": "Reference to a Wasm plugin attached at a workspace-level socket — the one unified attachment shape every socket uses (the four cross-cutting sockets and the provider-rendering bindings alike). `uri` and `capability` together select the plugin: `uri` only is a direct attach (the plugin at that identity is attached verbatim — the cross-cutting sockets' path, since their plugins declare no served capabilities); `capability` only resolves the plugin serving that capability (the bare engine name a Recipe binds through `spec.capability`, e.g. `helm`); both together disambiguate — `capability` names what to resolve and `uri` selects which publisher's plugin serves it, by that plugin's bare identity, in a federated catalog where more than one plugin serves the capability. `function` overrides the socket's default entry function (`mutate`, `validate`, `lint`, `import` per socket); when omitted, the socket's documented default applies. `with` carries optional attachment-time inputs the plugin reads.",
       "properties": {
         "uri": {
           "type": "string",
-          "description": "Plugin identifier: a Plugin entity's bare identity — the `<socket>/<name>` path, e.g. `mutator/redact` — a local filesystem path, or a registry alias."
+          "description": "Plugin identifier: a Plugin entity's bare identity — the `<socket>/<name>` path, e.g. `mutator/redact` or `provider/helm` — a local filesystem path, or a registry alias. Optional: an entry may instead select the plugin by `capability`. An optional trailing `:version` pins the version in the same three forms as any version pin (bare, exact `:1.0.0`, or major-compatible range `:^1.0.0`)."
+        },
+        "capability": {
+          "type": "string",
+          "description": "The render-engine capability this entry selects a plugin for — the bare engine name a Recipe binds through `spec.capability` (e.g. `helm`, `compose`). Optional: an entry may instead attach a plugin directly by `uri`. The provider bindings use this to select which publisher's plugin serves a capability in a federated catalog; the cross-cutting sockets leave it empty and attach by `uri`."
         },
         "function": {
           "type": "string",
@@ -405,30 +408,6 @@
         "settings": {
           "type": "object",
           "description": "Free-form settings object handed to the plugin verbatim. The host does not interpret its shape; the plugin defines the keys it reads."
-        }
-      }
-    },
-    "ProviderRef": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["capability", "uri"],
-      "description": "Per-capability provider-rendering plugin binding. `capability` names the render-engine capability this entry selects an engine for (the bare engine name a Recipe binds through `spec.capability`, e.g. `helm`). `uri` is the bare identity of the serving provider-rendering plugin (a Plugin entity's `metadata.name`, the `<socket>/<name>` path, e.g. `provider/helm`), with an optional trailing `:version` in the same three forms as a version pin. `function` and `with` mirror the plugin-socket reference shape so the provider list is homogeneous with the other plugin sockets.",
-      "properties": {
-        "capability": {
-          "type": "string",
-          "description": "The render-engine capability this binding selects an engine for — the bare engine name a Recipe binds through `spec.capability` (e.g. `helm`, `compose`)."
-        },
-        "uri": {
-          "type": "string",
-          "description": "Bare identity of the serving provider-rendering plugin (a Plugin entity's `metadata.name`, the `<socket>/<name>` path, e.g. `provider/helm`), with an optional trailing `:version` (bare, exact `:1.0.0`, or major-compatible range `:^1.0.0`)."
-        },
-        "function": {
-          "type": "string",
-          "description": "Optional override for the provider plugin's default render entry function. When omitted, the plugin's documented default applies."
-        },
-        "with": {
-          "$ref": "#/$defs/PluginRefWith",
-          "description": "Optional attachment-time inputs the provider plugin reads. Both members are optional and socket-agnostic, so any socket may reuse this surface."
         }
       }
     },
