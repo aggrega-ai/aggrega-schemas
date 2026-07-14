@@ -171,6 +171,7 @@
             "properties": {
               "name": { "type": "string", "description": "Must match a key in top-level volumes: map." },
               "path": { "type": "string", "description": "Mount point inside the container." },
+              "subPath": { "type": "string", "description": "Mounts a single file or subdirectory from the volume at path, without masking other files in the target directory." },
               "readonly": { "type": "boolean", "default": false }
             }
           }
