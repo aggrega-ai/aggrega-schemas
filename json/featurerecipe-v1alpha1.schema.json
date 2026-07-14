@@ -81,15 +81,15 @@
     },
     "spec": {
       "type": "object",
-      "description": "The render-engine target binding, mapping, pipeline, and inject mapping for a FeatureRecipe. Carries the same three input kinds as a Recipe (sourced, synthesized, artifacts) plus the FeatureRecipe-only injectMapping; a pure-wiring FeatureRecipe declaring only target and implements is valid and renders nothing.",
+      "description": "The render-engine capability binding, mapping, pipeline, and inject mapping for a FeatureRecipe. Carries the same three input kinds as a Recipe (sourced, synthesized, artifacts) plus the FeatureRecipe-only injectMapping; a pure-wiring FeatureRecipe declaring only capability and implements is valid and renders nothing.",
       "required": [
-        "target",
+        "capability",
         "implements"
       ],
       "allOf": [
         {
           "if": {
-            "properties": { "target": { "const": "eval" } }
+            "properties": { "capability": { "const": "eval" } }
           },
           "then": {
             "properties": {
@@ -101,14 +101,14 @@
             "description": "The eval provider executes formatting in-memory. Fetching a 'source', a 'workload', or 'artifacts' is mathematically banned. injectMapping (a Phase-A delivery transform, not a rendering surface) remains allowed."
           },
           "else": {
-            "description": "Non-eval targets use the three-input-kinds model (sourced, synthesised, artifacts) plus the FeatureRecipe-only injectMapping. Unlike a Recipe, a FeatureRecipe is not required to declare any input kind: a pure-wiring FeatureRecipe (target + implements only) is valid and renders nothing — its effect is the uses-edge the Feature it implements carries. Pairing rules apply: valuesMapping requires source; and a workload: block requires a provider whose engine supports workload synthesis — a synthesized-mode FeatureRecipe bound to a non-synthesizing provider halts loudly at render time."
+            "description": "Non-eval capabilities use the three-input-kinds model (sourced, synthesised, artifacts) plus the FeatureRecipe-only injectMapping. Unlike a Recipe, a FeatureRecipe is not required to declare any input kind: a pure-wiring FeatureRecipe (capability + implements only) is valid and renders nothing — its effect is the uses-edge the Feature it implements carries. Pairing rules apply: valuesMapping requires source; and a workload: block requires a provider whose engine supports workload synthesis — a synthesized-mode FeatureRecipe bound to a non-synthesizing provider halts loudly at render time."
           }
         }
       ],
       "properties": {
-        "target": {
+        "capability": {
           "type": "string",
-          "description": "The explicit render-engine target this recipe binds to (e.g., 'helm', 'terraform', 'compose') — the provider engine kind that renders it."
+          "description": "The explicit render-engine capability this recipe binds to (e.g., 'helm', 'terraform', 'compose') — the provider engine kind that renders it."
         },
         "implements": {
           "type": "string",

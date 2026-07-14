@@ -411,12 +411,12 @@
     "ProviderRef": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["target", "uri"],
-      "description": "Per-target provider-rendering plugin binding. `target` names the render target kind this entry selects an engine for (the bare engine name a Recipe binds through `spec.target`, e.g. `helm`). `uri` is the bare identity of the serving provider-rendering plugin (a Plugin entity's `metadata.name`, the `<socket>/<name>` path, e.g. `provider/helm`), with an optional trailing `:version` in the same three forms as a version pin. `function` and `with` mirror the plugin-socket reference shape so the provider list is homogeneous with the other plugin sockets.",
+      "required": ["capability", "uri"],
+      "description": "Per-capability provider-rendering plugin binding. `capability` names the render-engine capability this entry selects an engine for (the bare engine name a Recipe binds through `spec.capability`, e.g. `helm`). `uri` is the bare identity of the serving provider-rendering plugin (a Plugin entity's `metadata.name`, the `<socket>/<name>` path, e.g. `provider/helm`), with an optional trailing `:version` in the same three forms as a version pin. `function` and `with` mirror the plugin-socket reference shape so the provider list is homogeneous with the other plugin sockets.",
       "properties": {
-        "target": {
+        "capability": {
           "type": "string",
-          "description": "The render target kind this binding selects an engine for — the bare engine name a Recipe binds through `spec.target` (e.g. `helm`, `compose`)."
+          "description": "The render-engine capability this binding selects an engine for — the bare engine name a Recipe binds through `spec.capability` (e.g. `helm`, `compose`)."
         },
         "uri": {
           "type": "string",
