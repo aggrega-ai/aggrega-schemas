@@ -186,6 +186,28 @@
             }
           }
         },
+        "commands": {
+          "type": "array",
+          "readOnly": true,
+          "description": "Derived from the plugin's `.wasm` describe() self-report at publish, recorded by the stamp step, verified at load; machine-owned, do not author. The top-level `aggrega <command>` verbs a CLI plugin contributes are read from the plugin's describe() self-report and recorded here in describe()-declared order, so the command surface a CLI plugin installs as is readable from the entity without loading the plugin. A non-CLI plugin contributes no commands and records an empty list. The host installs exactly this set; a recorded set that diverges from the plugin's describe() self-report halts at load, and publish refuses a set out of sync with the binary and directs the author to re-record it.",
+          "items": {
+            "type": "object",
+            "x-aggrega-go-type": "PluginCommand",
+            "required": ["name"],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The command verb the host registers — the `aggrega <name>` token an operator invokes, and the discriminator the host hands the plugin at invocation so a single plugin backing several commands routes on which command was called."
+              },
+              "description": {
+                "type": "string",
+                "description": "The command's one-line short-help text, shown in the command listing and help output. Documentation only; the host does not act on it."
+              }
+            }
+          }
+        },
         "provider": {
           "type": "object",
           "x-aggrega-go-type": "*PluginProvider",
