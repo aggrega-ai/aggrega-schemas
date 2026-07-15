@@ -106,9 +106,6 @@ var WasmPolicyValidatorV1alpha1 string
 //go:embed json/wasm-provider-v1alpha1.schema.json
 var WasmProviderV1alpha1 string
 
-//go:embed json/wasm-search-v1alpha1.schema.json
-var WasmSearchV1alpha1 string
-
 //go:embed json/wasm-frp-step-v1alpha1.schema.json
 var WasmFrpStepV1alpha1 string
 
