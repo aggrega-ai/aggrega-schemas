@@ -163,7 +163,7 @@
         },
         "subDirectory": {
           "type": "string",
-          "description": "Component-level sub-path override appended to the parent boundary's directory. If omitted on both boundary and component, defaults to '{{ .provider }}'. Set to '.' or '' to disable sub-directory generation."
+          "description": "Component-level sub-path override appended to the parent boundary's directory. If omitted on both boundary and component, defaults to '{{ .capability }}'. Set to '.' or '' to disable sub-directory generation."
         },
         "annotations": {
           "type": "object",
@@ -304,11 +304,11 @@
         },
         "directory": {
           "type": "string",
-          "description": "Physical output path for GitOps artifact generation. Supports Go template variables ({{ .provider }}, {{ .boundary_name }}, {{ .parameters.X }}). Combined with subDirectory via filepath.Join to produce the final artifact path."
+          "description": "Physical output path for GitOps artifact generation. Supports Go template variables ({{ .capability }}, {{ .boundary_name }}, {{ .parameters.X }}). Combined with subDirectory via filepath.Join to produce the final artifact path."
         },
         "subDirectory": {
           "type": "string",
-          "description": "Boundary-level sub-path appended to directory. If omitted on both boundary and component, defaults to '{{ .provider }}' for CI/CD auto-partitioning. Set to '.' or '' to disable."
+          "description": "Boundary-level sub-path appended to directory. If omitted on both boundary and component, defaults to '{{ .capability }}' for CI/CD auto-partitioning. Set to '.' or '' to disable."
         },
         "syncWave": {
           "type": "integer",

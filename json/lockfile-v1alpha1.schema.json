@@ -147,7 +147,7 @@
     "providers": {
       "type": "array",
       "default": [],
-      "description": "Resolved per-target render-engine selections. Each entry pins one render target kind (e.g. `helm`) to the digest-free OCI identity of the provider-rendering plugin that renders it, resolved at pull from the `.aggrega-config.yaml` `plugins.providers` list (when the target is ambiguously served) or from the sole serving plugin (when unambiguous). Build reads this section — never `.aggrega-config.yaml` — to select the render engine, so build output is invariant to workspace-config changes made after the pull. The plugin's content digest is NOT duplicated here: it is single-sourced in the `plugins` and `entities` sections, which this record points into by identity. Version coexistence is preserved: this record selects the plugin repository per target; the concrete versions live in `entities` (one entry per resolved plugin version), and each Recipe's `spec.target` version pin selects among them at render.",
+      "description": "Resolved per-target render-engine selections. Each entry pins one render target kind (e.g. `helm`) to the digest-free OCI identity of the provider-rendering plugin that renders it, resolved at pull from the `.aggrega-config.yaml` `plugins.providers` list (when the target is ambiguously served) or from the sole serving plugin (when unambiguous). Build reads this section — never `.aggrega-config.yaml` — to select the render engine, so build output is invariant to workspace-config changes made after the pull. The plugin's content digest is NOT duplicated here: it is single-sourced in the `plugins` and `entities` sections, which this record points into by identity. Version coexistence is preserved: this record selects the plugin repository per target; the concrete versions live in `entities` (one entry per resolved plugin version), and each Recipe's `spec.capability` version pin selects among them at render.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -159,7 +159,7 @@
           },
           "target": {
             "type": "string",
-            "description": "The render target kind this binding selects an engine for — the bare engine name a Recipe binds through `spec.target` (e.g. `helm`, `compose`)."
+            "description": "The render target kind this binding selects an engine for — the bare engine name a Recipe binds through `spec.capability` (e.g. `helm`, `compose`)."
           }
         }
       }
