@@ -98,7 +98,7 @@
         "mappings": {
           "type": "object",
           "x-aggrega-go-type": "ManifestMappings",
-          "description": "Maps abstract interfaces to concrete implementations. Two authoring shapes are accepted: (a) the flat shape, with reserved top-level keys 'components' and 'features' mapping component-type / feature-type URIs directly to Recipe / FeatureRecipe URIs (recommended; provider-agnostic at the Manifest layer — provider determination flows from each resolved Recipe's spec.provider at orchestrator-time); (b) the legacy per-provider shape, with top-level keys naming providers (e.g., 'helm', 'compose'), each provider section carrying its own components / features sub-sections. The flat shape takes precedence when both are present in the same Manifest.",
+          "description": "Maps abstract interfaces to concrete implementations. Two authoring shapes are accepted: (a) the flat shape, with reserved top-level keys 'components' and 'features' mapping component-type / feature-type URIs directly to Recipe / FeatureRecipe URIs (recommended; capability-agnostic at the Manifest layer — capability determination flows from each resolved Recipe's spec.capability at orchestrator-time); (b) the legacy per-provider shape, with top-level keys naming providers (e.g., 'helm', 'compose'), each provider section carrying its own components / features sub-sections. The flat shape takes precedence when both are present in the same Manifest.",
           "properties": {
             "components": {
               "$ref": "#/$defs/mapping_tier",

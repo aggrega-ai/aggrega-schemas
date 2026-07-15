@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/ir-v1alpha1.schema.json",
-  "title": "Aggrega Target-Agnostic Graph (IR)",
+  "title": "Aggrega Capability-Agnostic Graph (IR)",
   "description": "The flattened, fully resolved 1-dimensional graph emitted by the Topology Builder.",
   "type": "object",
   "required": [

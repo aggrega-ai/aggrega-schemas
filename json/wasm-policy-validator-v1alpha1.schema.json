@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/wasm-policy-validator-v1alpha1.schema.json",
   "title": "Aggrega Wasm Policy Validator Socket",
-  "description": "The JSON wire shapes the policy-validator.wasm plugin socket consumes (PolicyValidatorInput for the IR stage, RenderPolicyValidatorInput for the render stage) and emits (PolicyValidatorOutput). The policy validator runs during compilation; a deny verdict halts the build with a build-time diagnostic. The IR-stage input graph is the full target-agnostic IR graph, referenced from ir-v1alpha1.schema.json rather than re-declared here, so the policy plugin sees the same node, edge, and attachment detail the compiler does; plugin authors track the IR schema version. The render-stage input carries the rendered output files instead of the graph. The wire shapes are co-canonical with the host types in aggrega-cli (the IR graph) and the generated codec in aggrega-abi.",
+  "description": "The JSON wire shapes the policy-validator.wasm plugin socket consumes (PolicyValidatorInput for the IR stage, RenderPolicyValidatorInput for the render stage) and emits (PolicyValidatorOutput). The policy validator runs during compilation; a deny verdict halts the build with a build-time diagnostic. The IR-stage input graph is the full capability-agnostic IR graph, referenced from ir-v1alpha1.schema.json rather than re-declared here, so the policy plugin sees the same node, edge, and attachment detail the compiler does; plugin authors track the IR schema version. The render-stage input carries the rendered output files instead of the graph. The wire shapes are co-canonical with the host types in aggrega-cli (the IR graph) and the generated codec in aggrega-abi.",
   "oneOf": [
     { "$ref": "#/$defs/PolicyValidatorInput" },
     { "$ref": "#/$defs/RenderPolicyValidatorInput" },
@@ -21,7 +21,7 @@
         "graph": {
           "$ref": "ir-v1alpha1.schema.json#/$defs/IRGraph",
           "x-aggrega-go-type": "IRGraph",
-          "description": "The full target-agnostic IR graph, single-sourced from ir-v1alpha1.schema.json. The policy plugin reasons over the complete node/edge/attachment detail rather than a narrow projection."
+          "description": "The full capability-agnostic IR graph, single-sourced from ir-v1alpha1.schema.json. The policy plugin reasons over the complete node/edge/attachment detail rather than a narrow projection."
         },
         "precalculated_paths": {
           "type": "array",
