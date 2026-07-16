@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/plugin-v1alpha1.schema.json",
   "title": "Aggrega Core (Plugin)",
-  "description": "A Wasm plugin: a WebAssembly module published to an OCI registry and identified by its `metadata.name` — the `<socket>/<name>` path — declaring the socket type it implements, the ABI version it targets, an optional signature pointer, and an optional runtime block. The entity and its `.wasm` publish as one OCI manifest tagged by metadata.version — the entity YAML as the manifest's config blob, the `.wasm` as an inline layer, signed once. Identity is `metadata.name` plus the entity's metadata.version — the same shape every other entity carries; the `.wasm` location is derived from that identity plus the configured registry, and the resolved content digest lives in the lockfile, not in the entity. The closure records the digest and the per-registry trust policy verifies the artifact's signature at pull. The compiler is blind to the plugin's behavior — it routes the reference; the WebAssembly runtime executes the bytes.",
+  "description": "A Wasm plugin: a WebAssembly module published to an OCI registry and identified by its `metadata.pluginType` — the socket it implements — plus its bare `metadata.name`, declaring the ABI version it targets, an optional signature pointer, and an optional runtime block. The entity and its `.wasm` publish as one OCI manifest tagged by metadata.version — the entity YAML as the manifest's config blob, the `.wasm` as an inline layer, signed once. Identity is the `metadata.pluginType`/`metadata.name` coordinate plus the entity's metadata.version; the `.wasm` location is derived from that coordinate plus the configured registry, and the resolved content digest lives in the lockfile, not in the entity. The closure records the digest and the per-registry trust policy verifies the artifact's signature at pull. The compiler is blind to the plugin's behavior — it routes the reference; the WebAssembly runtime executes the bytes.",
   "type": "object",
   "required": [
     "apiVersion",
@@ -24,7 +24,8 @@
       "type": "object",
       "required": [
         "name",
-        "version"
+        "version",
+        "pluginType"
       ],
       "properties": {
         "name": {
@@ -35,6 +36,11 @@
           "type": "string",
           "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
           "description": "Strict Semantic Versioning of the Plugin entity (e.g., 1.0.0)."
+        },
+        "pluginType": {
+          "type": "string",
+          "enum": ["provider", "linter", "frp_step", "mutator", "policy", "cli"],
+          "description": "The socket type this plugin implements. A plugin implements exactly one socket type, drawn from the plugin-type taxonomy the runtime recognises: `provider` (renders IR nodes into provider-native artifacts), `linter` (inspects authored content and raises diagnostics), `frp_step` (a feature-recipe-pipeline step that transforms IR within a pipeline), `mutator` (auto-tags topology-graph node labels at Step 2 via JSON Patch), `policy` (evaluates the full IR graph at Step 4 and halts the build on a failed rule), `cli` (contributes a runtime `aggrega <cmd>` subcommand an operator invokes at the command line — a runtime socket, distinct from the compile-time render and pipeline sockets)."
         },
         "description": {
           "type": "string",
@@ -82,17 +88,11 @@
     "spec": {
       "type": "object",
       "required": [
-        "pluginType",
         "abiVersion"
       ],
       "additionalProperties": false,
-      "description": "The socket type the plugin implements, the ABI version it targets, an optional signature pointer, and an optional runtime block. The plugin's `.wasm` location is derived from its identity — `metadata.name` (the `<socket>/<name>` path) plus the configured registry — not carried in the spec.",
+      "description": "The ABI version the plugin targets, an optional signature pointer, and an optional runtime block. The plugin's `.wasm` location is derived from the plugin's identity — its `metadata.pluginType` (the socket) plus its bare `metadata.name` — and the configured registry; it is not carried in the spec.",
       "properties": {
-        "pluginType": {
-          "type": "string",
-          "enum": ["provider", "linter", "frp_step", "mutator", "policy-validator", "cli"],
-          "description": "The socket type this plugin implements. A plugin implements exactly one socket type, drawn from the plugin-type taxonomy the runtime recognises: `provider` (renders IR nodes into provider-native artifacts), `linter` (inspects authored content and raises diagnostics), `frp_step` (a feature-recipe-pipeline step that transforms IR within a pipeline), `mutator` (auto-tags topology-graph node labels at Step 2 via JSON Patch), `policy-validator` (evaluates the full IR graph at Step 4 and halts the build on a failed rule), `cli` (contributes a runtime `aggrega <cmd>` subcommand an operator invokes at the command line — a runtime socket, distinct from the compile-time render and pipeline sockets)."
-        },
         "abiVersion": {
           "type": "string",
           "enum": ["v1alpha1"],
@@ -100,7 +100,7 @@
         },
         "capabilities": {
           "type": "array",
-          "description": "The capabilities this plugin serves, interpreted per pluginType. A `provider` plugin lists the render-engine capabilities — provider engine names such as `helm` or `compose` — whose output shape it renders; an `frp_step` plugin lists the provider capabilities its pipeline step is compatible with; the cross-cutting sockets (`linter`, `mutator`, `policy-validator`) leave it empty. A plugin is generic across artifacts that share a capability's output shape, not across all capabilities; this list is an explicit, tested-compatibility claim. Entries preserve author order. The runtime consults the list when a pipeline step touches a scope: the provider rendering that scope's documents must appear here, or the build halts. An empty or absent list declares no capability claim, so it matches nothing and the runtime halts any pipeline step that uses the plugin.",
+          "description": "The capabilities this plugin serves, interpreted per pluginType. A `provider` plugin lists the render-engine capabilities — provider engine names such as `helm` or `compose` — whose output shape it renders; an `frp_step` plugin lists the provider capabilities its pipeline step is compatible with; the cross-cutting sockets (`linter`, `mutator`, `policy`) leave it empty. A plugin is generic across artifacts that share a capability's output shape, not across all capabilities; this list is an explicit, tested-compatibility claim. Entries preserve author order. The runtime consults the list when a pipeline step touches a scope: the provider rendering that scope's documents must appear here, or the build halts. An empty or absent list declares no capability claim, so it matches nothing and the runtime halts any pipeline step that uses the plugin.",
           "items": { "type": "string" }
         },
         "signature": {
@@ -212,7 +212,7 @@
           "type": "object",
           "x-aggrega-go-type": "*PluginProvider",
           "additionalProperties": false,
-          "description": "The provider-socket metadata for a `pluginType: provider` plugin: how its rendering engine translates the aggrega.ai/v1alpha1 Workload kind and which platform-native annotations the engine reads. Present only on provider-rendering plugins; absent on `linter`, `frp_step`, `mutator`, and `policy-validator` plugins, and on provider plugins whose engine renders only sourced or artifact content (no Workload synthesis).",
+          "description": "The provider-socket metadata for a `pluginType: provider` plugin: how its rendering engine translates the aggrega.ai/v1alpha1 Workload kind and which platform-native annotations the engine reads. Present only on provider-rendering plugins; absent on `linter`, `frp_step`, `mutator`, and `policy` plugins, and on provider plugins whose engine renders only sourced or artifact content (no Workload synthesis).",
           "properties": {
             "workloadSchema": {
               "type": "string",

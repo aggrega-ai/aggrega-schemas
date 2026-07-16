@@ -100,8 +100,8 @@ var WasmLinterV1alpha1 string
 //go:embed json/wasm-mutator-v1alpha1.schema.json
 var WasmMutatorV1alpha1 string
 
-//go:embed json/wasm-policy-validator-v1alpha1.schema.json
-var WasmPolicyValidatorV1alpha1 string
+//go:embed json/wasm-policy-v1alpha1.schema.json
+var WasmPolicyV1alpha1 string
 
 //go:embed json/wasm-provider-v1alpha1.schema.json
 var WasmProviderV1alpha1 string

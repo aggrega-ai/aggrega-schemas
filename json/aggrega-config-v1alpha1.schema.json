@@ -104,7 +104,7 @@
           "type": "array",
           "default": [],
           "items": { "$ref": "#/$defs/PluginRef" },
-          "description": "Policy-validator-socket plugins. Default entry function: `validate`."
+          "description": "Policy-socket plugins. Default entry function: `validate`."
         },
         "policy_append": {
           "type": "array",

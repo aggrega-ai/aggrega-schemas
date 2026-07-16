@@ -1,17 +1,17 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aggrega.ai/schemas/wasm-policy-validator-v1alpha1.schema.json",
-  "title": "Aggrega Wasm Policy Validator Socket",
-  "description": "The JSON wire shapes the policy-validator.wasm plugin socket consumes (PolicyValidatorInput for the IR stage, RenderPolicyValidatorInput for the render stage) and emits (PolicyValidatorOutput). The policy validator runs during compilation; a deny verdict halts the build with a build-time diagnostic. The IR-stage input graph is the full capability-agnostic IR graph, referenced from ir-v1alpha1.schema.json rather than re-declared here, so the policy plugin sees the same node, edge, and attachment detail the compiler does; plugin authors track the IR schema version. The render-stage input carries the rendered output files instead of the graph. The wire shapes are co-canonical with the host types in aggrega-cli (the IR graph) and the generated codec in aggrega-abi.",
+  "$id": "https://aggrega.ai/schemas/wasm-policy-v1alpha1.schema.json",
+  "title": "Aggrega Wasm Policy Socket",
+  "description": "The JSON wire shapes the policy.wasm plugin socket consumes (PolicyInput for the IR stage, RenderPolicyInput for the render stage) and emits (PolicyOutput). The policy validator runs during compilation; a deny verdict halts the build with a build-time diagnostic. The IR-stage input graph is the full capability-agnostic IR graph, referenced from ir-v1alpha1.schema.json rather than re-declared here, so the policy plugin sees the same node, edge, and attachment detail the compiler does; plugin authors track the IR schema version. The render-stage input carries the rendered output files instead of the graph. The wire shapes are co-canonical with the host types in aggrega-cli (the IR graph) and the generated codec in aggrega-abi.",
   "oneOf": [
-    { "$ref": "#/$defs/PolicyValidatorInput" },
-    { "$ref": "#/$defs/RenderPolicyValidatorInput" },
-    { "$ref": "#/$defs/PolicyValidatorOutput" }
+    { "$ref": "#/$defs/PolicyInput" },
+    { "$ref": "#/$defs/RenderPolicyInput" },
+    { "$ref": "#/$defs/PolicyOutput" }
   ],
   "$defs": {
-    "PolicyValidatorInput": {
+    "PolicyInput": {
       "type": "object",
-      "description": "The payload Step 4 hands to the policy-validator socket: the full IR graph (the same shape the Topology Builder emits) plus the precalculated routing paths the analyzer enumerates alongside.",
+      "description": "The payload Step 4 hands to the policy socket: the full IR graph (the same shape the Topology Builder emits) plus the precalculated routing paths the analyzer enumerates alongside.",
       "required": [
         "graph",
         "precalculated_paths"
@@ -45,9 +45,9 @@
         }
       }
     },
-    "PolicyValidatorOutput": {
+    "PolicyOutput": {
       "type": "object",
-      "description": "The response shape the policy-validator plugin emits: the verdicts that fired during evaluation, one PolicyResult per fired verdict. An allowing rule emits nothing, so an empty results array means no verdicts fired.",
+      "description": "The response shape the policy plugin emits: the verdicts that fired during evaluation, one PolicyResult per fired verdict. An allowing rule emits nothing, so an empty results array means no verdicts fired.",
       "required": [
         "results"
       ],
@@ -62,9 +62,9 @@
         }
       }
     },
-    "RenderPolicyValidatorInput": {
+    "RenderPolicyInput": {
       "type": "object",
-      "description": "The payload the render stage hands to a policy-validator socket that declares the render stage: the rendered output files the policy reasons over. The render stage carries the rendered artifacts instead of the IR graph.",
+      "description": "The payload the render stage hands to a policy socket that declares the render stage: the rendered output files the policy reasons over. The render stage carries the rendered artifacts instead of the IR graph.",
       "required": [
         "artifacts"
       ],

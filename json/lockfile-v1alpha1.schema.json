@@ -95,7 +95,7 @@
         "properties": {
           "uri": {
             "type": "string",
-            "description": "Bare identity of the Wasm plugin's `.wasm` artifact — the `<socket>/<name>` path (e.g. `policy-validator/aggrega-security-baseline`). The first segment is the plugin's socket (`linter`, `policy-validator`, `mutator`, `formatter`, `importer`, `security`, `pipeline`, `provider`); the segment after that is the plugin name. Socket + name together form the plugin's identity — same name in different sockets is a different plugin. The physical fetch location is derived from this identity plus the configured registry, never carried in the lockfile."
+            "description": "Bare identity of the Wasm plugin's `.wasm` artifact — the `<socket>/<name>` path (e.g. `policy/aggrega-security-baseline`). The first segment is the plugin's socket (`linter`, `policy`, `mutator`, `formatter`, `importer`, `security`, `pipeline`, `provider`); the segment after that is the plugin name. Socket + name together form the plugin's identity — same name in different sockets is a different plugin. The physical fetch location is derived from this identity plus the configured registry, never carried in the lockfile."
           },
           "resolved_version": {
             "type": "string",
