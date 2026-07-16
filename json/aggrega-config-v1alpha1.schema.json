@@ -147,6 +147,12 @@
           "default": [],
           "items": { "$ref": "#/$defs/PluginRef" },
           "description": "Append-only addition to the effective `providers` list. Entries here are concatenated onto the resolved base list at each precedence layer, letting workspace and global configs compose provider bindings rather than shadow them. Same compose-don't-shadow semantic as `mutator_append`. The one-entry-per-capability rule applies to the composed list, so an appended entry naming a capability already bound by a lower layer halts resolution loudly."
+        },
+        "cli": {
+          "type": "array",
+          "default": [],
+          "items": { "$ref": "#/$defs/CLIPluginRef" },
+          "description": "CLI-extension plugins installed as top-level `aggrega` commands. Each entry pins one CLI plugin by its resolved, version-pinned artifact reference and the content digest of the guest bytes that reference resolved to at install time. Unlike the four cross-cutting socket lists, whose base list whole-replaces across the config cascade, the CLI list composes: a CLI plugin in the global config registers its command(s) in every workspace, one in a workspace config registers only in that project, and both register together — so it needs no `_append` companion. The command names and help each plugin contributes come from the plugin's own self-description, read from the on-disk describe cache keyed by `digest` (a load of the guest is the fallback on a cold cache); the list carries only the pin. At command invocation the resolved bytes are re-hashed and compared to `digest`; a mismatch halts the command loudly and instructs a re-pin, so a plugin whose bytes changed since it was pinned never runs unnoticed."
         }
       }
     },
@@ -392,6 +398,22 @@
         "with": {
           "$ref": "#/$defs/PluginRefWith",
           "description": "Optional attachment-time inputs the plugin reads. Both members are optional and socket-agnostic, so any socket may reuse this surface."
+        }
+      }
+    },
+    "CLIPluginRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uri", "digest"],
+      "description": "A pinned CLI-extension plugin installed as a top-level `aggrega` command: the resolved, version-pinned artifact reference the command resolves and runs, and the content digest of the guest bytes that reference resolved to at install time. Together they pin exactly which bytes the command executes; the digest also keys the describe cache that supplies the command's names and help without loading the guest.",
+      "properties": {
+        "uri": {
+          "type": "string",
+          "description": "The resolved, version-pinned artifact reference the command resolves and runs, e.g. `oci://hub.aggrega.ai/plugin/cli/<name>:1.2.0`, pinned at install."
+        },
+        "digest": {
+          "type": "string",
+          "description": "The hex SHA-256 content digest of the guest `.wasm` bytes the reference resolved to at install. It pins the exact bytes the command runs — a later resolution whose bytes hash differently halts the command — and is the key into the describe cache that renders the command's help without loading the guest."
         }
       }
     },
