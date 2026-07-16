@@ -288,6 +288,10 @@
           "type": "string",
           "description": "The registry host these settings apply to (e.g. `hub.aggrega.ai`). Matched against the registry host of the push/pull target."
         },
+        "name": {
+          "type": "string",
+          "description": "Optional friendly alias for this registry. The host is the identity; `name` is a convenience selector that resolves to this entry's host wherever a registry is named (for example `--registry`). An alias must be unique across entries."
+        },
         "trusted_identities": {
           "type": "array",
           "default": [],
