@@ -86,7 +86,7 @@
     "plugins": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Workspace-level Wasm plugin attachments. Each socket (mutator, policy, linter, importer) takes an array of plugin references; the build invokes each plugin's documented entry function per its socket contract. The `providers` list binds render targets to the provider-rendering plugins that serve them.",
+      "description": "Workspace-level Wasm plugin attachments. Each socket (mutator, policy, linter, importer) takes an array of plugin references; the build invokes each plugin's documented entry function per its socket contract. The `providers` list binds capabilities to the provider-rendering plugins that serve them.",
       "properties": {
         "mutator": {
           "type": "array",
