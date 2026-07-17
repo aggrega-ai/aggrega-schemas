@@ -84,6 +84,26 @@
       "description": "MappingLibrary entries the closure references via Recipe / FeatureRecipe `valuesMapping: { $import: ... }` sites. Each entry's `consumers` list records which catalog entity references which `<entry-name>` fragments of the library — a structured record that makes library-version-bump impact diffs traceable without re-running closure.",
       "items": { "$ref": "#/$defs/LibraryEntry" }
     },
+    "mutators": {
+      "type": "array",
+      "default": [],
+      "description": "Resolved mutator-socket attachments, in authored order. The mutator rewrites the IR and therefore shapes the rendered output bytes, so the attachment set — the ordered list, plus per attachment the plugin coordinate and export function — is a byte-determining input pinned here. Build reads this section — never `.aggrega-config.yaml` — to reconstruct the mutator set, order, and export function, so build output is invariant to a `plugins.mutator` change made after the pull (adopted only on the next pull). Order is SEMANTIC: the runner applies attachments in list order, so unlike the URI-sorted `plugins` / `providers` sections this list is never reordered. The plugin's content digest is NOT duplicated here: it is single-sourced in the `plugins` and `entities` sections, which this record points into by identity.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["plugin"],
+        "properties": {
+          "plugin": {
+            "type": "string",
+            "description": "Resolved plugin coordinate of the mutator — a Plugin entity's `<pluginType>/<name>` identity (e.g. `mutator/tag-injector`). Joins by identity into the `plugins` and `entities` sections for the pinned digest and version set."
+          },
+          "function": {
+            "type": "string",
+            "description": "Export override the attachment names. Absent selects the mutator socket's default `mutate` export."
+          }
+        }
+      }
+    },
     "plugins": {
       "type": "array",
       "default": [],
