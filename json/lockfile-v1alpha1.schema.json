@@ -151,15 +151,15 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["target", "plugin"],
+        "required": ["capability", "plugin"],
         "properties": {
+          "capability": {
+            "type": "string",
+            "description": "The capability this binding selects an engine for — the bare engine name a Recipe binds through `spec.capability` (e.g. `helm`, `compose`)."
+          },
           "plugin": {
             "type": "string",
             "description": "Bare identity of the resolved provider-rendering plugin (a Plugin entity's `metadata.name`, the `<socket>/<name>` path, e.g. `provider/helm`). Joins by identity into the `plugins` and `entities` sections for the pinned digest and version set."
-          },
-          "target": {
-            "type": "string",
-            "description": "The capability this binding selects an engine for — the bare engine name a Recipe binds through `spec.capability` (e.g. `helm`, `compose`)."
           }
         }
       }
