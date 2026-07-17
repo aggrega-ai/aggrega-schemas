@@ -1,0 +1,316 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/wasm-describe-v1alpha1.schema.json",
+  "title": "Aggrega Wasm Describe Socket",
+  "description": "The JSON wire shape every Wasm plugin returns from its describe() export (PluginDescriptor). describe() is the plugin's self-declaration, read once by the host when it loads the plugin: the ABI version the guest binds against, the plugin type, the exports it offers with each export's capability declaration, a plugin-level capability self-report, an optional provider render-behavior contract, optional CLI commands, an optional settings schema, and optional authorship metadata. One shape covers every plugin type — provider, linter, feature-recipe-pipeline step, mutator, policy, and CLI. The host reads describe() before dispatching any other export and refuses a descriptor it cannot admit rather than mis-invoking the plugin at dispatch.",
+  "oneOf": [
+    { "$ref": "#/$defs/PluginDescriptor" }
+  ],
+  "$defs": {
+    "PluginDescriptor": {
+      "type": "object",
+      "description": "A plugin's complete self-declaration, returned from describe() and read once at load. It carries the ABI-compatibility handshake, the plugin type, the offered exports, and the optional per-type surfaces (a provider's render-behavior contract, a CLI plugin's commands, a settings schema, authorship metadata).",
+      "required": [
+        "abi_version",
+        "plugin_type",
+        "exports"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "abi_version": {
+          "type": "string",
+          "const": "v1alpha1",
+          "description": "The plugin ABI the guest binds against. The host accepts exactly this version; a guest built against any other ABI is refused at load rather than mis-invoked at dispatch."
+        },
+        "plugin_type": {
+          "type": "string",
+          "enum": ["provider", "linter", "frp_step", "mutator", "policy", "cli"],
+          "description": "The plugin's kind. It selects the minimum-export rule the host validates and, together with the export name, the default input-delivery pattern."
+        },
+        "capabilities": {
+          "type": "array",
+          "description": "What the plugin serves, interpreted per plugin type: for a provider, the render-engine capability names (such as helm or compose) whose output shape it renders; for a feature-recipe-pipeline step, the provider capabilities its step is compatible with. The cross-cutting sockets leave it empty. Entries are in declared order and are an explicit, tested-compatibility claim. An absent or empty list declares no capability claim.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "exports": {
+          "type": "array",
+          "description": "The exports the plugin offers, in declared order. The host validates that the per-type minimum export is present and binds the per-export host surface before invoking each export.",
+          "items": {
+            "$ref": "#/$defs/PluginExport"
+          }
+        },
+        "contract": {
+          "$ref": "#/$defs/ProviderContract",
+          "x-aggrega-go-type": "*ProviderContract",
+          "description": "The provider's render-behavior self-report — the input kinds it renders, how it assembles a dispatch group's per-node output, the artifact-template delimiter pair it applies, and any source-file restriction. It describes the provider as a whole rather than any one export. Absent for a plugin that declares no render-behavior contract."
+        },
+        "description": {
+          "type": "string",
+          "description": "The plugin's own one-line human-readable description of what it does, distinct from a per-export description and from the entity's metadata description. It is informational; the host neither validates nor acts on it."
+        },
+        "commands": {
+          "type": "array",
+          "description": "The top-level aggrega command verbs a CLI plugin contributes, each with its own short-help line. One CLI plugin may contribute several commands; the host registers one command per entry and routes the resolved command name to the guest at invocation. A non-CLI plugin leaves it empty.",
+          "items": {
+            "$ref": "#/$defs/PluginCLICommand"
+          }
+        },
+        "stage": {
+          "type": "string",
+          "enum": ["ir", "render"],
+          "description": "The compilation stage a policy plugin evaluates at: ir evaluates the provider-agnostic IR graph, render evaluates the rendered provider-native artifacts. It is meaningful for the policy plugin type only; an absent stage defaults to ir. Other plugin types leave it empty."
+        },
+        "settings_schema": {
+          "type": "object",
+          "x-aggrega-go-type": "json.RawMessage",
+          "description": "An optional JSON Schema document a plugin declares to type the operator-supplied settings its attachment carries. When present, the host compiles it at load and validates the attachment's settings against it at dispatch before invoking the plugin; settings that do not conform halt the build. When absent, the plugin declares no shape and settings pass through verbatim. The schema is the plugin's own free-form declaration; the host runs generic JSON Schema validation against it and does not interpret the settings' meaning."
+        },
+        "metadata": {
+          "$ref": "#/$defs/PluginDescriptorMeta",
+          "x-aggrega-go-type": "*PluginDescriptorMeta",
+          "description": "Optional authorship and build-provenance information. It carries no behavioral contract — the host neither validates nor acts on it."
+        }
+      }
+    },
+    "PluginExport": {
+      "type": "object",
+      "description": "One export a plugin offers, as declared in describe(). The host dispatches to the export by its name and binds the least-privilege host surface the export's declared host functions require.",
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The export's ABI name — for example render_node, assemble_boundary, lint_rules, or step. The host dispatches to the export by this name."
+        },
+        "input_pattern": {
+          "type": "string",
+          "enum": ["a", "b"],
+          "description": "How the host delivers the export's input: b delivers the full payload inline so the guest renders from the payload alone; a delivers a small payload the guest enriches via host functions. An export that omits this field takes its plugin-type and name default."
+        },
+        "host_functions": {
+          "type": "array",
+          "description": "The host function names this export imports. Every name must be in the host-function allowlist. The declaration is authoritative and is cross-checked at load against the functions the guest actually imports from its module, so it cannot drift from the functions the guest really calls.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional human-readable text describing the export. It is documentation for catalog readers; the host neither validates nor acts on it."
+        },
+        "stability": {
+          "type": "string",
+          "enum": ["stable", "experimental", "deprecated"],
+          "description": "The export's stability level. An omitted value carries no stability claim."
+        },
+        "operates": {
+          "type": "string",
+          "enum": ["patch", "emit"],
+          "description": "The pipeline operation this export performs: patch modifies an existing rendered document, emit adds a new document. The value is shape-checked at load; the runtime reads it when dispatching the step."
+        },
+        "scope": {
+          "type": "string",
+          "enum": ["own", "host"],
+          "description": "The document root this export operates on: own is the node's own rendered documents, host is the documents of the component a component-scope feature recipe is attached to. The value is shape-checked at load; the runtime resolves the scope's documents when dispatching."
+        },
+        "selector": {
+          "type": "string",
+          "description": "A free-form, human-readable description of what the export acts on. It is documentation for catalog readers; the host neither validates its content nor acts on it."
+        }
+      }
+    },
+    "PluginCLICommand": {
+      "type": "object",
+      "description": "One top-level aggrega command verb a CLI plugin contributes, as declared in describe(). The host registers one command per entry and routes the resolved command name back to the guest at invocation, so a single guest may back several commands and select its behavior on the name.",
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The command verb the host registers — the aggrega token an operator invokes and the discriminator the host hands the guest so it can route on which command was called. Every declared command must name it."
+        },
+        "description": {
+          "type": "string",
+          "description": "The command's one-line short-help text, shown in the command listing and help output. It is optional documentation; the host neither validates nor acts on it."
+        },
+        "flags": {
+          "type": "array",
+          "description": "The command's flags, in declared order. Each entry contributes one flag the host registers on the command so aggrega help <command> renders it like a core command's flag. A command with no flags leaves it empty.",
+          "items": {
+            "$ref": "#/$defs/PluginCommandFlag"
+          }
+        }
+      }
+    },
+    "PluginCommandFlag": {
+      "type": "object",
+      "description": "One flag a CLI plugin declares on a command, as reported in describe(). The host registers it on the command so aggrega help <command> lists it alongside a core command's flags.",
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The flag's long name — the --name token an operator passes on the command line. Every declared flag must name it."
+        },
+        "shorthand": {
+          "type": "string",
+          "description": "The flag's optional single-character short alias — the -x form an operator may pass instead of the long name. Absent means the flag has no short alias."
+        },
+        "description": {
+          "type": "string",
+          "description": "The flag's one-line help text, shown in the command's help output. It is optional documentation; the host neither validates nor acts on it."
+        },
+        "type": {
+          "type": "string",
+          "description": "The flag's value type — for example string, bool, or int. Absent carries no type claim."
+        },
+        "default": {
+          "type": "string",
+          "description": "The flag's default value when the operator does not pass it, expressed as a string. Absent means the flag declares no default."
+        }
+      }
+    },
+    "PluginDescriptorMeta": {
+      "type": "object",
+      "description": "Optional authorship and build-provenance metadata a plugin declares in describe(). It is informational; the host does not validate or act on it. The version and commit fields are build-provenance stamped into the guest at build time; an unstamped build omits them.",
+      "additionalProperties": false,
+      "properties": {
+        "author": {
+          "type": "string",
+          "description": "The plugin's author."
+        },
+        "repository": {
+          "type": "string",
+          "description": "The plugin's source repository."
+        },
+        "license": {
+          "type": "string",
+          "description": "The plugin's license identifier."
+        },
+        "version": {
+          "type": "string",
+          "description": "The build-provenance version stamped into the guest at build time. Omitted by an unstamped build."
+        },
+        "commit": {
+          "type": "string",
+          "description": "The build-provenance short commit the guest was built from. Omitted by an unstamped build."
+        }
+      }
+    },
+    "ProviderContract": {
+      "type": "object",
+      "description": "A provider's self-declaration of the compile-time render behaviors it performs across the nodes it renders — the input kinds it accepts, whether and how it assembles a dispatch group's per-node output into a single artifact, the Go-template delimiter pair it applies to imported artifact files, and any restriction on which source files it consumes. It describes the provider as a whole, not any one export. The load gate cross-checks it against the entity's authored claim.",
+      "required": [
+        "input_kinds",
+        "boundary_assembly"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "input_kinds": {
+          "$ref": "#/$defs/InputKinds",
+          "description": "Which of the three Recipe input kinds the plugin renders: a sourced file set, a synthesized workload, and a standalone artifacts-only node."
+        },
+        "boundary_assembly": {
+          "type": "string",
+          "enum": ["none", "merge", "nest", ""],
+          "description": "How the plugin combines a dispatch group's per-node render output: none writes each node's output directly at the dispatch path, merge folds the per-node fragments into one document, and nest places each node's output under its own position in an umbrella structure. An empty value carries no assembly claim."
+        },
+        "artifact_delimiters": {
+          "$ref": "#/$defs/ArtifactDelimiters",
+          "x-aggrega-go-type": "*ArtifactDelimiters",
+          "description": "The Go-template delimiter pair the plugin applies to imported artifact files. Absent means the default open/close pair; a plugin whose target syntax collides with that pair reports an alternate pair here."
+        },
+        "source_filter": {
+          "type": "array",
+          "description": "The source-file paths the plugin consumes when a node supplies a file set. Absent means the plugin consumes every file in the set.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "assembly_name_annotation": {
+          "$ref": "#/$defs/AssemblyNameAnnotation",
+          "x-aggrega-go-type": "*AssemblyNameAnnotation",
+          "description": "A boundary annotation whose resolved value names the artifact the plugin assembles from a dispatch group. Absent means the plugin names its assembly from the dispatch path alone."
+        },
+        "reusable_instance": {
+          "type": "boolean",
+          "description": "Whether one loaded plugin instance may serve every render, assemble, and validate crossing of the build rather than a fresh instance per crossing. A plugin declares it true only when it holds no state across crossings. Absent (false) is the safe default: the host loads a fresh instance per crossing."
+        },
+        "cross_boundary_linking": {
+          "type": "boolean",
+          "description": "Whether the plugin wires cross-boundary uses edges — edges whose consuming and consumed ends assemble into different dispatch groups — by producing provider-native cross-reference wiring through its link_publish and link_resolve exports. A plugin declares it true only when it exports both. Absent (false) is the safe default: the plugin wires no cross-boundary edges."
+        }
+      }
+    },
+    "InputKinds": {
+      "type": "object",
+      "description": "Which Recipe input kinds a plugin renders. Each field is an independent claim; a plugin may report any combination.",
+      "required": [
+        "sourced",
+        "synthesized",
+        "artifacts_standalone"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "sourced": {
+          "type": "boolean",
+          "description": "Whether the plugin renders a sourced file set (a chart, a module, a compose file)."
+        },
+        "synthesized": {
+          "type": "boolean",
+          "description": "Whether the plugin renders a synthesized workload."
+        },
+        "artifacts_standalone": {
+          "type": "boolean",
+          "description": "Whether the plugin renders a standalone artifacts-only node — one carrying imported artifact documents and no source or workload."
+        }
+      }
+    },
+    "ArtifactDelimiters": {
+      "type": "object",
+      "description": "The Go-template delimiter pair a plugin applies to imported artifact files, reported when it differs from the default pair.",
+      "required": [
+        "left",
+        "right"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "left": {
+          "type": "string",
+          "description": "The opening delimiter."
+        },
+        "right": {
+          "type": "string",
+          "description": "The closing delimiter."
+        }
+      }
+    },
+    "AssemblyNameAnnotation": {
+      "type": "object",
+      "description": "The boundary annotation whose resolved value names a plugin's assembled artifact, reported when the plugin folds a dispatch group's contributing boundaries into one named assembly.",
+      "required": [
+        "annotation"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "annotation": {
+          "type": "string",
+          "description": "The boundary annotation key the plugin reads the assembled artifact's name from."
+        },
+        "require_unique": {
+          "type": "boolean",
+          "description": "Whether every boundary contributing to one dispatch group must agree on the annotation's resolved value. When true, a group whose contributing boundaries resolve the annotation to different values halts the build; when false, the plugin accepts the first resolved value."
+        }
+      }
+    }
+  }
+}

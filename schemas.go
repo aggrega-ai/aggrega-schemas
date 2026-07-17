@@ -94,6 +94,9 @@ var TemplateContextV1alpha1 string
 //go:embed json/wasm-cli-v1alpha1.schema.json
 var WasmCliV1alpha1 string
 
+//go:embed json/wasm-describe-v1alpha1.schema.json
+var WasmDescribeV1alpha1 string
+
 //go:embed json/wasm-linter-v1alpha1.schema.json
 var WasmLinterV1alpha1 string
 

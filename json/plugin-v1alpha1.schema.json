@@ -204,6 +204,39 @@
               "description": {
                 "type": "string",
                 "description": "The command's one-line short-help text, shown in the command listing and help output. Documentation only; the host does not act on it."
+              },
+              "flags": {
+                "type": "array",
+                "description": "The command's flags, in declared order. Each entry contributes one flag the host registers on the command so aggrega help <command> renders it like a core command's flag. A command with no flags leaves it empty.",
+                "items": {
+                  "type": "object",
+                  "x-aggrega-go-type": "PluginCommandFlag",
+                  "required": ["name"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "The flag's long name — the --name token an operator passes on the command line. Every declared flag must name it."
+                    },
+                    "shorthand": {
+                      "type": "string",
+                      "description": "The flag's optional single-character short alias — the -x form an operator may pass instead of the long name. Absent means the flag has no short alias."
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "The flag's one-line help text, shown in the command's help output. It is optional documentation; the host neither validates nor acts on it."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "The flag's value type — for example string, bool, or int. Absent carries no type claim."
+                    },
+                    "default": {
+                      "type": "string",
+                      "description": "The flag's default value when the operator does not pass it, expressed as a string. Absent means the flag declares no default."
+                    }
+                  }
+                }
               }
             }
           }
