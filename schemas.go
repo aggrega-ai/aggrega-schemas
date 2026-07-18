@@ -112,6 +112,9 @@ var WasmProviderV1alpha1 string
 //go:embed json/wasm-frp-step-v1alpha1.schema.json
 var WasmFrpStepV1alpha1 string
 
+//go:embed json/wasm-parse-v1alpha1.schema.json
+var WasmParseV1alpha1 string
+
 //go:embed json/workload-v1alpha1.schema.json
 var WorkloadV1alpha1 string
 

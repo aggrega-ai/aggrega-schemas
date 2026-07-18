@@ -24,7 +24,7 @@
         },
         "plugin_type": {
           "type": "string",
-          "enum": ["provider", "linter", "frp_step", "mutator", "policy", "cli"],
+          "enum": ["provider", "linter", "frp_step", "mutator", "policy", "cli", "parser"],
           "description": "The plugin's kind. It selects the minimum-export rule the host validates and, together with the export name, the default input-delivery pattern."
         },
         "capabilities": {
