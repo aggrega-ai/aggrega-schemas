@@ -22,6 +22,19 @@
         },
         "graph": {
           "$ref": "#/$defs/MutatorGraph"
+        },
+        "sources": {
+          "type": "array",
+          "description": "Definition files the host reads and hands to the plugin verbatim, as an ordered list sorted by path. The host reads the bytes as opaque content and does not parse them. Absent when the attachment declares no sources.",
+          "items": {
+            "$ref": "#/$defs/MutatorSource"
+          }
+        },
+        "settings": {
+          "type": "object",
+          "x-aggrega-go-type": "json.RawMessage",
+          "additionalProperties": true,
+          "description": "A free-form settings object the host hands to the plugin verbatim. The host does not parse or act on its content. Absent when the attachment declares no settings."
         }
       }
     },
@@ -104,6 +117,25 @@
           "additionalProperties": {
             "type": "string"
           }
+        }
+      }
+    },
+    "MutatorSource": {
+      "type": "object",
+      "description": "One definition file handed to the plugin: its base-name path and the file's content. Both are carried verbatim; the host does not parse the content.",
+      "required": [
+        "path",
+        "content"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "The base name of the source file. The host supplies the base name only, never an absolute host path, so the wire is portable and deterministic."
+        },
+        "content": {
+          "type": "string",
+          "description": "The source file's content, carried verbatim as an opaque string."
         }
       }
     }

@@ -100,6 +100,34 @@
           "function": {
             "type": "string",
             "description": "Export override the attachment names. Absent selects the mutator socket's default `mutate` export."
+          },
+          "settings": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Free-form settings object the attachment declared, pinned as authored and handed to the plugin verbatim. Build reads settings from here — never live config — so a post-pull settings change does not move build output. Absent when the attachment declares none."
+          },
+          "sources": {
+            "type": "array",
+            "description": "Content-addressed pins of the attachment's declared source files, in base-name order. Build reconstructs the source the plugin reads from each pin's recorded content rather than a live host read, so build output stays invariant to a post-pull change to the source file. Absent when the attachment declares none.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["content", "digest", "path"],
+              "properties": {
+                "content": {
+                  "type": "string",
+                  "description": "The source file's content, carried verbatim so build reconstructs the plugin's source input from the lockfile."
+                },
+                "digest": {
+                  "type": "string",
+                  "description": "The `sha256:...` content-address of the recorded content. A re-pull compares the underlying file against this digest to detect drift."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "The base name of the source file — never an absolute host path, so the pin is portable and deterministic."
+                }
+              }
+            }
           }
         }
       }
