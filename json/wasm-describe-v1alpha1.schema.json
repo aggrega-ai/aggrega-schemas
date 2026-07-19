@@ -120,6 +120,16 @@
         "selector": {
           "type": "string",
           "description": "A free-form, human-readable description of what the export acts on. It is documentation for catalog readers; the host neither validates its content nor acts on it."
+        },
+        "input": {
+          "type": "object",
+          "x-aggrega-go-type": "json.RawMessage",
+          "description": "An optional JSON Schema document a step export declares to type the step-local input a pipeline entry supplies through its with block. When present, it describes the shape a step's with input satisfies; when absent, the export declares no input contract. The schema is the export's own free-form declaration of the input surface a pipeline author targets for this export."
+        },
+        "output": {
+          "type": "object",
+          "x-aggrega-go-type": "json.RawMessage",
+          "description": "An optional JSON Schema document a step export declares to type the outputs it returns for one step — the shape of the addressable outputs a step contributes for a later step or a template to read. When present, it describes the shape of those returned outputs; when absent, the export declares no output contract. The schema is the export's own free-form declaration of the output surface this export produces."
         }
       }
     },
