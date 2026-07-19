@@ -39,8 +39,8 @@
         },
         "pluginType": {
           "type": "string",
-          "enum": ["provider", "linter", "frp_step", "mutator", "policy", "cli"],
-          "description": "The socket type this plugin implements. A plugin implements exactly one socket type, drawn from the plugin-type taxonomy the runtime recognises: `provider` (renders IR nodes into provider-native artifacts), `linter` (inspects authored content and raises diagnostics), `frp_step` (a feature-recipe-pipeline step that transforms IR within a pipeline), `mutator` (auto-tags topology-graph node labels at Step 2 via JSON Patch), `policy` (evaluates the full IR graph at Step 4 and halts the build on a failed rule), `cli` (contributes a runtime `aggrega <cmd>` subcommand an operator invokes at the command line — a runtime socket, distinct from the compile-time render and pipeline sockets)."
+          "enum": ["provider", "linter", "frp_step", "mutator", "policy", "cli", "parser"],
+          "description": "The socket type this plugin implements. A plugin implements exactly one socket type, drawn from the plugin-type taxonomy the runtime recognises: `provider` (renders IR nodes into provider-native artifacts), `linter` (inspects authored content and raises diagnostics), `frp_step` (a feature-recipe-pipeline step that transforms IR within a pipeline), `mutator` (auto-tags topology-graph node labels at Step 2 via JSON Patch), `policy` (evaluates the full IR graph at Step 4 and halts the build on a failed rule), `cli` (contributes a runtime `aggrega <cmd>` subcommand an operator invokes at the command line — a runtime socket, distinct from the compile-time render and pipeline sockets), `parser` (turns a foreign source text into a canonical structured tree so a consumer reads the tree without carrying its own language parser, advertising the formats it handles as `parse:<format>` capabilities)."
         },
         "description": {
           "type": "string",
