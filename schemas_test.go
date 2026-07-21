@@ -119,6 +119,7 @@ var allSchemas = []struct {
 	{"WasmPolicyV1alpha1", WasmPolicyV1alpha1, "https://aggrega.ai/schemas/wasm-policy-v1alpha1.schema.json"},
 	{"WasmProviderV1alpha1", WasmProviderV1alpha1, "https://aggrega.ai/schemas/wasm-provider-v1alpha1.schema.json"},
 	{"WasmFrpStepV1alpha1", WasmFrpStepV1alpha1, "https://aggrega.ai/schemas/wasm-frp-step-v1alpha1.schema.json"},
+	{"WasmImportV1alpha1", WasmImportV1alpha1, "https://aggrega.ai/schemas/wasm-import-v1alpha1.schema.json"},
 	{"WasmParseV1alpha1", WasmParseV1alpha1, "https://aggrega.ai/schemas/wasm-parse-v1alpha1.schema.json"},
 	{"WorkloadV1alpha1", WorkloadV1alpha1, "https://aggrega.ai/schemas/workload-v1alpha1.schema.json"},
 }

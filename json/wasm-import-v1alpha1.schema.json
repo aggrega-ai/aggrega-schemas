@@ -1,0 +1,356 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/wasm-import-v1alpha1.schema.json",
+  "title": "Aggrega Wasm Importer Socket",
+  "description": "The JSON wire shapes an importer plugin socket consumes (ImportInput) and emits (ImportOutput). An importer turns a foreign infrastructure description into Aggrega entities: it reads the source bytes for a named format, maps each source node to a catalog entity, and returns the entities it emitted, the mapping decisions it made, any diagnostics it raised, and any scaffold files it produced. An importer declares the formats it handles as import:<format> capabilities in its descriptor. The importer maps meaning from the source to entities; the compiler pipes the emitted entities through opaquely.",
+  "oneOf": [
+    { "$ref": "#/$defs/ImportInput" },
+    { "$ref": "#/$defs/ImportOutput" }
+  ],
+  "$defs": {
+    "ImportInput": {
+      "type": "object",
+      "description": "The payload an importer guest receives: the source format that selects how to read the bytes, the primary source bytes, any named sources for a multi-file import, and an optional opaque options document the consumer supplies for importer-specific behavior.",
+      "required": [
+        "format",
+        "bytes"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "type": "string",
+          "description": "The name of the source format to import, matching one of the importer's advertised import:<format> capabilities. The importer reads the sources as this format."
+        },
+        "bytes": {
+          "type": "string",
+          "x-aggrega-go-type": "[]byte",
+          "description": "The primary source bytes to import, base64-encoded on the wire. The importer decodes the base64 to recover the original bytes and reads them as the named format."
+        },
+        "sources": {
+          "type": "array",
+          "description": "Named sources for a multi-file or directory import, each carrying its own bytes. Absent for a single-file import, where the primary bytes carry the whole source.",
+          "items": {
+            "$ref": "#/$defs/ImportSource"
+          }
+        },
+        "settings": {
+          "x-aggrega-go-type": "json.RawMessage",
+          "description": "An opaque import-options document the consumer supplies for importer-specific behavior. The host pipes it through without interpreting it; the importer reads whatever shape it documents. Absent when the consumer supplies no options."
+        }
+      }
+    },
+    "ImportSource": {
+      "type": "object",
+      "description": "One named source within a multi-file or directory import: a name locating the source and its own bytes.",
+      "required": [
+        "name",
+        "bytes"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of this source within the import, such as a relative file path."
+        },
+        "bytes": {
+          "type": "string",
+          "x-aggrega-go-type": "[]byte",
+          "description": "This source's bytes, base64-encoded on the wire. The importer decodes the base64 to recover the original bytes."
+        }
+      }
+    },
+    "ImportOutput": {
+      "type": "object",
+      "description": "The payload an importer guest returns: the entities the import produced, the mapping decisions behind them, any diagnostics the import raised, and any scaffold files it produced. Every field is optional, so an import that resolved nothing may return diagnostics alone.",
+      "additionalProperties": false,
+      "properties": {
+        "entities": {
+          "type": "array",
+          "description": "The entities the import produced, each either a reference to an existing catalog entity or a drafted entity body. Absent when the import emitted no entities.",
+          "items": {
+            "$ref": "#/$defs/EmittedEntity"
+          }
+        },
+        "decisions": {
+          "type": "array",
+          "description": "The mapping decisions the import made, one per source node it resolved, recording the candidates it weighed and the choice it made. Absent when the import recorded no decisions.",
+          "items": {
+            "$ref": "#/$defs/ImportDecision"
+          }
+        },
+        "diagnostics": {
+          "type": "array",
+          "description": "Diagnostics the import raised — for example an unresolved source node or an ambiguous mapping. Absent when the import produced none.",
+          "items": {
+            "$ref": "#/$defs/Diagnostic"
+          }
+        },
+        "files": {
+          "type": "array",
+          "description": "Scaffold files the import produced alongside the entities, such as a starter aggregate or a readme. Absent when the import produced no files.",
+          "items": {
+            "$ref": "#/$defs/ScaffoldFile"
+          }
+        }
+      }
+    },
+    "EmittedEntity": {
+      "type": "object",
+      "description": "One entity the import produced: its kind, its name, and how it is emitted — a reference to an existing catalog entity or a newly drafted entity body.",
+      "required": [
+        "kind",
+        "name",
+        "mode"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "description": "The kind of entity emitted. In v1 this is Component or Aggregate; additional kinds may appear as the emission surface grows, so a reader tolerates an unrecognized kind."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the emitted entity."
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "reference",
+            "draft"
+          ],
+          "description": "How the entity is emitted: reference points at an existing catalog entity by name, and draft carries a newly drafted entity body."
+        },
+        "body": {
+          "type": "string",
+          "description": "The raw YAML body of a drafted entity. Empty for a pure reference, which names an existing entity rather than drafting one."
+        },
+        "labels": {
+          "type": "object",
+          "x-aggrega-go-type": "map[string]string",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Labels to attach to the emitted entity, as a string-to-string map. Empty in v1; reserved for a future label-driven emission axis."
+        },
+        "annotations": {
+          "type": "object",
+          "x-aggrega-go-type": "map[string]string",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Annotations to attach to the emitted entity, as a string-to-string map. Empty in v1; reserved for a future annotation-driven emission axis."
+        },
+        "sourceRef": {
+          "type": "string",
+          "description": "A reference to the source node this entity was emitted from, so a reader can trace the entity back to its origin in the imported source."
+        },
+        "decisionRef": {
+          "type": "string",
+          "description": "A reference to the mapping decision that produced this entity, linking it to the candidates weighed and the choice made."
+        }
+      }
+    },
+    "ImportDecision": {
+      "type": "object",
+      "description": "One mapping decision: the source node the importer resolved, the candidate catalog entities it weighed, the candidate it chose, and the reasoning behind the choice.",
+      "required": [
+        "sourceNode"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "sourceNode": {
+          "$ref": "#/$defs/DecisionSourceNode",
+          "description": "The source node this decision resolved: the node the importer read from the source and mapped to a catalog entity."
+        },
+        "candidates": {
+          "type": "array",
+          "description": "The candidate catalog entities the importer weighed for this source node, each with its score and the per-signal breakdown behind that score. Absent when the importer weighed no candidates.",
+          "items": {
+            "$ref": "#/$defs/ImportCandidate"
+          }
+        },
+        "chosen": {
+          "$ref": "#/$defs/DecisionChoice",
+          "x-aggrega-go-type": "*DecisionChoice",
+          "description": "The candidate the importer chose for this source node, and how it emitted it. Absent when the importer made no choice."
+        },
+        "rationale": {
+          "type": "string",
+          "description": "A human-readable explanation of why the importer made this choice."
+        },
+        "swapHint": {
+          "type": "string",
+          "description": "A hint describing how to swap the chosen mapping for an alternative, so a reader can revise the decision."
+        }
+      }
+    },
+    "DecisionSourceNode": {
+      "type": "object",
+      "description": "The source node a mapping decision resolved: an identifier, the type the source names it, and a human-readable summary of its parameters.",
+      "required": [
+        "id",
+        "type",
+        "paramsSummary"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The identifier of the source node within the imported source."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of the source node as the source names it."
+        },
+        "paramsSummary": {
+          "type": "string",
+          "description": "A human-readable summary of the source node's parameters, for display alongside the decision."
+        }
+      }
+    },
+    "ImportCandidate": {
+      "type": "object",
+      "description": "One candidate catalog entity the importer weighed for a source node: the candidate component, its overall score, the match tier the score falls into, and the per-signal breakdown behind the score.",
+      "required": [
+        "componentName",
+        "score",
+        "tier",
+        "signals"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "componentName": {
+          "type": "string",
+          "description": "The name of the candidate catalog component."
+        },
+        "score": {
+          "type": "number",
+          "x-aggrega-go-type": "float64",
+          "description": "The candidate's overall match score, aggregated from the per-signal breakdown."
+        },
+        "tier": {
+          "type": "string",
+          "description": "The match tier the candidate falls into, a coarse band over the score."
+        },
+        "signals": {
+          "$ref": "#/$defs/CandidateSignals",
+          "description": "The per-signal breakdown behind the candidate's score."
+        }
+      }
+    },
+    "CandidateSignals": {
+      "type": "object",
+      "description": "The per-signal breakdown behind a candidate's score: one contribution per matching signal. A fixed-field object, so the set of signals is stable and the wire is deterministic.",
+      "required": [
+        "table",
+        "category",
+        "domainLabels",
+        "shape",
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "table": {
+          "type": "number",
+          "x-aggrega-go-type": "float64",
+          "description": "The score contribution from the mapping-table signal."
+        },
+        "category": {
+          "type": "number",
+          "x-aggrega-go-type": "float64",
+          "description": "The score contribution from the category signal."
+        },
+        "domainLabels": {
+          "type": "number",
+          "x-aggrega-go-type": "float64",
+          "description": "The score contribution from the domain-labels signal."
+        },
+        "shape": {
+          "type": "number",
+          "x-aggrega-go-type": "float64",
+          "description": "The score contribution from the shape signal."
+        },
+        "name": {
+          "type": "number",
+          "x-aggrega-go-type": "float64",
+          "description": "The score contribution from the name signal."
+        }
+      }
+    },
+    "DecisionChoice": {
+      "type": "object",
+      "description": "The candidate a mapping decision chose: the target catalog entity, how it is emitted, and the match tier of the choice.",
+      "required": [
+        "target",
+        "mode",
+        "tier"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "target": {
+          "type": "string",
+          "description": "The name of the chosen target catalog entity."
+        },
+        "mode": {
+          "type": "string",
+          "description": "How the chosen target is emitted, mirroring an emitted entity's mode: a reference to an existing entity or a newly drafted body."
+        },
+        "tier": {
+          "type": "string",
+          "description": "The match tier of the chosen target."
+        }
+      }
+    },
+    "Diagnostic": {
+      "type": "object",
+      "description": "One diagnostic the import raised: a severity, an optional stable code, a human-readable message, and an optional reference to the source node it concerns.",
+      "required": [
+        "severity",
+        "message"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "severity": {
+          "type": "string",
+          "enum": [
+            "error",
+            "warning",
+            "info"
+          ],
+          "description": "The diagnostic's severity: error, warning, or info."
+        },
+        "code": {
+          "type": "string",
+          "description": "A short stable code identifying the diagnostic class, for programmatic handling. Absent when the importer attaches no code."
+        },
+        "message": {
+          "type": "string",
+          "description": "The human-readable diagnostic message."
+        },
+        "sourceRef": {
+          "type": "string",
+          "description": "A reference to the source node the diagnostic concerns. Absent when the diagnostic is not tied to a specific node."
+        }
+      }
+    },
+    "ScaffoldFile": {
+      "type": "object",
+      "description": "One scaffold file the import produced: a path relative to the import output root and the file's content.",
+      "required": [
+        "path",
+        "content"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "The path of the scaffold file, relative to the import output root."
+        },
+        "content": {
+          "type": "string",
+          "description": "The scaffold file's content."
+        }
+      }
+    }
+  }
+}
