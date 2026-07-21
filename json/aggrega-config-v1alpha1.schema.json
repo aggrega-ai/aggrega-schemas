@@ -45,10 +45,6 @@
       "default": ".aggrega/cache",
       "description": "Local artifact/content cache directory (registry pulls, OCI manifests, compiled fixtures). Defaults to `.aggrega/cache`. Should be gitignored by convention. Distinct from `parse_cache`, which caps the daemon's in-memory parse cache."
     },
-    "plugin_sidecar_dir": {
-      "type": "string",
-      "description": "On-disk directory the Wasm-plugin resolver checks ahead of the local, cache, and registry tiers (and behind the binary's embedded built-ins): drop a `.wasm` here to override an embedded core plugin or to supply a third-party local plugin without publishing it. Layout is flat — a plugin URI resolves to `<plugin_sidecar_dir>/<uri-leaf>.wasm`. A relative path resolves against the declaring config file's directory at load. Empty disables the sidecar tier. The resolved bytes are still verified against the lockfile digest pin, so a sidecar override is determinism-safe when it matches the pin and halts the build when it does not."
-    },
     "skip_signature_verification": {
       "type": "boolean",
       "default": false,
