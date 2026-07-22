@@ -216,6 +216,14 @@
             ]
           }
         },
+        "outputLabels": {
+          "type": "object",
+          "x-aggrega-go-type": "map[string]string",
+          "description": "Recipe-author-declared labels stamped onto every object this recipe's rendered output produces, provider-translated onto each engine's label surface (Kubernetes metadata.labels for helm synthesis, source-render, and artifacts; Compose service labels; per-resource tags on Terraform .tf.json artifact bodies). They ride the same rail as the fixed provenance labels but are author-owned rather than compiler-owned. The aggrega.ai/ and app.kubernetes.io/ namespaces are reserved for platform-native provenance and are rejected at load. A key or value that is not a valid label for the target engine is the recipe author's responsibility; the core does not police label charset beyond the reserved-namespace rule.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "pipeline": {
           "type": "array",
           "description": "Sequential list of Wasm plugins to execute for stateful AST mutation directly on the base infrastructure.",
