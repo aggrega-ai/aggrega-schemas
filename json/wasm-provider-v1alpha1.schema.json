@@ -376,6 +376,10 @@
         "error": {
           "type": "string",
           "description": "The failure message on failure, naming the selection and the reason; absent on success."
+        },
+        "error_code": {
+          "type": "string",
+          "description": "The machine-matchable failure identity on failure, from the closed host-function error-code catalog, set beside the human error message; absent on success. A guest branches on this code without parsing the message, tolerating an absent code (older host) or an unrecognized one (newer host) by falling back to the message."
         }
       }
     },
@@ -406,6 +410,30 @@
         "error": {
           "type": "string",
           "description": "The failure message on failure, naming the file and the reason; absent on success."
+        },
+        "error_code": {
+          "type": "string",
+          "description": "The machine-matchable failure identity on failure, from the closed host-function error-code catalog, set beside the human error message; absent on success. A guest branches on this code without parsing the message, tolerating an absent code (older host) or an unrecognized one (newer host) by falling back to the message."
+        }
+      }
+    },
+    "FetchExternalInputResponse": {
+      "type": "object",
+      "description": "The fetch-external-input host function's reply: on success the fetched content, on failure an error message. Exactly one of content or error is populated. Failure is delivered in-band rather than by trapping, so a guest carries an unresolvable URL or a fetch failure into its own diagnostics as a deterministic render failure. The request is a bare URL string rather than a JSON payload, so only the reply has a wire shape.",
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "type": "string",
+          "x-aggrega-go-type": "*string",
+          "description": "The fetched content on success (base64 on the JSON wire); absent on failure. A pointer so a zero-length payload still emits the content key and stays distinguishable from a failure."
+        },
+        "error": {
+          "type": "string",
+          "description": "The failure message on failure, naming the URL and the remedy; absent on success."
+        },
+        "error_code": {
+          "type": "string",
+          "description": "The machine-matchable failure identity on failure, from the closed host-function error-code catalog, set beside the human error message; absent on success. A guest branches on this code without parsing the message, tolerating an absent code (older host) or an unrecognized one (newer host) by falling back to the message."
         }
       }
     },

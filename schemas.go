@@ -97,6 +97,9 @@ var WasmCliV1alpha1 string
 //go:embed json/wasm-describe-v1alpha1.schema.json
 var WasmDescribeV1alpha1 string
 
+//go:embed json/wasm-hostfunc-error-v1alpha1.schema.json
+var WasmHostfuncErrorV1alpha1 string
+
 //go:embed json/wasm-linter-v1alpha1.schema.json
 var WasmLinterV1alpha1 string
 
