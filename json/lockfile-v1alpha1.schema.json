@@ -87,7 +87,7 @@
     "mutators": {
       "type": "array",
       "default": [],
-      "description": "Resolved mutator-socket attachments, in authored order. The mutator rewrites the IR and therefore shapes the rendered output bytes, so the attachment set — the ordered list, plus per attachment the plugin coordinate and export function — is a byte-determining input pinned here. Build reads this section — never `.aggrega-config.yaml` — to reconstruct the mutator set, order, and export function, so build output is invariant to a `plugins.mutator` change made after the pull (adopted only on the next pull). Order is SEMANTIC: the runner applies attachments in list order, so unlike the URI-sorted `plugins` / `providers` sections this list is never reordered. The plugin's content digest is NOT duplicated here: it is single-sourced in the `plugins` and `entities` sections, which this record points into by identity.",
+      "description": "Resolved label-transform governance attachments, in authored order. A label-transform plugin rewrites node labels and therefore shapes the rendered output bytes, so the attachment set — the ordered list, plus per attachment the plugin coordinate and export function — is a byte-determining input pinned here. Build reads this section — never `.aggrega-config.yaml` — to reconstruct the set, order, and export function, so build output is invariant to a `plugins.governance` change made after the pull (adopted only on the next pull). Order is SEMANTIC: the runner applies attachments in list order, so unlike the URI-sorted `plugins` / `providers` sections this list is never reordered. The plugin's content digest is NOT duplicated here: it is single-sourced in the `plugins` and `entities` sections, which this record points into by identity.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -95,11 +95,11 @@
         "properties": {
           "plugin": {
             "type": "string",
-            "description": "Resolved plugin coordinate of the mutator — a Plugin entity's `<pluginType>/<name>` identity (e.g. `mutator/tag-injector`). Joins by identity into the `plugins` and `entities` sections for the pinned digest and version set."
+            "description": "Resolved plugin coordinate of the label-transform plugin — a Plugin entity's `<pluginType>/<name>` identity (e.g. `governance/tag-injector`). Joins by identity into the `plugins` and `entities` sections for the pinned digest and version set."
           },
           "function": {
             "type": "string",
-            "description": "Export override the attachment names. Absent selects the mutator socket's default `mutate` export."
+            "description": "Export override the attachment names. Absent selects the label-transform role's default `mutate` export."
           },
           "settings": {
             "type": "object",
@@ -135,7 +135,7 @@
     "plugins": {
       "type": "array",
       "default": [],
-      "description": "Wasm plugins the closure references — workspace-level plugin pins from `.aggrega-config.yaml` `plugins.{mutator,policy,linter,importer}[]:` plus any embedded plugin URIs from referenced Recipes / FeatureRecipes / Providers.",
+      "description": "Wasm plugins the closure references — workspace-level plugin pins from `.aggrega-config.yaml` `plugins.{governance,linter,importer}[]:` plus any embedded plugin URIs from referenced Recipes / FeatureRecipes / Providers.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -143,7 +143,7 @@
         "properties": {
           "uri": {
             "type": "string",
-            "description": "Bare identity of the Wasm plugin's `.wasm` artifact — the `<socket>/<name>` path (e.g. `policy/aggrega-security-baseline`). The first segment is the plugin's socket (`linter`, `policy`, `mutator`, `formatter`, `importer`, `security`, `pipeline`, `provider`); the segment after that is the plugin name. Socket + name together form the plugin's identity — same name in different sockets is a different plugin. The physical fetch location is derived from this identity plus the configured registry, never carried in the lockfile."
+            "description": "Bare identity of the Wasm plugin's `.wasm` artifact — the `<socket>/<name>` path (e.g. `governance/aggrega-security-baseline`). The first segment is the plugin's socket (`linter`, `governance`, `formatter`, `importer`, `security`, `pipeline`, `provider`); the segment after that is the plugin name. Socket + name together form the plugin's identity — same name in different sockets is a different plugin. The physical fetch location is derived from this identity plus the configured registry, never carried in the lockfile."
           },
           "resolved_version": {
             "type": "string",
@@ -161,7 +161,7 @@
             "type": "array",
             "default": [],
             "items": { "type": "string" },
-            "description": "Authoring-site origins — dotted paths recording why this URI is in the closure (e.g. `.aggrega-config.yaml.plugins.policy`)."
+            "description": "Authoring-site origins — dotted paths recording why this URI is in the closure (e.g. `.aggrega-config.yaml.plugins.governance`)."
           },
           "signature": {
             "type": "object",
