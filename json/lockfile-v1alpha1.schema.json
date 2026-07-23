@@ -91,7 +91,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["plugin"],
+        "required": ["plugin", "role"],
         "properties": {
           "plugin": {
             "type": "string",
@@ -100,7 +100,7 @@
           "role": {
             "type": "string",
             "enum": ["label-transform", "annotation-transform"],
-            "description": "The transform role this attachment is bound to, fixing which runner (and therefore which facet) reconstruction dispatches it at: `label-transform` rewrites node labels at Step 2; `annotation-transform` injects annotations before expansion at Step 1. Absent selects `label-transform` — the default that keeps a lockfile written before the annotation role existed reconstructing unchanged."
+            "description": "The transform role this attachment is bound to, fixing which runner (and therefore which facet) reconstruction dispatches it at: `label-transform` rewrites node labels at Step 2; `annotation-transform` injects annotations before expansion at Step 1. Required — the attachment's role is recorded verbatim from the authored `plugins.governance` entry, so reconstruction dispatches at the exact role it was authored for rather than inferring one."
           },
           "function": {
             "type": "string",
