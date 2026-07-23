@@ -87,7 +87,7 @@
     "mutators": {
       "type": "array",
       "default": [],
-      "description": "Resolved label-transform governance attachments, in authored order. A label-transform plugin rewrites node labels and therefore shapes the rendered output bytes, so the attachment set — the ordered list, plus per attachment the plugin coordinate and export function — is a byte-determining input pinned here. Build reads this section — never `.aggrega-config.yaml` — to reconstruct the set, order, and export function, so build output is invariant to a `plugins.governance` change made after the pull (adopted only on the next pull). Order is SEMANTIC: the runner applies attachments in list order, so unlike the URI-sorted `plugins` / `providers` sections this list is never reordered. The plugin's content digest is NOT duplicated here: it is single-sourced in the `plugins` and `entities` sections, which this record points into by identity.",
+      "description": "Resolved transform-role governance attachments, in authored order. A transform-role plugin (`label-transform`, which rewrites node labels; or `annotation-transform`, which injects annotations before expansion) shapes the rendered output bytes, so the attachment set — the ordered list, plus per attachment the role, plugin coordinate, and export function — is a byte-determining input pinned here. Build reads this section — never `.aggrega-config.yaml` — to reconstruct the set, order, role, and export function, so build output is invariant to a `plugins.governance` change made after the pull (adopted only on the next pull). Order is SEMANTIC: each transform runner applies its role's attachments in list order, so unlike the URI-sorted `plugins` / `providers` sections this list is never reordered. The plugin's content digest is NOT duplicated here: it is single-sourced in the `plugins` and `entities` sections, which this record points into by identity.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -95,11 +95,16 @@
         "properties": {
           "plugin": {
             "type": "string",
-            "description": "Resolved plugin coordinate of the label-transform plugin — a Plugin entity's `<pluginType>/<name>` identity (e.g. `governance/tag-injector`). Joins by identity into the `plugins` and `entities` sections for the pinned digest and version set."
+            "description": "Resolved plugin coordinate of the transform-role plugin — a Plugin entity's `<pluginType>/<name>` identity (e.g. `governance/tag-injector`). Joins by identity into the `plugins` and `entities` sections for the pinned digest and version set."
+          },
+          "role": {
+            "type": "string",
+            "enum": ["label-transform", "annotation-transform"],
+            "description": "The transform role this attachment is bound to, fixing which runner (and therefore which facet) reconstruction dispatches it at: `label-transform` rewrites node labels at Step 2; `annotation-transform` injects annotations before expansion at Step 1. Absent selects `label-transform` — the default that keeps a lockfile written before the annotation role existed reconstructing unchanged."
           },
           "function": {
             "type": "string",
-            "description": "Export override the attachment names. Absent selects the label-transform role's default `mutate` export."
+            "description": "Export override the attachment names. Absent selects the role's default export (`mutate` for label-transform, `transform_annotations` for annotation-transform)."
           },
           "settings": {
             "type": "object",
@@ -227,6 +232,46 @@
       "default": [],
       "description": "Source artifacts pulled from Recipe / FeatureRecipe `spec.source` fields at pull time. Each entry identifies a unique `{kind, url, chart, pinned_version}` identity with content digest, mediatype, and the structured `referenced_by:` back-pointers naming every catalog entity that resolved to this artifact. `url` is the authored identity URL; the resolved artifact location for a repo-root helm source is recorded separately under `resolved_url:` as provenance. Multiple Recipes pinning the same chart at the same version dedupe to a single entry with multiple `referenced_by:` records. The kind enum covers the four currently-supported source kinds plus one reserved (terraform-module-oci) for the future terraform engine.",
       "items": { "$ref": "#/$defs/SourceArtifactEntry" }
+    },
+    "verdict_inputs": {
+      "type": "array",
+      "default": [],
+      "description": "External rule inputs a verdict-role governance attachment (`ir-verdict` / `render-verdict`) reads at compile time — a Kyverno / Rego rule file supplied through the attachment's `with.sources`. Recorded as a content digest per source, for audit and cross-pull drift visibility: the digest that shaped a verdict is diffable across pulls, so a changed rule file surfaces as a lockfile diff. This section is PROVENANCE, not a build input: unlike `mutators.sources` it carries no `content`, and build does NOT read it — a verdict plugin is cache-not-pin and reads its rule inputs live (the verdict shapes no output bytes, so it is not part of the deterministic-output pin closure). Because a verdict plugin is cache-not-pin, it is absent from the `entities` / `plugins` sections; this record therefore identifies the attachment by its authored URI, self-standing provenance rather than a closure join. Recording the digest makes the inputs that determined an accept/reject decision auditable and reproducible without pinning them into the build.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["plugin", "role"],
+        "properties": {
+          "plugin": {
+            "type": "string",
+            "description": "The verdict attachment's authored plugin URI, as written in `.aggrega-config.yaml` `plugins.governance` (e.g. `governance/aggrega-security-baseline:1.0.0`). Identifies which attachment the recorded rule inputs belong to; a verdict plugin is cache-not-pin and so has no entry in the `plugins` / `entities` sections to join to."
+          },
+          "role": {
+            "type": "string",
+            "enum": ["ir-verdict", "render-verdict"],
+            "description": "The verdict role this attachment is bound to — `ir-verdict` (Step 4, over the IR graph) or `render-verdict` (Step 5, over the rendered artifacts). Distinguishes the same plugin attached at both verdict stages, each potentially with its own rule inputs."
+          },
+          "sources": {
+            "type": "array",
+            "description": "Content digests of the attachment's declared rule-input files, in base-name order. Absent when the attachment declares no sources.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["digest", "path"],
+              "properties": {
+                "digest": {
+                  "type": "string",
+                  "description": "The `sha256:...` content-address of the rule-input file's bytes at pull time. A re-pull recomputes it, so a changed rule file surfaces as a lockfile diff."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "The base name of the rule-input file — never an absolute host path, so the record is portable and deterministic."
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "version": {
       "type": "integer",
