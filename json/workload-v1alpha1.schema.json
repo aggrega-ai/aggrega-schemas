@@ -6,8 +6,32 @@
   "type": "object",
   "required": [
     "apiVersion",
-    "kind",
-    "containers"
+    "kind"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": { "form": { "const": "reference" } },
+        "required": ["form"]
+      },
+      "then": {
+        "required": ["endpoint"],
+        "properties": {
+          "containers": false,
+          "initContainers": false,
+          "volumes": false,
+          "services": false
+        }
+      },
+      "else": {
+        "required": ["containers"],
+        "properties": {
+          "endpoint": false,
+          "port": false,
+          "credential": false
+        }
+      }
+    }
   ],
   "additionalProperties": false,
   "properties": {
@@ -37,9 +61,29 @@
     },
     "form": {
       "type": "string",
-      "enum": ["stateless", "stateful", "daemon", "scheduled", "task"],
+      "enum": ["stateless", "stateful", "daemon", "scheduled", "task", "reference"],
       "default": "stateless",
-      "description": "Abstract controller-shape intent for the workload. Chooses the kind of runtime lifecycle the workload has, independent of any target platform: stateless (interchangeable long-running replicas), stateful (replicas with stable per-replica identity and per-replica storage), daemon (one instance per eligible host), scheduled (recurring, time-triggered runs), task (a single run to completion). Empty is treated as stateless. Each target Engine maps the form to its own native shape; the form carries no platform-native resource kinds itself. A persistentTemplate volume is a companion of stateful and is only valid on a stateful workload."
+      "description": "Abstract controller-shape intent for the workload. Chooses the kind of runtime lifecycle the workload has, independent of any target platform: stateless (interchangeable long-running replicas), stateful (replicas with stable per-replica identity and per-replica storage), daemon (one instance per eligible host), scheduled (recurring, time-triggered runs), task (a single run to completion), reference (an external endpoint with no compute — no controller; helm emits an ExternalName Service, compose carries the endpoint through the injection contract). Empty is treated as stateless. Each target Engine maps the form to its own native shape; the form carries no platform-native resource kinds itself. A persistentTemplate volume is a companion of stateful and is only valid on a stateful workload. A reference workload declares endpoint (and optionally port and credential) and no containers."
+    },
+    "endpoint": {
+      "type": "string",
+      "description": "External endpoint for form: reference — a host or URL. The compiler pipes it through as a deterministic pointer string; it is never resolved at compile time (AOT). Required when form is reference and only meaningful then. helm emits it as an ExternalName Service's externalName (the host portion); compose carries it to consumers through the recipe's provides."
+    },
+    "port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535,
+      "description": "Optional port for the reference endpoint (form: reference). helm emits it as a port on the ExternalName Service."
+    },
+    "credential": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "env"],
+      "description": "Optional credential for a reference endpoint (form: reference): a secretsSchema slot delivered to consumers as an environment variable. Per the AOT boundary the secret value is never resolved here; the credential is a pointer carried to consumers through the recipe's provides.",
+      "properties": {
+        "from": { "type": "string", "description": "Name of a secretsSchema slot supplying the credential." },
+        "env": { "type": "string", "description": "Environment variable name the credential is delivered as by the consuming workload." }
+      }
     },
     "schedule": {
       "type": "string",
@@ -99,6 +143,48 @@
     "serviceAccount": {
       "type": "string",
       "description": "Name of the ServiceAccount this workload runs under. Actual RBAC (ServiceAccount/Role/RoleBinding resources) should be emitted via Features or artifacts, not via this field."
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Names of image-pull Secrets for pulling images from private registries. helm emits pod.imagePullSecrets. compose has no in-file analog — registry authentication is configured out-of-band via docker login — and omits it."
+    },
+    "priorityClassName": {
+      "type": "string",
+      "description": "Name of the PriorityClass governing this workload's scheduling priority. helm emits pod.priorityClassName. compose has no single-host scheduling-priority analog and omits it."
+    },
+    "terminationGracePeriodSeconds": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Seconds between SIGTERM and SIGKILL on shutdown. helm emits pod.terminationGracePeriodSeconds; compose emits stop_grace_period."
+    },
+    "dnsPolicy": {
+      "type": "string",
+      "enum": ["Default", "ClusterFirst", "ClusterFirstWithHostNet", "None"],
+      "description": "Pod DNS policy. helm emits pod.dnsPolicy. compose has no DNS-policy analog and omits it (compose maps dnsConfig nameservers/searches directly instead)."
+    },
+    "dnsConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Custom pod DNS configuration. helm emits pod.dnsConfig. compose maps nameservers to dns and searches to dns_search; options have no compose analog and are omitted there.",
+      "properties": {
+        "nameservers": { "type": "array", "items": { "type": "string" } },
+        "searches": { "type": "array", "items": { "type": "string" } },
+        "options": { "type": "array", "items": { "type": "object", "additionalProperties": true } }
+      }
+    },
+    "hostAliases": {
+      "type": "array",
+      "description": "Static hostname-to-IP mappings injected into the pod's hosts file. helm emits pod.hostAliases; compose emits extra_hosts (one hostname:ip entry per hostname).",
+      "items": {
+        "type": "object",
+        "required": ["ip", "hostnames"],
+        "additionalProperties": false,
+        "properties": {
+          "ip": { "type": "string" },
+          "hostnames": { "type": "array", "items": { "type": "string" } }
+        }
+      }
     }
   },
   "$defs": {
@@ -114,6 +200,11 @@
         "image": {
           "type": "string",
           "description": "Container image reference (e.g., 'nginx:1.27-alpine', 'ghcr.io/example/app:v1.2.3')."
+        },
+        "imagePullPolicy": {
+          "type": "string",
+          "enum": ["Always", "Never", "IfNotPresent"],
+          "description": "Image pull policy. helm emits it as container.imagePullPolicy. compose maps it to the service pull_policy (Always to always, Never to never, IfNotPresent to if_not_present)."
         },
         "command": {
           "type": "array",
@@ -134,6 +225,23 @@
           "type": "object",
           "description": "Ordered map of env-or-file name → { from, as, path? }. Each entry references a slot declared in the Component's secretsSchema. The 'as' field selects the delivery mechanism, which must be allowlisted in the slot's inject: array. Blackbox slots (inject: []) MAY NOT appear here.",
           "additionalProperties": { "$ref": "#/$defs/containerSecret" }
+        },
+        "envFrom": {
+          "type": "array",
+          "description": "Bulk environment imported from a ConfigMap or Secret source. helm emits container.envFrom (configMapRef/secretRef). compose has no env-from-object primitive — a source reference is not a host file, so an env_file reinterpretation would silently change meaning; a workload declaring envFrom halts loudly on a compose target.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "oneOf": [
+              { "required": ["configMap"] },
+              { "required": ["secret"] }
+            ],
+            "properties": {
+              "configMap": { "type": "string", "description": "Name of a ConfigMap source emitted by this Recipe's artifacts input or an attached Feature." },
+              "secret": { "type": "string", "description": "Name of a secretsSchema slot; the imported Secret's name is resolved from the slot's provides." },
+              "prefix": { "type": "string", "description": "Optional prefix prepended to every imported environment variable name." }
+            }
+          }
         },
         "ports": {
           "type": "object",
@@ -183,6 +291,7 @@
         "lifecycle": {
           "type": "object",
           "additionalProperties": false,
+          "description": "Container lifecycle hooks. Translated to K8s container.lifecycle (postStart/preStop) for helm. compose has no lifecycle-hook primitive; a workload declaring lifecycle halts loudly on a compose target rather than silently dropping the hook.",
           "properties": {
             "postStart": { "$ref": "#/$defs/lifecycleHook" },
             "preStop": { "$ref": "#/$defs/lifecycleHook" }
@@ -230,8 +339,8 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "cpu": { "type": "string", "description": "K8s quantity (e.g., '100m', '0.5', '2'). Compose translates to cpus fractional." },
-        "memory": { "type": "string", "description": "K8s quantity (e.g., '128Mi', '1Gi'). Compose translates to mem_limit bytes." }
+        "cpu": { "type": "string", "description": "CPU quantity (e.g., '100m', '0.5', '2'). helm emits it verbatim under resources.{requests,limits}.cpu. compose maps it to deploy.resources.{reservations,limits}.cpus as fractional cores — a millicpu quantity is converted (500m becomes 0.5); a plain core quantity passes through. A quantity compose cannot convert halts loudly rather than emitting a wrong value." },
+        "memory": { "type": "string", "description": "Memory quantity (e.g., '128Mi', '1Gi'). helm emits it verbatim under resources.{requests,limits}.memory. compose maps it to deploy.resources.{reservations,limits}.memory as an exact byte count. Integer quantities with a binary (Ki/Mi/Gi/Ti/Pi) or decimal (k/M/G/T/P) suffix, or a plain byte integer, are converted exactly; a fractional or otherwise unconvertible quantity halts loudly rather than rounding." }
       }
     },
     "probe": {
@@ -335,7 +444,12 @@
           "additionalProperties": false,
           "properties": {
             "size": { "type": "string", "description": "K8s quantity (e.g., '10Gi')." },
-            "class": { "type": "string", "description": "StorageClassName. Optional." }
+            "class": { "type": "string", "description": "StorageClassName. Optional." },
+            "accessModes": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["ReadWriteOnce", "ReadOnlyMany", "ReadWriteMany", "ReadWriteOncePod"] },
+              "description": "PVC access modes. helm emits spec.accessModes, defaulting to [ReadWriteOnce] when omitted. compose volumes have no access-mode concept and omit it."
+            }
           }
         },
         "persistentTemplate": {
@@ -345,7 +459,12 @@
           "description": "Per-replica claim template. Requires form: stateful, because only the stateful shape gives each replica the stable identity a per-replica claim needs. On Kubernetes it becomes StatefulSet.volumeClaimTemplates; compose degrades to a single named volume with a warning comment.",
           "properties": {
             "size": { "type": "string" },
-            "class": { "type": "string" }
+            "class": { "type": "string" },
+            "accessModes": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["ReadWriteOnce", "ReadOnlyMany", "ReadWriteMany", "ReadWriteOncePod"] },
+              "description": "PVC access modes for the per-replica claim template. helm emits spec.accessModes, defaulting to [ReadWriteOnce] when omitted. compose has no access-mode concept and omits it."
+            }
           }
         }
       }
