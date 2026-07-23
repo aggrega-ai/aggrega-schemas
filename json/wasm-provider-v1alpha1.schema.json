@@ -224,6 +224,10 @@
             "$ref": "wasm-diagnostic-v1alpha1.schema.json#/$defs/Diagnostic",
             "x-aggrega-go-type": "Diagnostic"
           }
+        },
+        "error": {
+          "type": "string",
+          "description": "A failure message set when the guest ran but could not complete the operation; absent on success. It is distinct from any diagnostics the output carries: diagnostics report issues found during a run that still produced a result, while error reports that the operation itself did not complete. The host surfaces a present error as a failed plugin invocation."
         }
       }
     },
@@ -240,6 +244,10 @@
             "$ref": "wasm-diagnostic-v1alpha1.schema.json#/$defs/Diagnostic",
             "x-aggrega-go-type": "Diagnostic"
           }
+        },
+        "error": {
+          "type": "string",
+          "description": "A failure message set when the guest ran but could not complete the operation; absent on success. It is distinct from any diagnostics the output carries: diagnostics report issues found during a run that still produced a result, while error reports that the operation itself did not complete. The host surfaces a present error as a failed plugin invocation."
         }
       }
     },
@@ -688,6 +696,10 @@
         "nest_per_node": {
           "type": "boolean",
           "description": "Whether the orchestrator nests each contributor's per-node files under charts/<nodeID>/ rather than emitting them flat; the assembler signals this per provider (compose emits flat, so false; an umbrella-chart assembler nests, so true)."
+        },
+        "error": {
+          "type": "string",
+          "description": "A failure message set when the guest ran but could not complete the operation; absent on success. It is distinct from any diagnostics the output carries: diagnostics report issues found during a run that still produced a result, while error reports that the operation itself did not complete. The host surfaces a present error as a failed plugin invocation."
         }
       }
     },

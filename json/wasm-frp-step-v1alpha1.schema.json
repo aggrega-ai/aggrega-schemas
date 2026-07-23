@@ -79,6 +79,10 @@
           "x-aggrega-go-type": "OrderedMap[any]",
           "description": "The addressable outputs the guest returns for this step, an author-ordered key set that populates the step's outputs for a later step or a template to read. Preserves author order so the payload is byte-identical across runs of identical input. Absent when the step returns no outputs.",
           "additionalProperties": true
+        },
+        "error": {
+          "type": "string",
+          "description": "A failure message set when the guest ran but could not complete the operation; absent on success. It is distinct from any diagnostics the output carries: diagnostics report issues found during a run that still produced a result, while error reports that the operation itself did not complete. The host surfaces a present error as a failed plugin invocation."
         }
       }
     },
