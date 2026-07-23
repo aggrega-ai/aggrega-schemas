@@ -73,45 +73,9 @@
           "type": "array",
           "description": "Per-rule findings produced by the plugin invocation, in plugin emit order.",
           "items": {
-            "$ref": "#/$defs/LinterFinding"
+            "$ref": "wasm-diagnostic-v1alpha1.schema.json#/$defs/Diagnostic",
+            "x-aggrega-go-type": "Diagnostic"
           }
-        }
-      }
-    },
-    "LinterFinding": {
-      "type": "object",
-      "description": "One rule's verdict. rule_id names the rule that produced it. severity distinguishes errors (publish-time halt) from warnings (informational). classification carries the PATCH/MINOR/MAJOR verdict for the schema-evolution rule; omitted for rules whose finding does not carry a classification (structural rules typically). message carries the human-readable diagnostic surfaced in CLI output.",
-      "required": [
-        "rule_id",
-        "severity",
-        "message"
-      ],
-      "additionalProperties": false,
-      "properties": {
-        "rule_id": {
-          "type": "string",
-          "description": "The rule that emitted the finding. For the schema-evolution rule the value is 'schema-evolution'. Unknown rule_ids requested via LinterInput.rule_id produce a finding with rule_id 'unknown_rule'."
-        },
-        "severity": {
-          "type": "string",
-          "description": "Diagnostic severity. 'error' halts the publish-time gate; 'warning' is informational and does not affect the gate.",
-          "enum": [
-            "error",
-            "warning"
-          ]
-        },
-        "classification": {
-          "type": "string",
-          "description": "PATCH / MINOR / MAJOR verdict from the schema-evolution rule. Omitted for rules that do not carry a classification.",
-          "enum": [
-            "PATCH",
-            "MINOR",
-            "MAJOR"
-          ]
-        },
-        "message": {
-          "type": "string",
-          "description": "Human-readable diagnostic surfaced in CLI output. Names the offending field(s) for evolution findings; names the policy condition for structural findings."
         }
       }
     },

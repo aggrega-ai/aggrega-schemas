@@ -219,9 +219,10 @@
         },
         "diagnostics": {
           "type": "array",
-          "description": "Diagnostics the guest raised while rendering. Each element carries the shared Wasm-plugin diagnostic shape; the element shape is opaque at this schema layer so a guest emits the shared diagnostic without the provider socket schema rebinding it.",
+          "description": "Diagnostics the guest raised while rendering. Each element is the shared Wasm-plugin diagnostic shape.",
           "items": {
-            "x-aggrega-go-type": "renderctx.Diagnostic"
+            "$ref": "wasm-diagnostic-v1alpha1.schema.json#/$defs/Diagnostic",
+            "x-aggrega-go-type": "Diagnostic"
           }
         }
       }
@@ -234,9 +235,10 @@
       "properties": {
         "diagnostics": {
           "type": "array",
-          "description": "Diagnostics the guest raised while validating the node's input. Each element carries the shared Wasm-plugin diagnostic shape; the element shape is opaque at this schema layer so a guest emits the shared diagnostic without the provider socket schema rebinding it. Empty when the input passed the structural check.",
+          "description": "Diagnostics the guest raised while validating the node's input. Each element is the shared Wasm-plugin diagnostic shape. Empty when the input passed the structural check.",
           "items": {
-            "x-aggrega-go-type": "renderctx.Diagnostic"
+            "$ref": "wasm-diagnostic-v1alpha1.schema.json#/$defs/Diagnostic",
+            "x-aggrega-go-type": "Diagnostic"
           }
         }
       }
@@ -677,9 +679,10 @@
         },
         "diagnostics": {
           "type": "array",
-          "description": "Diagnostics the guest raised while assembling. Each element carries the shared Wasm-plugin diagnostic shape; the element shape is opaque at this schema layer so a guest emits the shared diagnostic without the provider socket schema rebinding it.",
+          "description": "Diagnostics the guest raised while assembling. Each element is the shared Wasm-plugin diagnostic shape.",
           "items": {
-            "x-aggrega-go-type": "renderctx.Diagnostic"
+            "$ref": "wasm-diagnostic-v1alpha1.schema.json#/$defs/Diagnostic",
+            "x-aggrega-go-type": "Diagnostic"
           }
         },
         "nest_per_node": {

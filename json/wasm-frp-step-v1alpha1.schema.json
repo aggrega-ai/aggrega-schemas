@@ -68,9 +68,11 @@
         },
         "diagnostics": {
           "type": "array",
-          "description": "Diagnostics the guest raised. The element shape is intentionally opaque at this schema layer for now; a structured diagnostic definition is a follow-on for when a guest needs to emit structured diagnostics. Each element carries the shared Wasm-plugin diagnostic shape.",
-          "items": {},
-          "x-aggrega-go-type": "renderctx.Diagnostic"
+          "description": "Diagnostics the guest raised. Each element is the shared Wasm-plugin diagnostic shape.",
+          "items": {
+            "$ref": "wasm-diagnostic-v1alpha1.schema.json#/$defs/Diagnostic",
+            "x-aggrega-go-type": "Diagnostic"
+          }
         },
         "outputs": {
           "type": "object",

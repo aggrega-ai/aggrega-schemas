@@ -47,7 +47,7 @@
     },
     "PolicyOutput": {
       "type": "object",
-      "description": "The response shape the policy plugin emits: the verdicts that fired during evaluation, one PolicyResult per fired verdict. An allowing rule emits nothing, so an empty results array means no verdicts fired.",
+      "description": "The response shape the policy plugin emits: the verdicts that fired during evaluation, one diagnostic per fired verdict. An allowing rule emits nothing, so an empty results array means no verdicts fired.",
       "required": [
         "results"
       ],
@@ -55,9 +55,10 @@
       "properties": {
         "results": {
           "type": "array",
-          "description": "The fired verdicts, one PolicyResult each, in the order the plugin emits them. Empty when no verdict fired.",
+          "description": "The fired verdicts, one diagnostic each, in the order the plugin emits them. Empty when no verdict fired.",
           "items": {
-            "$ref": "#/$defs/PolicyResult"
+            "$ref": "wasm-diagnostic-v1alpha1.schema.json#/$defs/Diagnostic",
+            "x-aggrega-go-type": "Diagnostic"
           }
         }
       }
@@ -165,26 +166,6 @@
           "items": {
             "type": "string"
           }
-        }
-      }
-    },
-    "PolicyResult": {
-      "type": "object",
-      "description": "One fired policy verdict: its severity and a human-readable message. Only fired verdicts appear in the output; an allowing rule emits no result. Severity governs the build outcome: deny halts the build, warn flags the verdict and lets the build proceed, audit records the verdict without affecting the outcome.",
-      "required": [
-        "severity",
-        "message"
-      ],
-      "additionalProperties": false,
-      "properties": {
-        "severity": {
-          "type": "string",
-          "enum": ["deny", "warn", "audit"],
-          "description": "The verdict's severity: deny halts the build, warn flags the verdict and lets the build proceed, audit records the verdict without affecting the build outcome."
-        },
-        "message": {
-          "type": "string",
-          "description": "Human-readable diagnostic for the fired verdict, surfaced to the operator."
         }
       }
     }

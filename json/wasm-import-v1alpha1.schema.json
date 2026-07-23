@@ -82,7 +82,8 @@
           "type": "array",
           "description": "Diagnostics the import raised — for example an unresolved source node or an ambiguous mapping. Absent when the import produced none.",
           "items": {
-            "$ref": "#/$defs/Diagnostic"
+            "$ref": "wasm-diagnostic-v1alpha1.schema.json#/$defs/Diagnostic",
+            "x-aggrega-go-type": "Diagnostic"
           }
         },
         "files": {
@@ -298,38 +299,6 @@
         "tier": {
           "type": "string",
           "description": "The match tier of the chosen target."
-        }
-      }
-    },
-    "Diagnostic": {
-      "type": "object",
-      "description": "One diagnostic the import raised: a severity, an optional stable code, a human-readable message, and an optional reference to the source node it concerns.",
-      "required": [
-        "severity",
-        "message"
-      ],
-      "additionalProperties": false,
-      "properties": {
-        "severity": {
-          "type": "string",
-          "enum": [
-            "error",
-            "warning",
-            "info"
-          ],
-          "description": "The diagnostic's severity: error, warning, or info."
-        },
-        "code": {
-          "type": "string",
-          "description": "A short stable code identifying the diagnostic class, for programmatic handling. Absent when the importer attaches no code."
-        },
-        "message": {
-          "type": "string",
-          "description": "The human-readable diagnostic message."
-        },
-        "sourceRef": {
-          "type": "string",
-          "description": "A reference to the source node the diagnostic concerns. Absent when the diagnostic is not tied to a specific node."
         }
       }
     },

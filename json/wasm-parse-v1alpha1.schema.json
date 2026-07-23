@@ -48,7 +48,8 @@
           "type": "array",
           "description": "Diagnostics the parse raised — for example a syntax error or a warning. Absent when the parse produced none.",
           "items": {
-            "$ref": "#/$defs/ParseDiagnostic"
+            "$ref": "wasm-diagnostic-v1alpha1.schema.json#/$defs/Diagnostic",
+            "x-aggrega-go-type": "Diagnostic"
           }
         },
         "spans": {
@@ -57,30 +58,6 @@
           "items": {
             "$ref": "#/$defs/NodeSpan"
           }
-        }
-      }
-    },
-    "ParseDiagnostic": {
-      "type": "object",
-      "description": "One diagnostic the parse raised: a severity, a human-readable message, and an optional source span locating the diagnostic in the original bytes.",
-      "required": [
-        "severity",
-        "message"
-      ],
-      "additionalProperties": false,
-      "properties": {
-        "severity": {
-          "type": "string",
-          "description": "The diagnostic's severity — for example error or warning. An open string so a parser can report its own severity vocabulary."
-        },
-        "message": {
-          "type": "string",
-          "description": "The human-readable diagnostic message."
-        },
-        "span": {
-          "$ref": "#/$defs/SourceSpan",
-          "x-aggrega-go-type": "*SourceSpan",
-          "description": "The source span locating the diagnostic in the original bytes. Absent when the parser attaches no location to the diagnostic."
         }
       }
     },
