@@ -103,6 +103,9 @@ var WasmHostfuncErrorV1alpha1 string
 //go:embed json/wasm-linter-v1alpha1.schema.json
 var WasmLinterV1alpha1 string
 
+//go:embed json/wasm-annotation-transform-v1alpha1.schema.json
+var WasmAnnotationTransformV1alpha1 string
+
 //go:embed json/wasm-mutator-v1alpha1.schema.json
 var WasmMutatorV1alpha1 string
 

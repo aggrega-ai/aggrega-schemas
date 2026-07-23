@@ -88,7 +88,7 @@
           "type": "array",
           "default": [],
           "items": { "$ref": "#/$defs/PluginRef" },
-          "description": "Governance-socket plugins. Each entry names the pipeline `role` it is attached at (`label-transform`, `ir-verdict`, or `render-verdict`); the role fixes both what the plugin may emit and its default entry function (`label-transform` → `mutate`; `ir-verdict` / `render-verdict` → `validate`)."
+          "description": "Governance-socket plugins. Each entry names the pipeline `role` it is attached at (`annotation-transform`, `label-transform`, `ir-verdict`, or `render-verdict`); the role fixes both what the plugin may emit and its default entry function (`annotation-transform` → `transform_annotations`; `label-transform` → `mutate`; `ir-verdict` / `render-verdict` → `validate`)."
         },
         "governance_append": {
           "type": "array",
@@ -377,8 +377,8 @@
         },
         "role": {
           "type": "string",
-          "enum": ["label-transform", "ir-verdict", "render-verdict"],
-          "description": "The pipeline role a governance attachment is bound to, read on a `governance` entry only: `label-transform` auto-tags topology-graph node labels at Step 2; `ir-verdict` renders an accept/reject verdict over the IR graph at Step 4; `render-verdict` renders a verdict over the rendered artifacts at Step 5. The role — not the plugin's declared kind — fixes what the plugin may emit: a verdict role's output can only be read as a verdict, never applied as a change. It also selects the default entry function (`label-transform` → `mutate`; verdict roles → `validate`)."
+          "enum": ["annotation-transform", "label-transform", "ir-verdict", "render-verdict"],
+          "description": "The pipeline role a governance attachment is bound to, read on a `governance` entry only: `annotation-transform` injects annotations onto resolved components before annotation expansion, so bound injections become Feature attachments; `label-transform` auto-tags topology-graph node labels at Step 2; `ir-verdict` renders an accept/reject verdict over the IR graph at Step 4; `render-verdict` renders a verdict over the rendered artifacts at Step 5. The role — not the plugin's declared kind — fixes what the plugin may emit: a verdict role's output can only be read as a verdict, never applied as a change; a transform role's output is host-confined to its facet (annotations or labels). It also selects the default entry function (`annotation-transform` → `transform_annotations`; `label-transform` → `mutate`; verdict roles → `validate`)."
         },
         "capability": {
           "type": "string",
@@ -386,7 +386,7 @@
         },
         "function": {
           "type": "string",
-          "description": "Optional override for the socket's default entry function. When omitted, the socket's documented default applies (governance `label-transform` → `mutate`, governance verdict roles → `validate`, linter → `lint`, importer → `import`)."
+          "description": "Optional override for the socket's default entry function. When omitted, the socket's documented default applies (governance `annotation-transform` → `transform_annotations`, governance `label-transform` → `mutate`, governance verdict roles → `validate`, linter → `lint`, importer → `import`)."
         },
         "with": {
           "$ref": "#/$defs/PluginRefWith",

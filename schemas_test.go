@@ -116,6 +116,7 @@ var allSchemas = []struct {
 	{"WasmDescribeV1alpha1", WasmDescribeV1alpha1, "https://aggrega.ai/schemas/wasm-describe-v1alpha1.schema.json"},
 	{"WasmHostfuncErrorV1alpha1", WasmHostfuncErrorV1alpha1, "https://aggrega.ai/schemas/wasm-hostfunc-error-v1alpha1.schema.json"},
 	{"WasmLinterV1alpha1", WasmLinterV1alpha1, "https://aggrega.ai/schemas/wasm-linter-v1alpha1.schema.json"},
+	{"WasmAnnotationTransformV1alpha1", WasmAnnotationTransformV1alpha1, "https://aggrega.ai/schemas/wasm-annotation-transform-v1alpha1.schema.json"},
 	{"WasmMutatorV1alpha1", WasmMutatorV1alpha1, "https://aggrega.ai/schemas/wasm-mutator-v1alpha1.schema.json"},
 	{"WasmPolicyV1alpha1", WasmPolicyV1alpha1, "https://aggrega.ai/schemas/wasm-policy-v1alpha1.schema.json"},
 	{"WasmProviderV1alpha1", WasmProviderV1alpha1, "https://aggrega.ai/schemas/wasm-provider-v1alpha1.schema.json"},
