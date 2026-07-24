@@ -20,7 +20,8 @@
           "containers": false,
           "initContainers": false,
           "volumes": false,
-          "services": false
+          "services": false,
+          "runtimeClassName": false
         }
       },
       "else": {
@@ -152,6 +153,10 @@
     "priorityClassName": {
       "type": "string",
       "description": "Name of the PriorityClass governing this workload's scheduling priority. helm emits pod.priorityClassName. compose has no single-host scheduling-priority analog and omits it."
+    },
+    "runtimeClassName": {
+      "type": "string",
+      "description": "Name of the RuntimeClass selecting the container runtime this workload runs under (for example a GPU-enabled runtime such as 'nvidia'). The compiler pipes the name through verbatim; the cluster resolves it to a configured RuntimeClass at schedule time. helm emits pod.runtimeClassName. compose has no runtime-class analog and omits it. Compute-only: not permitted on a reference workload."
     },
     "terminationGracePeriodSeconds": {
       "type": "integer",
@@ -341,6 +346,12 @@
       "properties": {
         "cpu": { "type": "string", "description": "CPU quantity (e.g., '100m', '0.5', '2'). helm emits it verbatim under resources.{requests,limits}.cpu. compose maps it to deploy.resources.{reservations,limits}.cpus as fractional cores — a millicpu quantity is converted (500m becomes 0.5); a plain core quantity passes through. A quantity compose cannot convert halts loudly rather than emitting a wrong value." },
         "memory": { "type": "string", "description": "Memory quantity (e.g., '128Mi', '1Gi'). helm emits it verbatim under resources.{requests,limits}.memory. compose maps it to deploy.resources.{reservations,limits}.memory as an exact byte count. Integer quantities with a binary (Ki/Mi/Gi/Ti/Pi) or decimal (k/M/G/T/P) suffix, or a plain byte integer, are converted exactly; a fractional or otherwise unconvertible quantity halts loudly rather than rounding." }
+      },
+      "patternProperties": {
+        "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)+/[A-Za-z0-9]([-A-Za-z0-9_.]*[A-Za-z0-9])?$": {
+          "type": "string",
+          "description": "An extended (vendor/domain-scoped) resource quantity, keyed by a fully-qualified '<domain>/<name>' name (for example 'nvidia.com/gpu': '1', 'amd.com/gpu': '2'). The domain segment carries at least one dot, which distinguishes an extended key from the bare cpu/memory quantities. The compiler pipes the quantity through verbatim; the cluster's device plugin resolves and allocates it at schedule time. helm emits it under resources.{requests,limits}.<key>. compose has no extended-resource analog on this shape and omits it."
+        }
       }
     },
     "probe": {
