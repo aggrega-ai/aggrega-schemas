@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/workloadlibrary-v1alpha1.schema.json",
+  "title": "Aggrega Catalog (WorkloadLibrary)",
+  "description": "A reusable collection of Workload template fragments that Recipes consume at render time via `workload: { $import: ... }`. Tier 3 — opt-in for catalogs that need cross-Recipe workload reuse. Single authoring mode: Go templates only.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "aggrega.ai/v1alpha1"
+    },
+    "kind": {
+      "type": "string",
+      "const": "WorkloadLibrary"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$",
+          "description": "PascalCase identifier for the library. It is the <Library> name in the bare-name identity reference <Library>#/workloads/<name>; the version is supplied by the per-Release lockfile and no registry host enters the reference or any derived identifier."
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+          "description": "Strict Semantic Versioning of the library (e.g., 1.0.0). A consumer may assert this as an optional `:<version>` minimum-version floor in a bare-name reference (<Library>:<version>#/workloads/<name>); the per-Release lockfile owns the resolved version."
+        },
+        "description": {
+          "type": "string",
+          "description": "A concise summary of what the library covers."
+        },
+        "labels": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
+          "additionalProperties": { "type": "string" },
+          "description": "Author-declared labels. The compiler does not interpret label values; labels are metadata for discovery + hub UI surfacing."
+        },
+        "annotations": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
+          "additionalProperties": { "type": "string" },
+          "description": "Author-declared annotations. Same opaque-metadata posture as labels."
+        }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "required": [
+        "workloads"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "workloads": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[WorkloadEntry]",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^[A-Z][A-Za-z0-9]*$",
+            "description": "PascalCase identifier. Entry keys appear in canonical reference URLs (`#/workloads/<name>`); the envelope-level constraint prevents non-PascalCase keys from propagating through the catalog ecosystem."
+          },
+          "additionalProperties": {
+            "type": "string",
+            "description": "A single workload entry. The value is a Go template fragment authored as a YAML string whose output parses as 'aggrega.ai/v1alpha1 Workload'. The compiler stores the fragment verbatim at WorkloadLibrary load; parsing happens at Recipe render time when the entry is imported via `workload: { $import: ... }`."
+          },
+          "description": "Named map of reusable Workload template fragments. Each entry's body is opaque to the envelope validation — content semantics are handled by the Go template parser at consumption time."
+        }
+      },
+      "description": "The WorkloadLibrary's content. spec.workloads is required and must declare at least one entry. spec carries additionalProperties: false — no parallel authoring modes are accepted at the envelope level. The single-authoring-mode posture keeps Recipe rendering uniform (Go template throughout) and avoids forcing authors to switch evaluation models mid-render when consuming imported fragments."
+    }
+  }
+}

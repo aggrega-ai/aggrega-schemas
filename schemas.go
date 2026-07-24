@@ -130,6 +130,9 @@ var WasmParseV1alpha1 string
 //go:embed json/workload-v1alpha1.schema.json
 var WorkloadV1alpha1 string
 
+//go:embed json/workloadlibrary-v1alpha1.schema.json
+var WorkloadLibraryV1alpha1 string
+
 //go:embed json/*.schema.json
 var schemaFiles embed.FS
 

@@ -114,6 +114,7 @@ var allSchemas = []struct {
 	{"TemplateContextV1alpha1", TemplateContextV1alpha1, "https://aggrega.ai/schemas/template-context-v1alpha1.schema.json"},
 	{"WasmCliV1alpha1", WasmCliV1alpha1, "https://aggrega.ai/schemas/wasm-cli-v1alpha1.schema.json"},
 	{"WasmDescribeV1alpha1", WasmDescribeV1alpha1, "https://aggrega.ai/schemas/wasm-describe-v1alpha1.schema.json"},
+	{"WasmDiagnosticV1alpha1", WasmDiagnosticV1alpha1, "https://aggrega.ai/schemas/wasm-diagnostic-v1alpha1.schema.json"},
 	{"WasmHostfuncErrorV1alpha1", WasmHostfuncErrorV1alpha1, "https://aggrega.ai/schemas/wasm-hostfunc-error-v1alpha1.schema.json"},
 	{"WasmLinterV1alpha1", WasmLinterV1alpha1, "https://aggrega.ai/schemas/wasm-linter-v1alpha1.schema.json"},
 	{"WasmAnnotationTransformV1alpha1", WasmAnnotationTransformV1alpha1, "https://aggrega.ai/schemas/wasm-annotation-transform-v1alpha1.schema.json"},
@@ -124,6 +125,7 @@ var allSchemas = []struct {
 	{"WasmImportV1alpha1", WasmImportV1alpha1, "https://aggrega.ai/schemas/wasm-import-v1alpha1.schema.json"},
 	{"WasmParseV1alpha1", WasmParseV1alpha1, "https://aggrega.ai/schemas/wasm-parse-v1alpha1.schema.json"},
 	{"WorkloadV1alpha1", WorkloadV1alpha1, "https://aggrega.ai/schemas/workload-v1alpha1.schema.json"},
+	{"WorkloadLibraryV1alpha1", WorkloadLibraryV1alpha1, "https://aggrega.ai/schemas/workloadlibrary-v1alpha1.schema.json"},
 }
 
 // TestEverySchemaIsNonEmpty asserts every exported identifier has
