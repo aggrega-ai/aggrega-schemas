@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/lockfile-v1alpha1.schema.json",
   "title": "Aggrega Per-Release Lockfile",
-  "description": "Machine-generated lockfile pinning every URI resolved from a Release for deterministic future builds. Lives at `<release-stem>.lock` next to `<release-stem>.yaml`; produced by `aggrega pull <release>`; consumed by `aggrega build <release>`. Two provenance shapes serve two distinct closure-graph relationships: `referenced_from` (list of strings — dotted authoring-site paths) appears on `entities` and `plugins` to record where in the Release / Aggregate / Manifest / `.aggrega-config.yaml` each URI was pulled in from; `consumers` (list of `{consumer_uri, fragments}` records) appears on `schema_libraries` and `mapping_libraries` to record which catalog entity references which `<entry-name>` fragments of a library — the structured shape makes consumer-affected-by-library-bump diffs traceable without re-running closure. Schema evolution discipline: adding a new top-level section is SemVer-MINOR (additive); adding a new field inside an existing section is SemVer-MINOR; removing a key or tightening a constraint is SemVer-MAJOR. A future additive `source_artifacts` section is reserved for the source-resolution amendment.",
+  "description": "Machine-generated lockfile pinning every URI resolved from a Release for deterministic future builds. Lives at `<release-stem>.lock` next to `<release-stem>.yaml`; produced by `aggrega pull <release>`; consumed by `aggrega build <release>`. Two provenance shapes serve two distinct closure-graph relationships: `referenced_from` (list of strings — dotted authoring-site paths) appears on `entities` and `plugins` to record where in the Release / Aggregate / Manifest / `.aggrega-config.yaml` each URI was pulled in from; `consumers` (list of `{consumer_uri, fragments}` records) appears on `schema_libraries`, `mapping_libraries`, and `workload_libraries` to record which catalog entity references which `<entry-name>` fragments of a library — the structured shape makes consumer-affected-by-library-bump diffs traceable without re-running closure. Schema evolution discipline: adding a new top-level section is SemVer-MINOR (additive); adding a new field inside an existing section is SemVer-MINOR; removing a key or tightening a constraint is SemVer-MAJOR. A future additive `source_artifacts` section is reserved for the source-resolution amendment.",
   "type": "object",
   "additionalProperties": false,
   "required": ["version", "release", "generated_at"],
@@ -277,6 +277,14 @@
       "type": "integer",
       "const": 1,
       "description": "Lockfile schema version. Currently 1; future SemVer-MAJOR breaks of the schema increment this integer."
+    },
+    "workload_libraries": {
+      "type": "array",
+      "default": [],
+      "description": "WorkloadLibrary entries the closure references via Recipe `workload: { $import: ... }` sites. Each entry's `consumers` list records which catalog entity references which `<entry-name>` fragments of the library — a structured record that makes library-version-bump impact diffs traceable without re-running closure.",
+      "items": {
+        "$ref": "#/$defs/LibraryEntry"
+      }
     }
   },
   "$defs": {
@@ -352,7 +360,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["uri", "resolved_version", "digest"],
-      "description": "Common shape shared by `schema_libraries` and `mapping_libraries` entries. The `consumers` list captures the catalog-graph relationship — which catalog entity references which `<entry-name>` fragments of this library — supporting structured impact diffs when the library's digest changes.",
+      "description": "Common shape shared by `schema_libraries`, `mapping_libraries`, and `workload_libraries` entries. The `consumers` list captures the catalog-graph relationship — which catalog entity references which `<entry-name>` fragments of this library — supporting structured impact diffs when the library's digest changes.",
       "properties": {
         "uri": {
           "type": "string",
