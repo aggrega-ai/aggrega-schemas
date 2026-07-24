@@ -163,7 +163,7 @@
         },
         "workload": {
           "x-aggrega-go-type": "WorkloadTemplate",
-          "description": "Workload YAML producer with two authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output parses as 'aggrega.ai/v1alpha1 Workload'. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Library imports are not supported at this site — use a local file path. The target Provider's engine must support workload synthesis; the standard-library catalog declares workloadSchema on such providers as the documented contract. A workload: FeatureRecipe bound to a provider whose engine cannot synthesize halts loudly at render time. A synthesized FeatureRecipe workload emits its provider-native manifests under the feature's output directory.",
+          "description": "Workload YAML producer with three authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output parses as 'aggrega.ai/v1alpha1 Workload'. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Mode 3 (library import): a YAML map of exactly one key, `$import: <Library>#/workloads/<entry>`, referencing a WorkloadLibrary entry by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference). The target Provider's engine must support workload synthesis; the standard-library catalog declares workloadSchema on such providers as the documented contract. A workload: FeatureRecipe bound to a provider whose engine cannot synthesize halts loudly at render time. A synthesized FeatureRecipe workload emits its provider-native manifests under the feature's output directory.",
           "oneOf": [
             {
               "type": "string"
@@ -175,9 +175,9 @@
                 "$import": {
                   "type": "string",
                   "not": {
-                    "pattern": "^oci://|#/"
+                    "pattern": "^oci://"
                   },
-                  "description": "Local file path. Library imports are not supported at workload: — use a local file path."
+                  "description": "A local file path, or a bare-name WorkloadLibrary reference `<Library>#/workloads/<entry>`. A registry host (`oci://…`) is rejected: a library is addressed by identity, and the version is supplied by the per-Release lockfile."
                 }
               },
               "additionalProperties": false
