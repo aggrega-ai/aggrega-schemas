@@ -207,32 +207,6 @@
           },
           "additionalProperties": false
         },
-        "secrets": {
-          "type": "object",
-          "description": "Credential Features (labeled feature.aggrega.ai/kind: secret) attached via the Release. Only infra is allowed (no values — credential values come from the Aggregate).",
-          "patternProperties": {
-            "^[a-zA-Z0-9_-]+$": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "description": "The URI of the credential Feature. Required for Release-only secrets (Operator-injected). Must match the Aggregate's type if both declare it."
-                },
-                "description": {
-                  "type": "string",
-                  "description": "Optional documentation explaining why the Operator attached this credential at this boundary level."
-                },
-                "infra": {
-                  "type": "object",
-                  "description": "Operational sizing for this credential feature (e.g., specific AWS Vault ARN, region).",
-                  "additionalProperties": true
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "additionalProperties": false
-        },
         "uses": {
           "$ref": "#/$defs/release_uses_block",
           "description": "Operator edge surface. Within Architect-declared sockets the Release may wire a declared-but-unbound socket to an existing component (target) and/or supply per-edge infra. No values (the Release values: ban holds) and no compute creation; retargeting a developer-declared edge halts at build."
@@ -350,10 +324,6 @@
             }
           },
           "additionalProperties": false
-        },
-        "secrets": {
-          "type": "object",
-          "description": "Boundary-wide secrets accessible by all nested components."
         },
         "boundaries": {
           "type": "object",
