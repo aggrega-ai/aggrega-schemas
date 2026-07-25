@@ -49,6 +49,9 @@ var AggregaConfigV1alpha1 string
 //go:embed json/aggregate-v1alpha1.schema.json
 var AggregateV1alpha1 string
 
+//go:embed json/artifactslibrary-v1alpha1.schema.json
+var ArtifactsLibraryV1alpha1 string
+
 //go:embed json/cache-metadata-v1alpha1.schema.json
 var CacheMetadataV1alpha1 string
 

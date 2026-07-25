@@ -98,6 +98,7 @@ var allSchemas = []struct {
 }{
 	{"AggregaConfigV1alpha1", AggregaConfigV1alpha1, "https://aggrega.ai/schemas/aggrega-config-v1alpha1.schema.json"},
 	{"AggregateV1alpha1", AggregateV1alpha1, "https://aggrega.ai/schemas/aggregate-v1alpha1.schema.json"},
+	{"ArtifactsLibraryV1alpha1", ArtifactsLibraryV1alpha1, "https://aggrega.ai/schemas/artifactslibrary-v1alpha1.schema.json"},
 	{"CacheMetadataV1alpha1", CacheMetadataV1alpha1, "https://aggrega.ai/schemas/cache-metadata-v1alpha1.schema.json"},
 	{"ComponentV1alpha1", ComponentV1alpha1, "https://aggrega.ai/schemas/component-v1alpha1.schema.json"},
 	{"FeatureV1alpha1", FeatureV1alpha1, "https://aggrega.ai/schemas/feature-v1alpha1.schema.json"},

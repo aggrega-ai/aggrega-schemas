@@ -193,7 +193,7 @@
         "artifacts": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[ArtifactEntry]",
-          "description": "Map of output filename to artifact-content authoring. Each entry's value carries one of two modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output is the artifact body. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Library imports are not supported at this site — use a local file path. Map keys become output filenames verbatim. Collisions across artifact entries, source output, workload synthesis are load-time or render-time errors.",
+          "description": "Map of output filename to artifact-content authoring. Each entry's value carries one of three modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output is the artifact body. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Mode 3 (library import): a YAML map of exactly one key, `$import: <Library>#/artifacts/<entry>`, referencing an ArtifactsLibrary bundle by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference). A bundle expands into one output per file, each named by the bundle's authored filename. Map keys become output filenames verbatim. Collisions across artifact entries, bundle files, source output, workload synthesis are load-time or render-time errors.",
           "additionalProperties": {
             "oneOf": [
               {
@@ -206,9 +206,9 @@
                   "$import": {
                     "type": "string",
                     "not": {
-                      "pattern": "^oci://|#/"
+                      "pattern": "^oci://"
                     },
-                    "description": "Local file path. Library imports are not supported at artifacts:."
+                    "description": "A local file path, or a bare-name ArtifactsLibrary reference `<Library>#/artifacts/<entry>` (the entry names a bundle). A registry host (`oci://…`) is rejected: a library is addressed by identity, and the version is supplied by the per-Release lockfile."
                   }
                 },
                 "additionalProperties": false
