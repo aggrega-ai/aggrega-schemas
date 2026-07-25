@@ -286,7 +286,7 @@
         "$ref": "#/$defs/LibraryEntry"
       }
     },
-    "artifact_libraries": {
+    "artifacts_libraries": {
       "type": "array",
       "default": [],
       "description": "ArtifactsLibrary entries the closure references via Recipe / FeatureRecipe `artifacts.<name>: { $import: ... }` sites. Each entry's `consumers` list records which catalog entity references which `<entry-name>` bundles of the library — a structured record that makes library-version-bump impact diffs traceable without re-running closure.",
