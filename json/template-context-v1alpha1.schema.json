@@ -114,33 +114,13 @@
       },
       "features": {
         "type": "object",
-        "description": "The attached features for this node, keyed by instance name. Available for Base Recipes to conditionally adapt rendering based on attached capabilities.",
-        "additionalProperties": {
-          "type": "object",
-          "properties": {
-            "type": { "type": "string", "description": "The Catalog Feature URI." },
-            "values": { "type": "object", "additionalProperties": true },
-            "infra": { "type": "object", "additionalProperties": true }
-          },
-          "additionalProperties": false
-        }
+        "description": "The attachments on this node, keyed by instance name. A Recipe reads them to adapt its rendering to the attached capabilities and to consume what an attachment publishes.",
+        "additionalProperties": { "$ref": "#/$defs/template_attachment" }
       },
       "secrets": {
         "type": "object",
-        "description": "The attached credential Features for this node, keyed by instance name.",
-        "additionalProperties": {
-          "type": "object",
-          "properties": {
-            "type": { "type": "string", "description": "The Catalog credential Feature URI (labeled feature.aggrega.ai/kind: secret)." },
-            "values": { "type": "object", "additionalProperties": true },
-            "provides": {
-              "type": "object",
-              "description": "The resolved public contract of the credential producer filling this slot — the generated Secret's name, its key, and any additional produced keys — exposed to the consumer as .secrets.<slot>.provides.<key>. The consumer reads these values instead of re-deriving the credential's physical identity.",
-              "additionalProperties": { "type": "string" }
-            }
-          },
-          "additionalProperties": false
-        }
+        "description": "The credential attachments on this node, keyed by instance name. Same attachment shape as .features — what differs is what the attachment produces, not how it is read.",
+        "additionalProperties": { "$ref": "#/$defs/template_attachment" }
       },
       "metadata": {
         "type": "object",
@@ -283,8 +263,8 @@
           },
           "feature_attachments": {
             "type": "array",
-            "description": "List of features directly attached to this boundary (for cross-feature reference within boundary scope).",
-            "items": { "type": "object", "additionalProperties": true }
+            "description": "The attachments directly attached to this boundary (for cross-attachment reference within boundary scope), in the same attachment shape .features carries.",
+            "items": { "$ref": "#/$defs/template_attachment" }
           }
         },
         "additionalProperties": false
@@ -292,6 +272,29 @@
     },
     "additionalProperties": false,
     "$defs": {
+      "template_attachment": {
+        "type": "object",
+        "description": "One attachment as a template reads it: the per-instance view of an attached Feature. Every attachment exposes the same fields regardless of what it produces, so .features.<name> and .secrets.<slot> are read the same way.",
+        "properties": {
+          "type": { "type": "string", "description": "The Catalog Feature URI of the attached Feature." },
+          "values": {
+            "type": "object",
+            "description": "The attachment's own developer-intent pillar, carried verbatim from the attachment declaration.",
+            "additionalProperties": true
+          },
+          "infra": {
+            "type": "object",
+            "description": "The attachment's own operational-sizing pillar, carried verbatim from the attachment declaration.",
+            "additionalProperties": true
+          },
+          "provides": {
+            "type": "object",
+            "description": "The resolved public contract of the FeatureRecipe bound to this attachment — the emitted resource's name, its key, an identity, and any additional produced keys — exposed to the consumer as .features.<name>.provides.<key>. The consumer reads these values instead of re-deriving the attachment's physical identity. Empty when the bound FeatureRecipe publishes nothing.",
+            "additionalProperties": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      },
       "enriched_edge": {
         "type": "object",
         "description": "A single enriched topological edge assembled by the compiler. Contains the target's resolved identity, provides, and cascaded annotations.",
