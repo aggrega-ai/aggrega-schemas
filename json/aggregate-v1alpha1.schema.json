@@ -245,12 +245,12 @@
                     "values": {
                       "type": "object",
                       "additionalProperties": true,
-                      "description": "Per-connection developer values for this edge, validated against the target socket's valueSchema by the Step-1 conformance gate (not structurally here). Projected into the consuming node's render context at .uses.<socket>.<alias>.values."
+                      "description": "Per-connection developer values for this edge, validated by the Step-1 conformance gate (not structurally here) against the valueSchema declared by the source socket — the socket on this component, the one whose uses block carries this entry. Projected into the consuming node's render context at .uses.<alias>.values."
                     },
                     "infra": {
                       "type": "object",
                       "additionalProperties": true,
-                      "description": "Per-connection infra for this edge. The Aggregate may seed defaults; a Release edge surface may supply or override per-edge infra. Validated against the target socket's infraSchema by the Step-1 conformance gate."
+                      "description": "Per-connection infra for this edge. The Aggregate may seed defaults; a Release edge surface may supply or override per-edge infra. Validated by the Step-1 conformance gate against the infraSchema declared by the source socket — the socket on this component, the one whose uses block carries this entry."
                     }
                   },
                   "additionalProperties": false
