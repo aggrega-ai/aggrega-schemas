@@ -104,7 +104,7 @@
       },
       "locals": {
         "type": "object",
-        "description": "The Recipe's own private state (e.g., primary_compute, volumes_path). Available for self-referencing within valuesMapping, provides templates, and for downstream Wasm plugins via pipeline[].with blocks. Never exposed to callers.",
+        "description": "The Recipe's own private state (e.g., primary_compute, volumes_path). Populated by Phase B.0, which evaluates every locals entry against the same self-contained context — so the entries cannot read one another, and peer locals are NOT readable from a locals template. Available afterwards in valuesMapping, workload, artifacts, assertions, and to downstream Wasm plugins via pipeline[].with (and pipeline[].when). NOT available within a provides template: provides is resolved first (a local may read .provides), so a provides template referencing .locals halts. Never exposed to callers.",
         "additionalProperties": { "type": "string" }
       },
       "provides": {

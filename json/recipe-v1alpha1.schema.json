@@ -137,7 +137,7 @@
         "locals": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[string]",
-          "description": "The Private Ops State. Internal computation results available only within this Recipe's templates (valuesMapping, provides, pipeline[].with). Used to export physical realities (e.g., target containers, JSON paths) for downstream Wasm plugins. Never exposed to callers — use provides for the public API.",
+          "description": "The Private Ops State. Internal computation results available within this Recipe's templates as '.locals.*'. Each entry is itself a Go template, and every entry is evaluated against the same context: '.context.instance_id', '.values', '.infra', and the node's resolved '.provides'. That context does not carry '.locals', so the entries cannot read one another — peer locals are NOT readable, and an entry that reaches for another entry through '.locals' halts rather than resolving. An entry that needs another's value repeats the expression instead of chaining. The resolved values reach valuesMapping, workload, artifacts, assertions, and pipeline[].with (and pipeline[].when). They do NOT reach provides: locals are resolved after provides — a local may read .provides — so a provides template referencing .locals halts, and a provides entry that needs a local's value inlines the expression the local computes. Used to export physical realities (e.g., target containers, JSON paths) for downstream Wasm plugins. Never exposed to callers — use provides for the public API.",
           "additionalProperties": {
             "type": "string"
           }
