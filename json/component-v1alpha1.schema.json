@@ -132,7 +132,7 @@
               "required": {
                 "type": "boolean",
                 "default": false,
-                "description": "Declares the slot as expected to be filled. A declaration of intent: no build-time check currently rejects a deployment that leaves the slot unfilled."
+                "description": "Declares that the slot must end up bound. The build halts when no attachment binds the slot's name on an instance of this entity, tested against the attachment set the instance holds after the whole attachment cascade — so an attachment declared at a scope the instance inherits from satisfies the slot exactly as a fill authored on the instance itself does."
               },
               "inject": {
                 "type": "array",

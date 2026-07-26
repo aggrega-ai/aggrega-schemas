@@ -120,7 +120,7 @@
               "required": {
                 "type": "boolean",
                 "default": false,
-                "description": "Declares the slot as expected to be filled. A declaration of intent: no build-time check currently rejects a deployment that leaves the slot unfilled."
+                "description": "Declares that the slot must end up bound. On a Component's slot this halts the build when nothing binds the slot's name on an instance of that Component. A Feature's own slots have no surface to be bound from — an attachment declares type, description, values, uses and inject, and carries no nested attachment block — so on a Feature slot this field is a declaration only, read by the Workload cross-check that validates a resource-generating FeatureRecipe's container attachment references against the slots the implemented Feature declares."
               },
               "inject": {
                 "type": "array",
