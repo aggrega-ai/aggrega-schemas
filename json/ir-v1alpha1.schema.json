@@ -49,9 +49,9 @@
           "type": "string",
           "description": "Source location of the annotation declaration as <file-path>:<dotted-yaml-key-path>; empty for explicit leaves."
         },
-        "overrides_annotation": {
+        "overridden_annotation": {
           "$ref": "#/$defs/FieldProvenance",
-          "description": "When an explicit leaf overwrote an annotation-contributed leaf, the suppressed provenance it replaced.",
+          "description": "The annotation contribution that lost this leaf to an explicit one: when an explicit leaf overwrote an annotation-contributed leaf, the suppressed provenance it replaced. Singular — exactly one suppressed contribution is ever retained.",
           "x-aggrega-go-type": "*FieldProvenance"
         }
       },
