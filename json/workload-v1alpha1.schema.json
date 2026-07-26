@@ -80,9 +80,9 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["from", "env"],
-      "description": "Optional credential for a reference endpoint (form: reference): a secretsSchema slot delivered to consumers as an environment variable. Per the AOT boundary the secret value is never resolved here; the credential is a pointer carried to consumers through the recipe's provides.",
+      "description": "Optional credential for a reference endpoint (form: reference): a featuresSchema slot delivered to consumers as an environment variable. Per the AOT boundary the secret value is never resolved here; the credential is a pointer carried to consumers through the recipe's provides.",
       "properties": {
-        "from": { "type": "string", "description": "Name of a secretsSchema slot supplying the credential." },
+        "from": { "type": "string", "description": "Name of a featuresSchema slot supplying the credential." },
         "env": { "type": "string", "description": "Environment variable name the credential is delivered as by the consuming workload." }
       }
     },
@@ -228,7 +228,7 @@
         },
         "secrets": {
           "type": "object",
-          "description": "Ordered map of env-or-file name → { from, as, path? }. Each entry references a slot declared in the Component's secretsSchema. The 'as' field selects the delivery mechanism, which must be allowlisted in the slot's inject: array. Blackbox slots (inject: []) MAY NOT appear here.",
+          "description": "Ordered map of env-or-file name → { from, as, path? }. Each entry references a slot declared in the Component's featuresSchema. The 'as' field selects the delivery mechanism, which must be allowlisted in the slot's inject: array. Blackbox slots (inject: []) MAY NOT appear here.",
           "additionalProperties": { "$ref": "#/$defs/containerSecret" }
         },
         "envFrom": {
@@ -243,7 +243,7 @@
             ],
             "properties": {
               "configMap": { "type": "string", "description": "Name of a ConfigMap source emitted by this Recipe's artifacts input or an attached Feature." },
-              "secret": { "type": "string", "description": "Name of a secretsSchema slot; the imported Secret's name is resolved from the slot's provides." },
+              "secret": { "type": "string", "description": "Name of a featuresSchema slot; the imported Secret's name is resolved from the slot's provides." },
               "prefix": { "type": "string", "description": "Optional prefix prepended to every imported environment variable name." }
             }
           }
@@ -328,7 +328,7 @@
       "required": ["from", "as"],
       "additionalProperties": false,
       "properties": {
-        "from": { "type": "string", "description": "Name of a slot declared in the Component's secretsSchema." },
+        "from": { "type": "string", "description": "Name of a slot declared in the Component's featuresSchema." },
         "as": { "type": "string", "enum": ["env", "file"], "description": "Delivery mechanism. Must be allowlisted in the slot's inject: array." },
         "key": { "type": "string", "description": "For as: env, the specific data key of the referenced slot's secret this entry reads. Set it when the slot's secret carries several data keys, so this entry selects one of them by name; two entries may reference the same slot with different keys to read several keys from one secret. When omitted, the entry reads the slot's single published key. Ignored for as: file, which mounts the whole secret." },
         "path": { "type": "string", "description": "File path inside the container (required when as: file)." }

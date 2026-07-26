@@ -185,7 +185,7 @@
             "allow_direct_x_aggrega_extensions": {
               "type": "boolean",
               "default": false,
-              "description": "When true, the build-time discouragement walker accepts x-aggrega-selector and x-aggrega-inject keywords authored directly in schema content. Default false; the recommended authoring path is usesSchema (for dependency sockets) or secretsSchema (for credential bindings), which the schema-composition layer then synthesises into the inline extension form."
+              "description": "When true, the build-time discouragement walker accepts x-aggrega-selector and x-aggrega-inject keywords authored directly in schema content. Default false; the recommended authoring path is usesSchema (for dependency sockets) or featuresSchema (for credential bindings), which the schema-composition layer then synthesises into the inline extension form."
             },
             "allow_aggrega_ai_prefix": {
               "type": "boolean",

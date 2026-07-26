@@ -224,7 +224,7 @@
     "schema_libraries": {
       "type": "array",
       "default": [],
-      "description": "SchemaLibrary entries the closure references via `$ref` and `$import:` sites in entity `schema:` / `usesSchema:` / `secretsSchema:` content. Each entry's `consumers` list records which catalog entity references which `<entry-name>` fragments of the library — a structured record that makes library-version-bump impact diffs traceable without re-running closure.",
+      "description": "SchemaLibrary entries the closure references via `$ref` and `$import:` sites in entity `schema:` / `usesSchema:` / `featuresSchema:` content. Each entry's `consumers` list records which catalog entity references which `<entry-name>` fragments of the library — a structured record that makes library-version-bump impact diffs traceable without re-running closure.",
       "items": { "$ref": "#/$defs/LibraryEntry" }
     },
     "source_artifacts": {

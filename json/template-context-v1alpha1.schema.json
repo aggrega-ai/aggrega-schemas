@@ -147,7 +147,7 @@
       },
       "secret_name": {
         "type": "string",
-        "description": "Only populated when rendering a credential FeatureRecipe. Contains the logical secret key name from the Component's secretsSchema or the Developer's secrets: block (e.g., 'admin_password', 'db_credentials'). Used to construct deterministic physical secret names (e.g., '{{ .context.instance_id }}-{{ .secret_name }}')."      },
+        "description": "Only populated when rendering a credential FeatureRecipe. Contains the logical secret key name from the Component's featuresSchema or the Developer's secrets: block (e.g., 'admin_password', 'db_credentials'). Used to construct deterministic physical secret names (e.g., '{{ .context.instance_id }}-{{ .secret_name }}')."      },
       "inject": {
         "description": "Only populated when rendering a credential FeatureRecipe. Contains the secret-specific inject block from the Developer's secrets entry (e.g., { env: { OPENAI_API_KEY: 'api_token' } }). Distinct from .context.inject which is the base component's pre-hydrated delivery pipe from uses edges. Evaluates to null/absent for non-credential FeatureRecipes and base Recipes.",
         "type": "object",

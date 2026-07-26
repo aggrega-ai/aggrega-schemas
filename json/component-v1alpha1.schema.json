@@ -122,26 +122,26 @@
           "type": "string",
           "description": "URI of a base Component to inherit YAML metadata from and auto-merge JSON Schema 2020-12 declarations with."
         },
-        "secretsSchema": {
+        "featuresSchema": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[AttachmentSlot]",
-          "description": "Declarative credential slot definitions. Parallel to usesSchema. The compiler generates JSON Schema 2020-12 validation rules from this schema.",
+          "description": "Declarative attachment slot definitions: the named binding points at which this entity expects a Feature to be attached. A slot constrains which fill may bind it (selector) and how the fill's material may be delivered (inject); the fill's own Feature owns its values and infra contract. Declaring a slot never closes the attachment block — a deployment may attach a Feature under a name no slot declares, so one entity serves both a slot-filled attachment and a credential shared at a broader scope. A slot is a binding point, not a dependency socket: usesSchema declares the separate topology surface.",
           "additionalProperties": {
             "type": "object",
             "properties": {
               "required": {
                 "type": "boolean",
                 "default": false,
-                "description": "When true, developer must provide this secret."
+                "description": "Declares the slot as expected to be filled. A declaration of intent: no build-time check currently rejects a deployment that leaves the slot unfilled."
               },
               "inject": {
                 "type": "array",
                 "items": { "type": "string", "enum": ["env", "file", "arg"] },
-                "description": "Allowed inject mechanisms. Empty array = blackbox (Recipe controls delivery)."
+                "description": "Allowed inject mechanisms for the slot's material. Empty array = blackbox (the Recipe controls delivery internally and the material is never delivered to the workload)."
               },
               "description": {
                 "type": "string",
-                "description": "Human documentation for this secret slot."
+                "description": "Human documentation for this attachment slot."
               },
               "sensitive": {
                 "type": "boolean",
@@ -211,7 +211,7 @@
           "type": "object",
           "additionalProperties": true,
           "x-aggrega-go-type": "yaml.Node",
-          "description": "JSON Schema 2020-12 content covering the free-form pillars: values (the Developer's domain — application-shape parameters the Developer configures per Component instance in the Aggregate); infra (the Operator's domain — physical sizing knobs supplied by the Release); and provides (downstream context keys this Component exposes to consumers via the topology pipe). Accepts three authoring modes via content-shape dispatch: (1) inline content (a YAML map carrying compact form, JSON Schema YAML, or mixed); (2) single-file replacement via {$import: <path>}; (3) cross-document reference via {$ref: <Library>#/schemas/<name>} into a SchemaLibrary entry by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference). The companion fields usesSchema and secretsSchema cover the fixed-shape pillars (dependency sockets, credential bindings); the bridge synthesis composes the three into the entity's unified validation surface."
+          "description": "JSON Schema 2020-12 content covering the free-form pillars: values (the Developer's domain — application-shape parameters the Developer configures per Component instance in the Aggregate); infra (the Operator's domain — physical sizing knobs supplied by the Release); and provides (downstream context keys this Component exposes to consumers via the topology pipe). Accepts three authoring modes via content-shape dispatch: (1) inline content (a YAML map carrying compact form, JSON Schema YAML, or mixed); (2) single-file replacement via {$import: <path>}; (3) cross-document reference via {$ref: <Library>#/schemas/<name>} into a SchemaLibrary entry by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference). The companion fields usesSchema and featuresSchema cover the fixed-shape pillars (dependency sockets, attachment slots); the bridge synthesis composes the three into the entity's unified validation surface."
         },
         "assertions": {
           "type": "object",
