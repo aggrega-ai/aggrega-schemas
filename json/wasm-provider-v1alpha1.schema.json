@@ -469,11 +469,11 @@
           "additionalProperties": true,
           "description": "The host-evaluated, post-validation Workload the guest synthesizes; opaque at this schema layer so the socket schema does not rebind the Workload entity contract."
         },
-        "secrets": {
+        "attachment_provides": {
           "type": "object",
           "x-aggrega-go-type": "map[string]types.OrderedMap[string]",
           "additionalProperties": true,
-          "description": "The per-slot secret provides the synthesis consumes, keyed by secret slot; each slot's provides carries the generated Secret's identity a workload secret reference resolves to."
+          "description": "Every attachment on the node, projected to its resolved provides and keyed by the attachment instance name a workload attachment reference carries; absent when the node carries no attachments. The host copies the strings through without interpreting them, so the guest reads whichever entries of an attachment's provides it needs to resolve a reference to the resource that attachment produced."
         }
       }
     },
