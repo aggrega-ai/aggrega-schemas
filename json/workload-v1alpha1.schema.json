@@ -226,10 +226,10 @@
           "additionalProperties": { "type": "string" },
           "description": "Environment variables as string key-value pairs. K8s: spec.template.spec.containers[].env[]. Compose: services.<name>.environment."
         },
-        "secrets": {
+        "attachments": {
           "type": "object",
-          "description": "Ordered map of env-or-file name → { from, as, path? }. Each entry references a slot declared in the Component's featuresSchema. The 'as' field selects the delivery mechanism, which must be allowlisted in the slot's inject: array. Blackbox slots (inject: []) MAY NOT appear here.",
-          "additionalProperties": { "$ref": "#/$defs/containerSecret" }
+          "description": "Ordered map of env-or-file name → { from, as, path? }. Each entry references a slot declared in the Component's featuresSchema and delivers what the attachment filling that slot published. The 'as' field selects the delivery mechanism, which must be allowlisted in the slot's inject: array. Blackbox slots (inject: []) MAY NOT appear here.",
+          "additionalProperties": { "$ref": "#/$defs/containerAttachment" }
         },
         "envFrom": {
           "type": "array",
@@ -323,7 +323,7 @@
         }
       }
     },
-    "containerSecret": {
+    "containerAttachment": {
       "type": "object",
       "required": ["from", "as"],
       "additionalProperties": false,

@@ -209,7 +209,7 @@
         "assertions": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[string]",
-          "description": "Build-time cross-field validation. Each entry is a named assertion: the key is a stable rule identifier surfaced in error messages; the value is a Go template string with `{{ fail \"message\" }}` halt semantics. Multiple named assertions per entity evaluate per-instance in author-declared order; the first failing assertion halts the build. Component assertions evaluate at Step 4b (post-resolution, post-analyzer-gate, pre-render) and express architectural invariants of the contract that hold regardless of which Recipe binds. Template context: .values / .infra / .uses / .secrets / .metadata. The evaluator uses missingkey=error: references to undefined keys halt with a no-such-key diagnostic; optional-field idioms use Sprig default / hasKey.",
+          "description": "Build-time cross-field validation. Each entry is a named assertion: the key is a stable rule identifier surfaced in error messages; the value is a Go template string with `{{ fail \"message\" }}` halt semantics. Multiple named assertions per entity evaluate per-instance in author-declared order; the first failing assertion halts the build. Component assertions evaluate at Step 4b (post-resolution, post-analyzer-gate, pre-render) and express architectural invariants of the contract that hold regardless of which Recipe binds. Template context: .values / .infra / .uses / .features / .metadata. The evaluator uses missingkey=error: references to undefined keys halt with a no-such-key diagnostic; optional-field idioms use Sprig default / hasKey.",
           "additionalProperties": {
             "type": "string"
           }

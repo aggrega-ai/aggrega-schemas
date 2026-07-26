@@ -59,7 +59,7 @@
     },
     "IRFeatureEntry": {
       "type": "object",
-      "description": "One resolved attachment for a node. Shared shape for a Feature (in feature_values_mapping) and a credential request (in the secrets bucket): a credential is a Feature labeled kind=secret, partitioned into the secrets bucket rather than given a lossier shape. Values carries vault pointers for credentials, never resolved plaintext.",
+      "description": "One resolved attachment for a node, carried in feature_values_mapping. Every attachment family shares this shape — an operational Feature, a credential Feature (labeled kind=secret), an identity Feature — so no family gets a lossier projection than another. For a credential, values carries pointers into a secret store, never resolved plaintext.",
       "required": [
         "type",
         "resolved_version"
@@ -67,7 +67,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "description": "URI of the Catalog Feature; in the secrets bucket, the credential Feature interface."
+          "description": "URI of the Catalog Feature this attachment requests."
         },
         "resolved_version": {
           "type": "string",
@@ -115,17 +115,6 @@
             }
           },
           "x-aggrega-go-type": "json.RawMessage"
-        },
-        "secrets": {
-          "type": "object",
-          "description": "Credentials scoped explicitly to this attachment.",
-          "patternProperties": {
-            "^[a-zA-Z0-9_-]+$": {
-              "$ref": "#/$defs/IRFeatureEntry"
-            }
-          },
-          "additionalProperties": false,
-          "x-aggrega-go-type": "OrderedMap[IRFeatureEntry]"
         },
         "origin": {
           "type": "string",
@@ -443,7 +432,6 @@
         "values_mapping",
         "infra_mapping",
         "feature_values_mapping",
-        "secrets",
         "provenance"
       ],
       "additionalProperties": false,
@@ -487,24 +475,7 @@
         },
         "feature_values_mapping": {
           "type": "object",
-          "description": "Normalized map of Node IDs to their attached Feature configurations.",
-          "patternProperties": {
-            "^[a-zA-Z0-9_.-]+$": {
-              "type": "object",
-              "patternProperties": {
-                "^[a-zA-Z0-9_-]+$": {
-                  "$ref": "#/$defs/IRFeatureEntry"
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "additionalProperties": false,
-          "x-aggrega-go-type": "OrderedMap[OrderedMap[IRFeatureEntry]]"
-        },
-        "secrets": {
-          "type": "object",
-          "description": "Validated credential requests mapped by component node ID, cleanly separated from the standard payload.",
+          "description": "Normalized map of Node IDs to their attached Feature configurations. One bucket carries every attachment on a node whatever it produces \u2014 operational Features, credential Features, identity Features \u2014 keyed by the instance name the author gave each attachment.",
           "patternProperties": {
             "^[a-zA-Z0-9_.-]+$": {
               "type": "object",
@@ -599,7 +570,6 @@
         "values_mapping",
         "infra_mapping",
         "feature_values_mapping",
-        "secrets",
         "provenance"
       ],
       "properties": {
@@ -802,24 +772,7 @@
         },
         "feature_values_mapping": {
           "type": "object",
-          "description": "Normalized map of Node IDs to their attached Feature configurations.",
-          "patternProperties": {
-            "^[a-zA-Z0-9_.-]+$": {
-              "type": "object",
-              "patternProperties": {
-                "^[a-zA-Z0-9_-]+$": {
-                  "$ref": "#/$defs/IRFeatureEntry"
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "additionalProperties": false,
-          "x-aggrega-go-type": "OrderedMap[OrderedMap[IRFeatureEntry]]"
-        },
-        "secrets": {
-          "type": "object",
-          "description": "Validated credential requests mapped by component node ID, cleanly separated from the standard payload.",
+          "description": "Normalized map of Node IDs to their attached Feature configurations. One bucket carries every attachment on a node whatever it produces \u2014 operational Features, credential Features, identity Features \u2014 keyed by the instance name the author gave each attachment.",
           "patternProperties": {
             "^[a-zA-Z0-9_.-]+$": {
               "type": "object",

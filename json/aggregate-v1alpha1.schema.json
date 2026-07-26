@@ -335,7 +335,7 @@
         "active": {
           "anyOf": [{ "type": "boolean" }, { "type": "string" }],
           "default": true,
-          "description": "Whether this component is present in the compiled topology. A boolean, or a string template over .parameters that must resolve to a boolean. When it resolves to false the component is pruned from the topology, cascading to its uses edges and its feature and secret attachments. Driving the value from a parameter lets a Release toggle the component's presence by fulfilling that parameter. Defaults to true when omitted."
+          "description": "Whether this component is present in the compiled topology. A boolean, or a string template over .parameters that must resolve to a boolean. When it resolves to false the component is pruned from the topology, cascading to its uses edges and its attachments. Driving the value from a parameter lets a Release toggle the component's presence by fulfilling that parameter. Defaults to true when omitted."
         },
         "description": {
           "type": "string",
@@ -362,14 +362,15 @@
         },
         "features": {
           "type": "object",
-          "description": "Operational and security features attached to this component.",
+          "description": "The Features attached to this component, keyed by the instance name the author gives each attachment. This is the single attachment surface: an operational Feature, a credential Feature (one labeled feature.aggrega.ai/kind: secret) and an identity Feature are all attached here, under the same keyword and the same shape. What differs between them is what the attachment produces, not how it is declared. An attachment whose instance name matches a slot the Component declares in featuresSchema fills that slot; any other instance name is a free attachment.",
           "patternProperties": {
             "^[a-zA-Z0-9_-]+$": {
               "type": "object",
               "required": ["type"],
               "properties": {
                 "type": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "The URI of the Feature interface this attachment requests (e.g. core/observability/prometheus-scrape:1.0.0)."
                 },
                 "description": {
                   "type": "string",
@@ -378,72 +379,6 @@
                 "values": {
                   "type": "object",
                   "description": "Developer-provided configuration for the Feature, validated by its schema declaration.",
-                  "additionalProperties": true
-                },
-                "uses": {
-                  "$ref": "#/$defs/uses_block"
-                },
-                "inject": {
-                  "$ref": "#/$defs/inject_block"
-                },
-                "secrets": {
-                  "type": "object",
-                  "description": "Credential Features mapped to this feature's operational requirements. Only Features labeled feature.aggrega.ai/kind: secret.",
-                  "patternProperties": {
-                    "^[a-zA-Z0-9_-]+$": {
-                      "type": "object",
-                      "required": ["type"],
-                      "properties": {
-                        "type": {
-                          "type": "string",
-                          "description": "The URI of the credential Feature interface (must carry label feature.aggrega.ai/kind: secret)."
-                        },
-                        "description": {
-                          "type": "string",
-                          "description": "Optional documentation explaining what this credential is for."
-                        },
-                        "values": {
-                          "type": "object",
-                          "description": "Vault query configuration validated by the credential Feature's schema declaration.",
-                          "additionalProperties": true
-                        },
-                        "uses": {
-                          "$ref": "#/$defs/uses_block"
-                        },
-                        "inject": {
-                          "$ref": "#/$defs/inject_block"
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "additionalProperties": false
-        },
-        "secrets": {
-          "type": "object",
-          "description": "Credential Features mapped to this component. Only Features labeled feature.aggrega.ai/kind: secret are accepted here. The compiler enforces this partition: non-credential Features placed in secrets: cause a Fatal Halt.",
-          "patternProperties": {
-            "^[a-zA-Z0-9_-]+$": {
-              "type": "object",
-              "required": ["type"],
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "description": "The URI of the credential Feature interface (must carry label feature.aggrega.ai/kind: secret)."
-                },
-                "description": {
-                  "type": "string",
-                  "description": "Optional documentation explaining what this credential is for and how it is consumed."
-                },
-                "values": {
-                  "type": "object",
-                  "description": "Vault query configuration validated by the credential Feature's schema declaration (e.g., path, key).",
                   "additionalProperties": true
                 },
                 "uses": {

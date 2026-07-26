@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://aggrega.ai/schemas/template-context-v1alpha1.schema.json",
     "title": "Aggrega Internal Template Context",
-    "description": "The runtime view assembled by the Go compiler and injected into Recipe and FeatureRecipe Go templates during Step 5. For credential FeatureRecipes (implementing Features labeled feature.aggrega.ai/kind: secret), the compiler additionally populates .secret_name and .inject with the secret-specific context. For boundary-scope FeatureRecipes (spec.executionScope: boundary), the .context, .workload, .secret_name, .inject, and .inject_raw pillars are absent and a .boundary.* pillar is populated instead — see the boundary block at the bottom of properties. This is NOT persisted to disk; it exists only in compiler memory during rendering. This schema documents the contract between the compiler and Ops template authors.\n\nPhase B sub-pass availability:\n  Pass 1 (provides): partial pillars (self-ref banned).\n  Phase B.0 (locals + source eval): all pillars; .source and .workload absent.\n  Phase B.1 (valuesMapping): all pillars + .source; .workload absent.\n  Phase B.2 (workload eval): all pillars + .source; .workload being evaluated (absent from self-reference).\n  Phase B.3 (artifacts): all pillars + .source + .workload (fullest context).",
+    "description": "The runtime view assembled by the Go compiler and injected into Recipe and FeatureRecipe Go templates during Step 5. When rendering an attachment FeatureRecipe the compiler additionally populates .attachment_name and .inject with the attachment-scoped context. For boundary-scope FeatureRecipes (spec.executionScope: boundary), the .context, .workload, .attachment_name, .inject, and .inject_raw pillars are absent and a .boundary.* pillar is populated instead — see the boundary block at the bottom of properties. This is NOT persisted to disk; it exists only in compiler memory during rendering. This schema documents the contract between the compiler and Ops template authors.\n\nPhase B sub-pass availability:\n  Pass 1 (provides): partial pillars (self-ref banned).\n  Phase B.0 (locals + source eval): all pillars; .source and .workload absent.\n  Phase B.1 (valuesMapping): all pillars + .source; .workload absent.\n  Phase B.2 (workload eval): all pillars + .source; .workload being evaluated (absent from self-reference).\n  Phase B.3 (artifacts): all pillars + .source + .workload (fullest context).",
     "type": "object",
     "required": [
       "context",
@@ -114,12 +114,7 @@
       },
       "features": {
         "type": "object",
-        "description": "The attachments on this node, keyed by instance name. A Recipe reads them to adapt its rendering to the attached capabilities and to consume what an attachment publishes.",
-        "additionalProperties": { "$ref": "#/$defs/template_attachment" }
-      },
-      "secrets": {
-        "type": "object",
-        "description": "The credential attachments on this node, keyed by instance name. Same attachment shape as .features — what differs is what the attachment produces, not how it is read.",
+        "description": "Every attachment on this node, keyed by the instance name the author gave it. One pillar carries them all whatever they produce — an operational Feature, a credential Feature, an identity Feature — because what differs between attachments is what they produce, not how a template reads them. A Recipe reads them to adapt its rendering to the attached capabilities and to consume what an attachment publishes.",
         "additionalProperties": { "$ref": "#/$defs/template_attachment" }
       },
       "metadata": {
@@ -145,31 +140,31 @@
         },
         "additionalProperties": false
       },
-      "secret_name": {
+      "attachment_name": {
         "type": "string",
-        "description": "Only populated when rendering a credential FeatureRecipe. Contains the logical secret key name from the Component's featuresSchema or the Developer's secrets: block (e.g., 'admin_password', 'db_credentials'). Used to construct deterministic physical secret names (e.g., '{{ .context.instance_id }}-{{ .secret_name }}')."      },
+        "description": "Only populated when rendering an attachment FeatureRecipe. Contains the attachment's instance name \u2014 the slot it fills in the owning entity's featuresSchema, or the free name the author gave it (e.g., 'admin_password', 'db_credentials'). Used to construct deterministic resource names (e.g., '{{ .context.instance_id }}-{{ .attachment_name }}')."      },
       "inject": {
-        "description": "Only populated when rendering a credential FeatureRecipe. Contains the secret-specific inject block from the Developer's secrets entry (e.g., { env: { OPENAI_API_KEY: 'api_token' } }). Distinct from .context.inject which is the base component's pre-hydrated delivery pipe from uses edges. Evaluates to null/absent for non-credential FeatureRecipes and base Recipes.",
+        "description": "Only populated when rendering an attachment FeatureRecipe that carries an authored inject block (e.g., { env: { OPENAI_API_KEY: 'api_token' } }). Distinct from .context.inject which is the base component's pre-hydrated delivery pipe from uses edges. Evaluates to null/absent for attachments with no authored inject and for base Recipes.",
         "type": "object",
         "properties": {
           "env": {
             "type": "object",
-            "description": "Secret-specific environment variable delivery.",
+            "description": "Attachment-scoped environment variable delivery.",
             "additionalProperties": { "type": "string" }
           },
           "file": {
             "type": "object",
-            "description": "Secret-specific file mount delivery.",
+            "description": "Attachment-scoped file mount delivery.",
             "additionalProperties": { "type": "string" }
           },
           "arg": {
             "type": "object",
-            "description": "Secret-specific argument delivery.",
+            "description": "Attachment-scoped argument delivery.",
             "additionalProperties": { "type": "string" }
           },
           "all": {
             "type": "object",
-            "description": "Compiler-generated convenience merge of all secret inject paradigms.",
+            "description": "Compiler-generated convenience merge of every attachment inject paradigm.",
             "additionalProperties": { "type": "string" }
           }
         },
@@ -274,7 +269,7 @@
     "$defs": {
       "template_attachment": {
         "type": "object",
-        "description": "One attachment as a template reads it: the per-instance view of an attached Feature. Every attachment exposes the same fields regardless of what it produces, so .features.<name> and .secrets.<slot> are read the same way.",
+        "description": "One attachment as a template reads it: the per-instance view of an attached Feature. Every attachment exposes the same fields regardless of what it produces, so .features.<name> reads the same way whether that name is a slot the entity declared or a free attachment.",
         "properties": {
           "type": { "type": "string", "description": "The Catalog Feature URI of the attached Feature." },
           "values": {
