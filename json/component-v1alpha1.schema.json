@@ -146,7 +146,7 @@
               "sensitive": {
                 "type": "boolean",
                 "default": false,
-                "description": "Declares that the material this slot carries is sensitive. A declaration only: no compiler behavior reads it today, so setting it changes nothing about validation, rendering, or emitted output."
+                "description": "Declares that whatever fills this slot handles secret material. A marker, not a constraint: no fill is accepted or rejected because of it, and no rendered output changes. The declaration is carried onto the slot's generated validation schema, where tooling can read it; nothing else in the build reads it."
               },
               "selector": {
                 "type": "string",
