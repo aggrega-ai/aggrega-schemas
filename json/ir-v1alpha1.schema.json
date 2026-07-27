@@ -148,6 +148,21 @@
             "$ref": "#/$defs/FieldProvenance"
           },
           "x-aggrega-go-type": "OrderedMap[FieldProvenance]"
+        },
+        "sensitive": {
+          "type": "boolean",
+          "description": "True when this attachment handles material an author declared sensitive — either the attached Feature declares a sensitive leaf in its values, infra or provides pillar, or the host Component's attachment slot of the same name declares the material it carries sensitive. Derived from those declarations over the merged attachment, never from a value's content or a name. Unset when neither declaration is present."
+        },
+        "sensitive_inject": {
+          "type": "object",
+          "description": "The delivery keys of inject whose referenced provides key the attached Feature declares sensitive, in inject's own shape: mechanism, then delivery key, with the referenced provides key as the value. A subset of inject. Empty when the attachment declares no delivery mechanism or references no sensitive provides key.",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "x-aggrega-go-type": "json.RawMessage"
         }
       },
       "additionalProperties": false

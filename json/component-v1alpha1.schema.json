@@ -146,7 +146,7 @@
               "sensitive": {
                 "type": "boolean",
                 "default": false,
-                "description": "Declares that whatever fills this slot handles secret material. A marker, not a constraint: no fill is accepted or rejected because of it, and no rendered output changes. The declaration is carried onto the slot's generated validation schema, where tooling can read it; nothing else in the build reads it."
+                "description": "Declares that whatever fills this slot handles secret material. A marker, not a constraint: no fill is accepted or rejected because of it, and no rendered output changes. The declaration is carried onto the slot's generated validation schema, where tooling can read it, and is read when deriving whether the attachment filling this slot handles sensitive material."
               },
               "selector": {
                 "type": "string",
