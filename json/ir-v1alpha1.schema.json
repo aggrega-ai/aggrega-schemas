@@ -81,6 +81,14 @@
           },
           "x-aggrega-go-type": "OrderedMap[string]"
         },
+        "catalog_annotations": {
+          "type": "object",
+          "description": "The attached Feature's catalog annotations — the metadata.annotations of the Feature entity this attachment names — carried verbatim in the order that entity declares them, never filtered, normalised or prefix-stripped, so a consumer reads exactly what the catalog author wrote, including keys in the author's own namespace. The compiler reads none of them. Distinct from annotation_key and annotation_source, which name and locate the annotation that caused this attachment to exist at all: those two report how the attachment came to be, this one reports the metadata of the entity it names, and an attachment written in a features: block carries these annotations while carrying neither of those. Empty when the Feature declares no annotations, and when its type resolves to no catalog entity.",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-aggrega-go-type": "OrderedMap[string]"
+        },
         "binding": {
           "type": "string",
           "description": "Names the host Component attachment slot this attachment fills, or \"free\" when it fills no declared slot. The pairing is by name — a deployment fills a slot by attaching a Feature under the slot's name — so the value is an exact key from the resolved Component's declared slot set, never anything read out of the name itself. The slot name is carried rather than a bare boolean because which slot was filled is the more useful half of the answer. Empty when the host Component's declared slot set could not be resolved, which is distinct from \"free\": free is the positive finding that no declared slot carries this name.",
