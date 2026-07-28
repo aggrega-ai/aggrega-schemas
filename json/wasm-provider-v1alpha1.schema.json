@@ -89,7 +89,7 @@
         "features": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[types.IRFeatureEntry]",
-          "description": "The node's feature attachments keyed by feature alias, carrying the same per-node feature-attachment shape the IR carries. Preserves author order so the payload is byte-identical across runs of identical input. Opaque at this schema layer; the guest reads the feature-entry shape through the IR wire contract.",
+          "description": "The node's feature attachments keyed by feature alias, carrying the same per-node feature-attachment shape the IR carries. Each entry carries the attachment's values, infra and inject mapping alongside its derived sensitivity marking, so a guest reads whether an attachment handles declared-sensitive material from the payload alone. Preserves author order so the payload is byte-identical across runs of identical input. Opaque at this schema layer; the guest reads the feature-entry shape through the IR wire contract.",
           "additionalProperties": true
         },
         "uses": {
@@ -474,6 +474,14 @@
           "x-aggrega-go-type": "map[string]types.OrderedMap[string]",
           "additionalProperties": true,
           "description": "Every attachment on the node, projected to its resolved provides and keyed by the attachment instance name a workload attachment reference carries; absent when the node carries no attachments. The host copies the strings through without interpreting them, so the guest reads whichever entries of an attachment's provides it needs to resolve a reference to the resource that attachment produced."
+        },
+        "attachment_sensitive": {
+          "type": "object",
+          "x-aggrega-go-type": "map[string]bool",
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "description": "Which of the node's attachments handle material an author declared sensitive, keyed by the same attachment instance name attachment_provides uses. Only a marked attachment appears, so an attachment absent from the map is not declared sensitive and the whole field is absent when none is. The marking is derived from declarations alone — a sensitive leaf declared on the Feature filling the attachment, or a sensitive attachment slot the attachment binds — never from a value's content. The field carries the marking so a guest whose target offers a native sensitivity primitive can mark the value there; a guest whose target offers none ignores it, and the marking changes nothing that guest emits."
         }
       }
     },
