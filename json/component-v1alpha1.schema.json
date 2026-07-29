@@ -117,10 +117,13 @@
     "spec": {
       "type": "object",
       "description": "Validation and schema definitions governing the developer's opaque values payload.",
+      "if": { "required": ["extends"] },
+      "then": { "$ref": "#/$defs/extending-component-must-declare-schema-inherited" },
+      "else": { "$ref": "#/$defs/non-extending-component-authors-its-own-schema" },
       "properties": {
         "extends": {
           "type": "string",
-          "description": "URI of a base Component to inherit YAML metadata from and auto-merge JSON Schema 2020-12 declarations with."
+          "description": "URI of a base Component this Component extends. Extending composes structure: the base's metadata labels and annotations, its attachment slots (featuresSchema), its self-inject allowlist (inject) and its topology sockets (usesSchema) are inherited, and this Component may add to them or replace an inherited entry key by key. The base's data pillars are NOT composed — the base's schema block is inherited exactly as the base authored it, so an extending Component writes schema: inherited and authors no pillar content of its own."
         },
         "featuresSchema": {
           "type": "object",
@@ -201,10 +204,9 @@
           "additionalProperties": false
         },
         "schema": {
-          "type": "object",
           "additionalProperties": true,
           "x-aggrega-go-type": "yaml.Node",
-          "description": "JSON Schema 2020-12 content covering the free-form pillars: values (the Developer's domain — application-shape parameters the Developer configures per Component instance in the Aggregate); infra (the Operator's domain — physical sizing knobs supplied by the Release); and provides (downstream context keys this Component exposes to consumers via the topology pipe). Accepts three authoring modes via content-shape dispatch: (1) inline content (a YAML map carrying compact form, JSON Schema YAML, or mixed); (2) single-file replacement via {$import: <path>}; (3) cross-document reference via {$ref: <Library>#/schemas/<name>} into a SchemaLibrary entry by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference). The companion fields usesSchema and featuresSchema cover the fixed-shape pillars (dependency sockets, attachment slots); the bridge synthesis composes the three into the entity's unified validation surface."
+          "description": "JSON Schema 2020-12 content covering the free-form pillars: values (the Developer's domain — application-shape parameters the Developer configures per Component instance in the Aggregate); infra (the Operator's domain — physical sizing knobs supplied by the Release); and provides (downstream context keys this Component exposes to consumers via the topology pipe). Accepts four authoring modes via content-shape dispatch: (1) inline content (a YAML map carrying compact form, JSON Schema YAML, or mixed); (2) single-file replacement via {$import: <path>}; (3) cross-document reference via {$ref: <Library>#/schemas/<name>} into a SchemaLibrary entry by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference); (4) the bare string inherited, which is the only form a Component declaring extends may write — it states that the three pillars come from the base Component exactly as the base authored them. Modes 1 to 3 author content and are available only to a Component that declares no extends; mode 4 authors none and is required of every Component that does. The companion fields usesSchema and featuresSchema cover the fixed-shape pillars (dependency sockets, attachment slots); the bridge synthesis composes the three into the entity's unified validation surface."
         },
         "assertions": {
           "type": "object",
@@ -216,6 +218,27 @@
         }
       },
       "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "extending-component-must-declare-schema-inherited": {
+      "description": "Applies when spec.extends is present. An extending Component receives its base's values / infra / provides exactly as the base authored them, so it declares spec.schema: inherited and authors no pillar content. Both other outcomes are errors, and they are different mistakes: omitting spec.schema entirely, which would leave a reader unable to tell an inherited pillar block from a forgotten one; and authoring pillar content under spec.schema, which would ask for a second, divergent contract on a Component whose contract is its base's.",
+      "required": ["schema"],
+      "properties": {
+        "schema": {
+          "const": "inherited",
+          "description": "The inheritance marker, and the only value spec.schema takes on a Component that declares extends. It names where the pillars come from; the pillar content itself is the base Component's."
+        }
+      }
+    },
+    "non-extending-component-authors-its-own-schema": {
+      "description": "Applies when spec.extends is absent. A Component that extends no base authors its own values / infra / provides content under spec.schema, so the field carries authored content rather than the inherited marker: the marker states that pillars come from a base, and this Component has none.",
+      "properties": {
+        "schema": {
+          "type": "object",
+          "description": "Authored pillar content — a map, in any of the three content-authoring modes spec.schema documents."
+        }
+      }
     }
   }
 }
