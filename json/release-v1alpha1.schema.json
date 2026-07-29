@@ -216,7 +216,7 @@
     },
     "release_uses_block": {
       "type": "object",
-      "description": "Release-authored per-edge uses surface, socket-keyed then alias-keyed (mirroring the Aggregate uses topology shape). Each connection may set target (to create an edge into a declared-but-unbound socket, pointing at an existing component) and/or infra (per-edge operator config, validated against the socket infraSchema by the Step-1 conformance gate). values is forbidden (the Release values: ban); retargeting a developer-declared edge is a loud guardrail at build.",
+      "description": "Release-authored per-edge uses surface, socket-keyed then alias-keyed (mirroring the Aggregate uses topology shape). Each connection may set target (to create an edge into a declared-but-unbound socket, pointing at an existing component) and/or infra (per-edge operator config, validated against the socket infraSchema by the conformance gate at resolution). values is forbidden (the Release values: ban); retargeting a developer-declared edge is a loud guardrail at build.",
       "patternProperties": {
         "^[a-zA-Z0-9_-]+$": {
           "type": "object",
@@ -231,7 +231,7 @@
                 "infra": {
                   "type": "object",
                   "additionalProperties": true,
-                  "description": "Per-edge operator infra, validated against the socket infraSchema by the Step-1 conformance gate."
+                  "description": "Per-edge operator infra, validated against the socket infraSchema by the conformance gate at resolution."
                 }
               },
               "additionalProperties": false
@@ -416,7 +416,7 @@
     },
     "inject_delivery": {
       "type": "array",
-      "description": "A single delivery mechanism, authored as an array of entries. Each entry carries an 'in' (local identifier — env var name, file path, arg flag, or custom mechanism-specific key) plus exactly one of 'from' (a provides key to resolve) or 'value' (a literal string, optionally containing Go template expressions evaluated during Step 5 Pass 2a). 'from' resolves against the target's provides in uses[].inject context, or against the component's own provides in component.inject context.",
+      "description": "A single delivery mechanism, authored as an array of entries. Each entry carries an 'in' (local identifier — env var name, file path, arg flag, or custom mechanism-specific key) plus exactly one of 'from' (a provides key to resolve) or 'value' (a literal string, optionally containing Go template expressions evaluated at self-inject resolution). 'from' resolves against the target's provides in uses[].inject context, or against the component's own provides in component.inject context.",
       "items": {
         "type": "object",
         "required": [
@@ -445,7 +445,7 @@
           },
           "value": {
             "type": "string",
-            "description": "A literal string value. Supports Go template expressions (e.g., '{{ .values.app_token }}', '{{ .infra.namespace }}') evaluated during Step 5 Pass 2a with access to .values, .infra, .context.instance_id, .context.labels, .context.annotations.*, and .metadata.*."
+            "description": "A literal string value. Supports Go template expressions (e.g., '{{ .values.app_token }}', '{{ .infra.namespace }}') evaluated at self-inject resolution with access to .values, .infra, .context.instance_id, .context.labels, .context.annotations.*, and .metadata.*."
           }
         },
         "additionalProperties": false

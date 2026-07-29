@@ -98,7 +98,7 @@
               "workload": false,
               "artifacts": false
             },
-            "description": "The eval provider executes formatting in-memory. Fetching a 'source', a 'workload', or 'artifacts' is mathematically banned. injectMapping (a Phase-A delivery transform, not a rendering surface) remains allowed."
+            "description": "The eval provider executes formatting in-memory. Fetching a 'source', a 'workload', or 'artifacts' is mathematically banned. injectMapping (a delivery transform applied at inject mapping, not a rendering surface) remains allowed."
           },
           "else": {
             "description": "Non-eval capabilities use the three-input-kinds model (sourced, synthesised, artifacts) plus the FeatureRecipe-only injectMapping. Unlike a Recipe, a FeatureRecipe is not required to declare any input kind: a pure-wiring FeatureRecipe (capability + implements only) is valid and renders nothing — its effect is the uses-edge the Feature it implements carries. Pairing rules apply: valuesMapping requires source; and a workload: block requires a provider whose engine supports workload synthesis — a synthesized-mode FeatureRecipe bound to a non-synthesizing provider halts loudly at render time."
@@ -259,12 +259,12 @@
           "type": "string",
           "enum": ["component", "boundary"],
           "default": "component",
-          "description": "Whether this FeatureRecipe's Resource Generation runs per-component (default, today's behavior) or once per boundary attachment. Boundary-scope FeatureRecipes deduplicate by (boundary_path, FR-instance) and receive a different TemplateContext shape (.boundary.* pillars instead of per-component .context.* pillars). Phase A injectMapping continues to fan per-consumer regardless of executionScope."
+          "description": "Whether this FeatureRecipe's Resource Generation runs per-component (default, today's behavior) or once per boundary attachment. Boundary-scope FeatureRecipes deduplicate by (boundary_path, FR-instance) and receive a different TemplateContext shape (.boundary.* pillars instead of per-component .context.* pillars). The injectMapping of inject mapping continues to fan per-consumer regardless of executionScope."
         },
         "assertions": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[string]",
-          "description": "Build-time cross-field validation. Each entry is a named assertion: the key is a stable rule identifier surfaced in error messages; the value is a Go template string with `{{ fail \"message\" }}` halt semantics. Multiple named assertions per entity evaluate per-instance in author-declared order; the first failing assertion halts the build. FeatureRecipe assertions evaluate at Step 5b (post-binding, post-allProvides-evaluation, pre-render) and express implementation invariants of the specific wrapped chart or module. Template context: .values / .infra / .uses / .features / .metadata plus .provides / .locals / .recipe. The evaluator uses missingkey=error: references to undefined keys halt with a no-such-key diagnostic. Because the bare reference halts before any fallback can run, a plain `default` does not supply an optional-field fallback on this surface — gate the reference with `hasKey`, or read it through `index` and then apply `default`, or use the `optional` helper, which performs the presence check directly.",
+          "description": "Build-time cross-field validation. Each entry is a named assertion: the key is a stable rule identifier surfaced in error messages; the value is a Go template string with `{{ fail \"message\" }}` halt semantics. Multiple named assertions per entity evaluate per-instance in author-declared order; the first failing assertion halts the build. FeatureRecipe assertions evaluate after recipe binding (post-binding, post-allProvides-evaluation, pre-render) and express implementation invariants of the specific wrapped chart or module. Template context: .values / .infra / .uses / .features / .metadata plus .provides / .locals / .recipe. The evaluator uses missingkey=error: references to undefined keys halt with a no-such-key diagnostic. Because the bare reference halts before any fallback can run, a plain `default` does not supply an optional-field fallback on this surface — gate the reference with `hasKey`, or read it through `index` and then apply `default`, or use the `optional` helper, which performs the presence check directly.",
           "additionalProperties": {
             "type": "string"
           }

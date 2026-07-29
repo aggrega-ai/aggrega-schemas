@@ -100,7 +100,7 @@
           "role": {
             "type": "string",
             "enum": ["label-transform", "annotation-transform"],
-            "description": "The transform role this attachment is bound to, fixing which runner (and therefore which facet) reconstruction dispatches it at: `label-transform` rewrites node labels at Step 2; `annotation-transform` injects annotations before expansion at Step 1. Required — the attachment's role is recorded verbatim from the authored `plugins.governance` entry, so reconstruction dispatches at the exact role it was authored for rather than inferring one."
+            "description": "The transform role this attachment is bound to, fixing which runner (and therefore which facet) reconstruction dispatches it at: `label-transform` rewrites node labels at topology construction; `annotation-transform` injects annotations before expansion, during resolution. Required — the attachment's role is recorded verbatim from the authored `plugins.governance` entry, so reconstruction dispatches at the exact role it was authored for rather than inferring one."
           },
           "function": {
             "type": "string",
@@ -249,7 +249,7 @@
           "role": {
             "type": "string",
             "enum": ["ir-verdict", "render-verdict"],
-            "description": "The verdict role this attachment is bound to — `ir-verdict` (Step 4, over the IR graph) or `render-verdict` (Step 5, over the rendered artifacts). Distinguishes the same plugin attached at both verdict stages, each potentially with its own rule inputs."
+            "description": "The verdict role this attachment is bound to — `ir-verdict` (at static analysis, over the IR graph) or `render-verdict` (at rendering, over the rendered artifacts). Distinguishes the same plugin attached at both verdict stages, each potentially with its own rule inputs."
           },
           "sources": {
             "type": "array",

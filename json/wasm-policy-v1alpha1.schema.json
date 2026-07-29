@@ -11,7 +11,7 @@
   "$defs": {
     "PolicyInput": {
       "type": "object",
-      "description": "The payload Step 4 hands to the policy socket: the full IR graph (the same shape the Topology Builder emits) plus the precalculated routing paths the analyzer enumerates alongside.",
+      "description": "The payload static analysis hands to the policy socket: the full IR graph (the same shape the Topology Builder emits) plus the precalculated routing paths the analyzer enumerates alongside.",
       "required": [
         "graph",
         "precalculated_paths"

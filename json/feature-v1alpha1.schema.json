@@ -200,7 +200,7 @@
               "properties": {
                 "selector": { 
                   "type": "string",
-                  "description": "Kubernetes-style selector evaluated natively by the Go compiler in Step 4 to guarantee Cross-Node Type Safety before Wasm execution."
+                  "description": "Kubernetes-style selector evaluated natively by the Go compiler during static analysis to guarantee Cross-Node Type Safety before Wasm execution."
                 },
                 "inject": {
                   "type": "array",
@@ -222,7 +222,7 @@
         "assertions": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[string]",
-          "description": "Build-time cross-field validation. Each entry is a named assertion: the key is a stable rule identifier surfaced in error messages; the value is a Go template string with `{{ fail \"message\" }}` halt semantics. Multiple named assertions per entity evaluate per-instance in author-declared order; the first failing assertion halts the build. Feature assertions evaluate at Step 4b (post-resolution, post-analyzer-gate, pre-render) and express architectural invariants of the contract. Template context: .values / .infra / .uses / .features / .metadata. The evaluator uses missingkey=error: references to undefined keys halt with a no-such-key diagnostic. Because the bare reference halts before any fallback can run, a plain `default` does not supply an optional-field fallback on this surface — gate the reference with `hasKey`, or read it through `index` and then apply `default`, or use the `optional` helper, which performs the presence check directly.",
+          "description": "Build-time cross-field validation. Each entry is a named assertion: the key is a stable rule identifier surfaced in error messages; the value is a Go template string with `{{ fail \"message\" }}` halt semantics. Multiple named assertions per entity evaluate per-instance in author-declared order; the first failing assertion halts the build. Feature assertions evaluate at assertion evaluation (post-resolution, post-analyzer-gate, pre-render) and express architectural invariants of the contract. Template context: .values / .infra / .uses / .features / .metadata. The evaluator uses missingkey=error: references to undefined keys halt with a no-such-key diagnostic. Because the bare reference halts before any fallback can run, a plain `default` does not supply an optional-field fallback on this surface — gate the reference with `hasKey`, or read it through `index` and then apply `default`, or use the `optional` helper, which performs the presence check directly.",
           "additionalProperties": {
             "type": "string"
           }

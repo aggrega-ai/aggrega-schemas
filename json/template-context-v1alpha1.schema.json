@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://aggrega.ai/schemas/template-context-v1alpha1.schema.json",
     "title": "Aggrega Internal Template Context",
-    "description": "The runtime view assembled by the Go compiler and injected into Recipe and FeatureRecipe Go templates during Step 5. When rendering an attachment FeatureRecipe the compiler additionally populates .attachment_name and .inject with the attachment-scoped context. For boundary-scope FeatureRecipes (spec.executionScope: boundary), the .context, .workload, .attachment_name, .inject, and .inject_raw pillars are absent and a .boundary.* pillar is populated instead — see the boundary block at the bottom of properties. This is NOT persisted to disk; it exists only in compiler memory during rendering. This schema documents the contract between the compiler and Ops template authors.\n\nPhase B sub-pass availability:\n  Pass 1 (locals preamble, then provides): node-local pillars only. A locals entry reads the entries above it in its own block; a provides template reads the node's whole resolved .locals. Self-reference banned (no provides entry reads another).\n  Phase B.0 (locals publication + source eval): all pillars; .source and .workload absent. The Pass-1 locals are published onto .locals here, then source: is evaluated against them.\n  Phase B.1 (valuesMapping): all pillars + .source; .workload absent.\n  Phase B.2 (workload eval): all pillars + .source; .workload being evaluated (absent from self-reference).\n  Phase B.3 (artifacts): all pillars + .source + .workload (fullest context).",
+    "description": "The runtime view assembled by the Go compiler and injected into Recipe and FeatureRecipe Go templates during rendering. When rendering an attachment FeatureRecipe the compiler additionally populates .attachment_name and .inject with the attachment-scoped context. For boundary-scope FeatureRecipes (spec.executionScope: boundary), the .context, .workload, .attachment_name, .inject, and .inject_raw pillars are absent and a .boundary.* pillar is populated instead — see the boundary block at the bottom of properties. This is NOT persisted to disk; it exists only in compiler memory during rendering. This schema documents the contract between the compiler and Ops template authors.\n\nBase-rendering stage availability, in the order the stages run:\n  Provides evaluation (locals preamble, then provides): node-local pillars only. A locals entry reads the entries above it in its own block; a provides template reads the node's whole resolved .locals. Self-reference banned (no provides entry reads another).\n  Source resolution (locals publication + source eval): all pillars; .source and .workload absent. Those locals are published onto .locals here, then source: is evaluated against them.\n  Values mapping (valuesMapping): all pillars + .source; .workload absent.\n  Workload synthesis (workload eval): all pillars + .source; .workload being evaluated (absent from self-reference).\n  Artifact evaluation (artifacts): all pillars + .source + .workload (fullest context).",
     "type": "object",
     "required": [
       "context",
@@ -26,7 +26,7 @@
           },
           "labels": {
             "type": "object",
-            "description": "The duck-typing and ontology labels of the current node, including any mutations applied by mutator.wasm in Step 2.",
+            "description": "The duck-typing and ontology labels of the current node, including any mutations applied by mutator.wasm at topology construction.",
             "additionalProperties": { "type": "string" }
           },
           "annotations": {
@@ -53,7 +53,7 @@
           },
           "inject": {
             "type": "object",
-            "description": "The pre-hydrated and intercepted delivery pipe. Starts as a compiler-generated map resolving Developer inject keys to Target provides values. Mutated in-place by Phase A injectMapping deep-merges. By the time the Base Recipe renders in Phase B, this contains the fully resolved physical strings.",
+            "description": "The pre-hydrated and intercepted delivery pipe. Starts as a compiler-generated map resolving Developer inject keys to Target provides values. Mutated in-place by the injectMapping deep-merges of inject mapping. By the time the Base Recipe renders, this contains the fully resolved physical strings.",
             "properties": {
               "env": {
                 "type": "object",
@@ -72,7 +72,7 @@
               },
               "all": {
                 "type": "object",
-                "description": "Pre-calculated flat merge of env + file + arg + custom mechanisms. Populated after Pass 2b and recalculated after Phase A. Templates use {{ toJson .context.inject.all }} for universal serialization.",
+                "description": "Pre-calculated flat merge of env + file + arg + custom mechanisms. Populated after uses-inject resolution and recalculated after inject mapping. Templates use {{ toJson .context.inject.all }} for universal serialization.",
                 "additionalProperties": { "type": "string" }
               }
             },
@@ -94,7 +94,7 @@
       },
       "values": {
         "type": "object",
-        "description": "The opaque cognitive payload for this node, already validated by the schema validator in Step 1. Passed through untouched.",
+        "description": "The opaque cognitive payload for this node, already validated by the schema validator at resolution. Passed through untouched.",
         "additionalProperties": true
       },
       "infra": {
@@ -104,12 +104,12 @@
       },
       "locals": {
         "type": "object",
-        "description": "The Recipe's own private state (e.g., primary_compute, volumes_path). Evaluated in the Pass 1 preamble — ahead of that node's provides — and published onto this pillar at Phase B.0. Each entry is a Go template evaluated against a self-contained node-local context carrying the entries of the same block resolved so far, so an entry MAY read a sibling defined ABOVE it and receives that sibling's resolved value. Author order is part of the contract wherever one entry reads another: moving a definition below its reader breaks the build. A direct '.locals.<key>' reference to a later entry, or to a key the block does not declare, halts; only direct references are checked, so a key reached through 'index .locals', a 'with .locals' block, or a variable bound to '.locals' is not analysed and renders as an empty value when absent. A locals entry cannot read '.provides'. Available in provides (Pass 1, after the preamble), source, valuesMapping, workload, artifacts, assertions, and to downstream Wasm plugins via pipeline[].with (and pipeline[].when). Never exposed to callers.",
+        "description": "The Recipe's own private state (e.g., primary_compute, volumes_path). Evaluated in the locals preamble — ahead of that node's provides — and published onto this pillar at source resolution. Each entry is a Go template evaluated against a self-contained node-local context carrying the entries of the same block resolved so far, so an entry MAY read a sibling defined ABOVE it and receives that sibling's resolved value. Author order is part of the contract wherever one entry reads another: moving a definition below its reader breaks the build. A direct '.locals.<key>' reference to a later entry, or to a key the block does not declare, halts; only direct references are checked, so a key reached through 'index .locals', a 'with .locals' block, or a variable bound to '.locals' is not analysed and renders as an empty value when absent. A locals entry cannot read '.provides'. Available in provides (at provides evaluation, after the preamble), source, valuesMapping, workload, artifacts, assertions, and to downstream Wasm plugins via pipeline[].with (and pipeline[].when). Never exposed to callers.",
         "additionalProperties": { "type": "string" }
       },
       "provides": {
         "type": "object",
-        "description": "The Recipe's public API contract. Populated from Pass 1 evaluation. Available in Phase B valuesMapping for self-reference (e.g., {{ .provides.host }}). NOT available within the provides template itself (Pass 1 self-containment invariant). Callers resolve inject keys against these values.",
+        "description": "The Recipe's public API contract. Populated from provides evaluation. Available in base-rendering valuesMapping for self-reference (e.g., {{ .provides.host }}). NOT available within the provides template itself (the provides self-containment invariant). Callers resolve inject keys against these values.",
         "additionalProperties": { "type": "string" }
       },
       "features": {
@@ -174,7 +174,7 @@
         }
       },
       "inject_raw": {
-        "description": "The immutable, unmutated Developer intent for the inject block. Evaluates to null if the Developer omitted the inject block entirely. Used by Ops for logical checks (e.g., {{ if not .inject_raw }}) to detect omission before Phase A mutations.",
+        "description": "The immutable, unmutated Developer intent for the inject block. Evaluates to null if the Developer omitted the inject block entirely. Used by Ops for logical checks (e.g., {{ if not .inject_raw }}) to detect omission before the mutations of inject mapping.",
         "oneOf": [
           { "type": "object", "additionalProperties": true },
           { "type": "null" }
@@ -195,7 +195,7 @@
         }
       },
       "source": {
-        "description": "Resolved source field content. Populated at Phase B.0 from the Recipe's source: field after Go-template evaluation. Available in Phase B.1+ (valuesMapping, workload, artifacts). Evaluates to null when the Recipe has no source:. String form = URI path; object form = structured source (e.g., OCI descriptor with resolved version).",
+        "description": "Resolved source field content. Populated at source resolution from the Recipe's source: field after Go-template evaluation. Available from values mapping onward (valuesMapping, workload, artifacts). Evaluates to null when the Recipe has no source:. String form = URI path; object form = structured source (e.g., OCI descriptor with resolved version).",
         "oneOf": [
           { "type": "string" },
           { "type": "object", "additionalProperties": true },
@@ -203,7 +203,7 @@
         ]
       },
       "workload": {
-        "description": "Parsed Workload spec for this node. Populated at Phase B.2 from the Recipe's workload: field after Go-template evaluation + Workload JSON-schema validation (against workload-v1alpha1.schema.json). Available in Phase B.3+ (artifacts) so artifacts can reference workload fields without duplication (e.g., a ServiceMonitor reading .workload.services.metrics.ports.prom). Evaluates to null when the Recipe has no workload: block. Template attempts to dereference .workload.* on a null value fail with a clear error at template eval time.",
+        "description": "Parsed Workload spec for this node. Populated at workload synthesis from the Recipe's workload: field after Go-template evaluation + Workload JSON-schema validation (against workload-v1alpha1.schema.json). Available from artifact evaluation onward (artifacts) so artifacts can reference workload fields without duplication (e.g., a ServiceMonitor reading .workload.services.metrics.ports.prom). Evaluates to null when the Recipe has no workload: block. Template attempts to dereference .workload.* on a null value fail with a clear error at template eval time.",
         "oneOf": [
           { "$ref": "workload-v1alpha1.schema.json" },
           { "type": "null" }
@@ -330,7 +330,7 @@
           },
           "provides": {
             "type": "object",
-            "description": "The target node's fully resolved provides dictionary. Evaluated in Pass 1 of Step 5 before inject pre-hydration.",
+            "description": "The target node's fully resolved provides dictionary. Evaluated at provides evaluation, before inject hydration.",
             "additionalProperties": { "type": "string" }
           },
           "inject": {
@@ -348,7 +348,7 @@
           },
           "labels": {
             "type": "object",
-            "description": "The target node's duck-typing and ontology labels (post-mutation from Step 2).",
+            "description": "The target node's duck-typing and ontology labels (post-mutation from topology construction).",
             "additionalProperties": { "type": "string" }
           },
           "annotations": {

@@ -106,7 +106,7 @@
         "parameters": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[any]",
-          "description": "Global environment contract. Each entry is a typed-contract object authoring the compact-form vocabulary subset (type, description, default, enum, min/max, minLength/maxLength, pattern, format, validate, validateMessage, required, items, valuesType, properties). Nested structure is expressed via the typed-form properties: sub-field. Release fulfillment may be inline (parameters: {...}) or single-source file import (parameters: {$import: <path>}); Step 1a validates the merged map against this contract before parameter interpolation. See aggrega-docs/language-reference/entities/aggregate.md for the full vocabulary.",
+          "description": "Global environment contract. Each entry is a typed-contract object authoring the compact-form vocabulary subset (type, description, default, enum, min/max, minLength/maxLength, pattern, format, validate, validateMessage, required, items, valuesType, properties). Nested structure is expressed via the typed-form properties: sub-field. Release fulfillment may be inline (parameters: {...}) or single-source file import (parameters: {$import: <path>}); The parameter-contract layer validates the merged map against this contract before parameter interpolation. See aggrega-docs/language-reference/entities/aggregate.md for the full vocabulary.",
           "additionalProperties": {
             "type": "object",
             "description": "Typed contract authoring the compact-form vocabulary subset.",
@@ -197,7 +197,7 @@
   "$defs": {
     "inject_delivery": {
       "type": "array",
-      "description": "A single delivery mechanism, authored as an array of entries. Each entry carries an 'in' (local identifier — env var name, file path, arg flag, or custom mechanism-specific key) plus exactly one of 'from' (a provides key to resolve) or 'value' (a literal string, optionally containing Go template expressions evaluated during Step 5 Pass 2a). 'from' resolves against the target's provides in uses[].inject context, or against the component's own provides in component.inject context.",
+      "description": "A single delivery mechanism, authored as an array of entries. Each entry carries an 'in' (local identifier — env var name, file path, arg flag, or custom mechanism-specific key) plus exactly one of 'from' (a provides key to resolve) or 'value' (a literal string, optionally containing Go template expressions evaluated at self-inject resolution). 'from' resolves against the target's provides in uses[].inject context, or against the component's own provides in component.inject context.",
       "items": {
         "type": "object",
         "required": ["in"],
@@ -208,7 +208,7 @@
         "properties": {
           "in": { "type": "string", "description": "The local identifier to inject into. Semantics determined by the parent mechanism (env → variable name, file → mount path, arg → flag prefix, custom → mechanism-specific key)." },
           "from": { "type": "string", "description": "A provides key to resolve. In uses[].inject, resolves against the target node's provides. In component.inject, resolves against the component's own provides." },
-          "value": { "type": "string", "description": "A literal string value. Supports Go template expressions (e.g., '{{ .values.app_token }}', '{{ .infra.namespace }}') evaluated during Step 5 Pass 2a with access to .values, .infra, .context.instance_id, .context.labels, .context.annotations.*, and .metadata.*." }
+          "value": { "type": "string", "description": "A literal string value. Supports Go template expressions (e.g., '{{ .values.app_token }}', '{{ .infra.namespace }}') evaluated at self-inject resolution with access to .values, .infra, .context.instance_id, .context.labels, .context.annotations.*, and .metadata.*." }
         },
         "additionalProperties": false
       }
@@ -245,12 +245,12 @@
                     "values": {
                       "type": "object",
                       "additionalProperties": true,
-                      "description": "Per-connection developer values for this edge, validated by the Step-1 conformance gate (not structurally here) against the valueSchema declared by the source socket — the socket on this component, the one whose uses block carries this entry. Projected into the consuming node's render context at .uses.<alias>.values."
+                      "description": "Per-connection developer values for this edge, validated by the conformance gate at resolution (not structurally here) against the valueSchema declared by the source socket — the socket on this component, the one whose uses block carries this entry. Projected into the consuming node's render context at .uses.<alias>.values."
                     },
                     "infra": {
                       "type": "object",
                       "additionalProperties": true,
-                      "description": "Per-connection infra for this edge. The Aggregate may seed defaults; a Release edge surface may supply or override per-edge infra. Validated by the Step-1 conformance gate against the infraSchema declared by the source socket — the socket on this component, the one whose uses block carries this entry."
+                      "description": "Per-connection infra for this edge. The Aggregate may seed defaults; a Release edge surface may supply or override per-edge infra. Validated by the conformance gate at resolution against the infraSchema declared by the source socket — the socket on this component, the one whose uses block carries this entry."
                     }
                   },
                   "additionalProperties": false
@@ -279,7 +279,7 @@
         },
         "features": {
           "type": "object",
-          "description": "Cross-cutting features attached to all components in this subsystem. Same schema as component-level features (type, values, uses, inject). Flattened into each component during Step 3 Graph Finalization, positioned after component-level features in execution order.",
+          "description": "Cross-cutting features attached to all components in this subsystem. Same schema as component-level features (type, values, uses, inject). Flattened into each component at graph finalization, positioned after component-level features in execution order.",
           "patternProperties": {
             "^[a-zA-Z0-9_-]+$": {
               "type": "object",
