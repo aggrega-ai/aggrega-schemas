@@ -148,29 +148,12 @@
         "publishing_discipline": {
           "type": "object",
           "additionalProperties": false,
-          "description": "Workspace-wide gates for the publishing-linter's rule set. `enforce_monotonic_narrowing` and `enforce_immutability` are workspace-wide rule gates (default true each); `narrowing_exemptions` carries per-entity escape hatches for legitimate narrowing cases. The remaining `allow_*` flags relax individual discouragement checks.",
+          "description": "Workspace-wide gates for the publishing-linter's rule set. `enforce_immutability` is a workspace-wide rule gate (default true); the `allow_*` flags relax individual discouragement checks.",
           "properties": {
-            "enforce_monotonic_narrowing": {
-              "type": "boolean",
-              "default": true,
-              "description": "When true (default), the publishing-linter and discouragement walker enforce the monotonic-narrowing rule: a child schema's constraint must narrow (not widen) vs the parent's. Set to false for the rare workspace-wide opt-out; per-entity exemptions are the recommended pattern for legitimate cases."
-            },
             "enforce_immutability": {
               "type": "boolean",
               "default": true,
               "description": "When true (default), the publishing-linter enforces the artifact-immutability rule: a published `name:version` plus content digest is treated as final; `aggrega push` rejects overwrites. Set to false only for forensic reproduction of historical builds where overwrites occurred prior to the rule's introduction; routine use is discouraged. Required for production catalogs."
-            },
-            "narrowing_exemptions": {
-              "type": "array",
-              "default": [],
-              "description": "Per-entity exemptions from the narrowing-violation rule. Used when `enforce_monotonic_narrowing` stays true (the default) but specific entity/path pairs need exemption with a documented reason. Each entry names the catalog entity, the specific schema paths exempted, and the human-readable justification.",
-              "items": { "$ref": "#/$defs/NarrowingExemption" }
-            },
-            "narrowing_exemptions_append": {
-              "type": "array",
-              "default": [],
-              "description": "Append-only addition to the effective `narrowing_exemptions` list. Entries here are concatenated onto the resolved base list at each precedence layer, so workspace and global configs compose exemptions rather than shadow them.",
-              "items": { "$ref": "#/$defs/NarrowingExemption" }
             },
             "allow_dynamic_refs": {
               "type": "boolean",
@@ -423,27 +406,6 @@
         "settings": {
           "type": "object",
           "description": "Free-form settings object handed to the plugin verbatim. The host does not interpret its shape; the plugin defines the keys it reads."
-        }
-      }
-    },
-    "NarrowingExemption": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["entity", "paths", "reason"],
-      "description": "Per-entity exemption from the narrowing-violation rule.",
-      "properties": {
-        "entity": {
-          "type": "string",
-          "description": "Catalog entity identifier the exemption applies to (e.g. `my-team/datastore/mariadb-eu`)."
-        },
-        "paths": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "JSON-Pointer-style schema paths the exemption covers (e.g. `spec.schema.values.primary.replicaCount`). Each path is a fully-qualified path into the entity's schema content."
-        },
-        "reason": {
-          "type": "string",
-          "description": "Human-readable justification for the exemption. Surfaced to reviewers; should explain why this specific narrowing violation is intentional."
         }
       }
     }

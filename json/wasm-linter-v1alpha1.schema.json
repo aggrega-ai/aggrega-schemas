@@ -45,11 +45,6 @@
           "type": "object",
           "x-aggrega-go-type": "json.RawMessage"
         },
-        "parent": {
-          "description": "Parsed structure of the resolved parent entity in the extends chain, for rules that perform child-vs-parent comparison (narrowing). The host caller resolves the entity's spec.extends URI before invocation. Omitted when no parent exists or the rule does not need parent context.",
-          "type": "object",
-          "x-aggrega-go-type": "json.RawMessage"
-        },
         "source_path": {
           "description": "Filesystem path the entity was loaded from. Populated by host callers walking the catalog filesystem; consumed by path-aware rules (e.g., category-matches-directory). Omitted when the caller has no path context.",
           "type": "string"
@@ -88,20 +83,9 @@
       "description": "Per-workspace publishing-discipline configuration the rule set consults. Mirrors workspaceconfig.PublishingDisciplineConfig field-for-field. Schema is the contract: both the Go workspaceconfig struct's godoc AND the Rust policies.rs struct doc cross-reference this $def. Field omission defaults each flag to false; the host's serialiser writes only fields with non-default values.",
       "additionalProperties": false,
       "properties": {
-        "enforce_monotonic_narrowing": {
-          "type": "boolean",
-          "description": "When true, the narrowing rule enforces the monotonic-narrowing invariant: every extending entity narrows the parent's schema (no widening, no semantic divergence). When false, the rule is suppressed."
-        },
         "enforce_immutability": {
           "type": "boolean",
           "description": "When true, published artefacts are immutable at the registry path; re-publishing the same version is rejected. When false, the rule is suppressed (development-only)."
-        },
-        "narrowing_exemptions": {
-          "type": "array",
-          "description": "Per-entity exemptions from the narrowing-violation rule. Each entry names an entity and the specific schema paths that may legitimately widen.",
-          "items": {
-            "$ref": "#/$defs/NarrowingExemption"
-          }
         },
         "allow_dynamic_refs": {
           "type": "boolean",
@@ -126,30 +110,6 @@
         "allow_category_mismatches": {
           "type": "boolean",
           "description": "When true, suppress the category-matches-directory rule's findings. The standard-catalog convention requires Components under core/<category>/ to declare component.aggrega.ai/category={category} matching the directory segment, where {category} is one of the 15 closed-set values. Workspaces with legitimate persistent exceptions opt out here. Default false."
-        }
-      }
-    },
-    "NarrowingExemption": {
-      "type": "object",
-      "description": "One per-entity exemption from the narrowing-violation rule. entity names the catalog entity; paths enumerates the schema paths within that entity that may legitimately widen; reason is the human-readable justification surfaced to reviewers.",
-      "required": [
-        "entity",
-        "paths",
-        "reason"
-      ],
-      "additionalProperties": false,
-      "properties": {
-        "entity": {
-          "type": "string"
-        },
-        "paths": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "reason": {
-          "type": "string"
         }
       }
     }
