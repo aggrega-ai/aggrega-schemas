@@ -339,7 +339,8 @@
       "type": "object",
       "required": [
         "source",
-        "target"
+        "target",
+        "socket_declaration"
       ],
       "properties": {
         "source": {
@@ -355,6 +356,14 @@
         "alias": {
           "type": "string",
           "description": "The developer-defined alias for this connection (e.g., 'primary_db')."
+        },
+        "socket_declaration": {
+          "type": "string",
+          "enum": [
+            "declared",
+            "ad-hoc"
+          ],
+          "description": "Where the socket came from: declared when the catalog entity that owns the socket lists it in usesSchema (the consuming Component, or the originating Feature for a Feature-authored edge), ad-hoc when the Aggregate author named a socket the catalog did not declare. This is a third axis, independent of edge authorship: it says where the socket came from, not who drew the edge, so a Release-authored edge into a declared socket and an Aggregate-authored edge into an ad-hoc socket differ on the two axes independently. A declared socket carries its usesSchema entry, including the selector that constrains which targets the edge may reach; an ad-hoc socket has no catalog entry and therefore no selector, so what the edge may carry is bounded by the target's declared provides alone. Always present, so a consumer never has to read an absent value as declared, and a policy can require every edge to be declared. Distinct from an attachment's binding marker, which answers the same shape of question about a different subject."
         },
         "origin_feature": {
           "type": "string",
@@ -724,7 +733,8 @@
             "type": "object",
             "required": [
               "source",
-              "target"
+              "target",
+              "socket_declaration"
             ],
             "properties": {
               "source": {
@@ -740,6 +750,14 @@
               "alias": {
                 "type": "string",
                 "description": "The developer-defined alias for this connection (e.g., 'primary_db')."
+              },
+              "socket_declaration": {
+                "type": "string",
+                "enum": [
+                  "declared",
+                  "ad-hoc"
+                ],
+                "description": "Where the socket came from: declared when the catalog entity that owns the socket lists it in usesSchema (the consuming Component, or the originating Feature for a Feature-authored edge), ad-hoc when the Aggregate author named a socket the catalog did not declare. This is a third axis, independent of edge authorship: it says where the socket came from, not who drew the edge, so a Release-authored edge into a declared socket and an Aggregate-authored edge into an ad-hoc socket differ on the two axes independently. A declared socket carries its usesSchema entry, including the selector that constrains which targets the edge may reach; an ad-hoc socket has no catalog entry and therefore no selector, so what the edge may carry is bounded by the target's declared provides alone. Always present, so a consumer never has to read an absent value as declared, and a policy can require every edge to be declared. Distinct from an attachment's binding marker, which answers the same shape of question about a different subject."
               },
               "origin_feature": {
                 "type": "string",
