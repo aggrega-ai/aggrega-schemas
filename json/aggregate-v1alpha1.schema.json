@@ -142,7 +142,7 @@
               "properties": {
                 "type": {
                   "type": "string",
-                  "description": "The abstract Aggregate requested (e.g., namespace/name:version, ./local/path). Resolved via the Three-Tier Entity Resolution Model (local path → workspace dir → registry)."
+                  "description": "The abstract Aggregate requested (e.g., publisher/name:version, ./local/path). Resolved via the Three-Tier Entity Resolution Model (local path → workspace dir → registry)."
                 },
                 "active": {
                   "anyOf": [{ "type": "boolean" }, { "type": "string" }],
