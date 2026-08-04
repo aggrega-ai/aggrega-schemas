@@ -28,8 +28,7 @@
         "required": ["containers"],
         "properties": {
           "endpoint": false,
-          "port": false,
-          "credential": false
+          "port": false
         }
       }
     }
@@ -64,7 +63,7 @@
       "type": "string",
       "enum": ["stateless", "stateful", "daemon", "scheduled", "task", "reference"],
       "default": "stateless",
-      "description": "Abstract controller-shape intent for the workload. Chooses the kind of runtime lifecycle the workload has, independent of any target platform: stateless (interchangeable long-running replicas), stateful (replicas with stable per-replica identity and per-replica storage), daemon (one instance per eligible host), scheduled (recurring, time-triggered runs), task (a single run to completion), reference (an external endpoint with no compute — no controller; helm emits an ExternalName Service, compose carries the endpoint through the injection contract). Empty is treated as stateless. Each target Engine maps the form to its own native shape; the form carries no platform-native resource kinds itself. A persistentTemplate volume is a companion of stateful and is only valid on a stateful workload. A reference workload declares endpoint (and optionally port and credential) and no containers."
+      "description": "Abstract controller-shape intent for the workload. Chooses the kind of runtime lifecycle the workload has, independent of any target platform: stateless (interchangeable long-running replicas), stateful (replicas with stable per-replica identity and per-replica storage), daemon (one instance per eligible host), scheduled (recurring, time-triggered runs), task (a single run to completion), reference (an external endpoint with no compute — no controller; helm emits an ExternalName Service, compose carries the endpoint through the injection contract). Empty is treated as stateless. Each target Engine maps the form to its own native shape; the form carries no platform-native resource kinds itself. A persistentTemplate volume is a companion of stateful and is only valid on a stateful workload. A reference workload declares endpoint (and optionally port) and no containers, and carries no credential field of its own, because the environment-variable name belongs to the consumer rather than to the endpoint. A consumer that needs a credential for the endpoint declares the slot on its own Component's featuresSchema and fills it from its container's attachments block, where that slot's inject list permits the delivery."
     },
     "endpoint": {
       "type": "string",
@@ -75,16 +74,6 @@
       "minimum": 1,
       "maximum": 65535,
       "description": "Optional port for the reference endpoint (form: reference). helm emits it as a port on the ExternalName Service."
-    },
-    "credential": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["from", "env"],
-      "description": "Optional credential for a reference endpoint (form: reference): a featuresSchema slot delivered to consumers as an environment variable. Per the AOT boundary the secret value is never resolved here; the credential is a pointer carried to consumers through the recipe's provides.",
-      "properties": {
-        "from": { "type": "string", "description": "Name of a featuresSchema slot supplying the credential." },
-        "env": { "type": "string", "description": "Environment variable name the credential is delivered as by the consuming workload." }
-      }
     },
     "schedule": {
       "type": "string",
