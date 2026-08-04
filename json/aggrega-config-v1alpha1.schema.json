@@ -69,13 +69,12 @@
         "halt_on_deprecated": {
           "type": "boolean",
           "default": false,
-          "description": "When true, consuming an entity its author marked `metadata.deprecated: true` halts the build instead of emitting an advisory."
+          "description": "When true, consuming an entity its author marked `metadata.deprecated: true` halts the build. It does not control whether that entity is reported: `aggrega build` prints a notice for every deprecated entity it consumes either way, so this dial only decides whether an author-marked one also stops the build. Defaults to false."
         },
         "halt_on_deprecated_severity": {
           "type": "string",
           "enum": ["warning", "error", "retracted"],
-          "default": "error",
-          "description": "Threshold, in the ordered set `warning` < `error` < `retracted`, at or above which a retroactive deprecation marker recorded in the lockfile halts the build; below it the marker emits an advisory and the build proceeds. Defaults to `error`."
+          "description": "Severity, in the ordered set `warning` < `error` < `retracted`, at or above which a deprecation marker recorded in the lockfile halts the build. Unset by default, and unset means no recorded marker halts: a marker is recorded against a version you already pinned, so a build that succeeded once keeps succeeding. Notification and resolution are two separate axes and neither is this dial. `aggrega build` reports EVERY deprecated entity it consumes — at every severity, and an entity its author marked `metadata.deprecated: true` alike — naming the entity, its severity and its message, so raising this threshold never reduces what the build tells you. Only a `retracted` marker affects which version a reference resolves to, and it does so when `aggrega pull` chooses a version, not at build."
         }
       }
     },
