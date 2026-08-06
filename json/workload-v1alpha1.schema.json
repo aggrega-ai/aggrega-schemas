@@ -49,11 +49,13 @@
       "properties": {
         "labels": {
           "type": "object",
+          "x-aggrega-go-type": "map[string]string",
           "additionalProperties": { "type": "string" },
           "description": "Author-declared labels. Merged with aggrega.ai/* provenance labels at emission (author values preserved; aggrega keys overwrite on collision)."
         },
         "annotations": {
           "type": "object",
+          "x-aggrega-go-type": "map[string]string",
           "additionalProperties": { "type": "string" },
           "description": "Author-declared annotations on the workload. Translated to pod template annotations for helm, compose labels for compose."
         }
@@ -81,6 +83,7 @@
     },
     "replicas": {
       "type": "integer",
+      "x-aggrega-go-type": "*int",
       "minimum": 0,
       "default": 1,
       "description": "Number of replicas. Default 1. Compose ignores values > 1 unless the target compose spec supports scaling."
@@ -88,26 +91,30 @@
     "initContainers": {
       "type": "array",
       "description": "Ordered list of containers that run to completion before the main containers start.",
-      "items": { "$ref": "#/$defs/container" }
+      "items": { "$ref": "#/$defs/container", "x-aggrega-go-type": "ContainerSpec" }
     },
     "containers": {
       "type": "object",
+      "x-aggrega-go-type": "OrderedMap[ContainerSpec]",
       "description": "Ordered map of container name → container spec. At least one entry required. YAML author order is preserved by the Go parser.",
       "minProperties": 1,
       "additionalProperties": { "$ref": "#/$defs/container" }
     },
     "volumes": {
       "type": "object",
+      "x-aggrega-go-type": "OrderedMap[VolumeSpec]",
       "description": "Ordered map of volume name → volume spec. Each volume spec declares exactly one of: ephemeral, configmap, secret, persistent, persistentTemplate.",
       "additionalProperties": { "$ref": "#/$defs/volume" }
     },
     "services": {
       "type": "object",
+      "x-aggrega-go-type": "OrderedMap[ServiceSpec]",
       "description": "Ordered map of service name → service spec. Each becomes a separate K8s Service (helm) or port-publishing rule on the compose service (compose). Service names are suffixed by aggrega instance_id for K8s resource-name uniqueness.",
       "additionalProperties": { "$ref": "#/$defs/service" }
     },
     "scheduling": {
       "type": "object",
+      "x-aggrega-go-type": "*Scheduling",
       "additionalProperties": false,
       "description": "K8s-native scheduling constraints. Translated directly for helm; ignored (with warning) for compose except where compose has analogs.",
       "properties": {
@@ -122,6 +129,7 @@
     },
     "podSecurityContext": {
       "type": "object",
+      "x-aggrega-go-type": "*PodSecurityContext",
       "additionalProperties": false,
       "properties": {
         "runAsUser": { "type": "integer" },
@@ -149,6 +157,7 @@
     },
     "terminationGracePeriodSeconds": {
       "type": "integer",
+      "x-aggrega-go-type": "*int",
       "minimum": 0,
       "description": "Seconds between SIGTERM and SIGKILL on shutdown. helm emits pod.terminationGracePeriodSeconds; compose emits stop_grace_period."
     },
@@ -159,6 +168,7 @@
     },
     "dnsConfig": {
       "type": "object",
+      "x-aggrega-go-type": "*DNSConfig",
       "additionalProperties": false,
       "description": "Custom pod DNS configuration. helm emits pod.dnsConfig. compose maps nameservers to dns and searches to dns_search; options have no compose analog and are omitted there.",
       "properties": {
@@ -172,6 +182,7 @@
       "description": "Static hostname-to-IP mappings injected into the pod's hosts file. helm emits pod.hostAliases; compose emits extra_hosts (one hostname:ip entry per hostname).",
       "items": {
         "type": "object",
+        "x-aggrega-go-type": "HostAlias",
         "required": ["ip", "hostnames"],
         "additionalProperties": false,
         "properties": {
