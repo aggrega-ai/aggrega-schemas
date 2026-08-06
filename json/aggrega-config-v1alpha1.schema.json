@@ -53,7 +53,7 @@
     "build": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Build-time strictness dials and authoring hints. `authoring_release` provides the LSP a `current Release` hint for inline diagnostics; `halt_on_deprecated` and `halt_on_deprecated_severity` control how the build reacts to deprecated-entity consumption; `yaml_indent` sets the indentation width of every rendered YAML artifact.",
+      "description": "Build-time strictness dials and authoring hints. `authoring_release` provides the LSP a `current Release` hint for inline diagnostics; `halt_on_deprecated_severity` controls how the build reacts to deprecated-entity consumption; `yaml_indent` sets the indentation width of every rendered YAML artifact.",
       "properties": {
         "authoring_release": {
           "type": "string",
@@ -66,15 +66,10 @@
           "maximum": 9,
           "description": "Indentation width (in spaces) for every rendered YAML artifact — docker-compose files, Helm chart templates and values, and Kubernetes manifests. Defaults to 2, the conventional width for those formats."
         },
-        "halt_on_deprecated": {
-          "type": "boolean",
-          "default": false,
-          "description": "When true, consuming an entity its author marked `metadata.deprecated: true` halts the build. It does not control whether that entity is reported: `aggrega build` prints a notice for every deprecated entity it consumes either way, so this dial only decides whether an author-marked one also stops the build. Defaults to false."
-        },
         "halt_on_deprecated_severity": {
           "type": "string",
           "enum": ["warning", "error", "retracted"],
-          "description": "Severity, in the ordered set `warning` < `error` < `retracted`, at or above which a deprecation marker recorded in the lockfile halts the build. Unset by default, and unset means no recorded marker halts: a marker is recorded against a version you already pinned, so a build that succeeded once keeps succeeding. Notification and resolution are two separate axes and neither is this dial. `aggrega build` reports EVERY deprecated entity it consumes — at every severity, and an entity its author marked `metadata.deprecated: true` alike — naming the entity, its severity and its message, so raising this threshold never reduces what the build tells you. Only a `retracted` marker affects which version a reference resolves to, and it does so when `aggrega pull` chooses a version, not at build."
+          "description": "Severity, in the ordered set `warning` < `error` < `retracted`, at or above which a deprecation marker recorded in the lockfile halts the build. Unset by default, and unset means no recorded marker halts: a marker is recorded against a version you already pinned, so a build that succeeded once keeps succeeding. Notification and resolution are two separate axes and neither is this dial. `aggrega build` reports EVERY deprecated entity it consumes — at every severity — naming the entity, its severity and its message, so raising this threshold never reduces what the build tells you. Only a `retracted` marker affects which version a reference resolves to, and it does so when `aggrega pull` chooses a version, not at build."
         }
       }
     },

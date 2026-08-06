@@ -59,10 +59,6 @@
           "type": "array",
           "description": "A list of descriptive keywords for UI discoverability.",
           "items": { "type": "string" }
-        },
-        "deprecated": {
-          "type": "boolean",
-          "description": "Indicates whether this entity is deprecated and should no longer be used."
         }
       },
       "additionalProperties": false
