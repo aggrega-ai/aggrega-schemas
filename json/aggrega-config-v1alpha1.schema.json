@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/aggrega-config-v1alpha1.schema.json",
   "title": "Aggrega Workspace Config",
-  "description": "Per-workspace configuration file consumed by the aggrega CLI. Lives at `.aggrega-config.yaml`. The `workspace` block is the root marker (its presence marks the workspace root; it holds only `catalog_dirs`). Pure settings live at the top level: `default_registry`, `offline`, `auto_pull`, `artifact_cache_dir`, plus the `build` (authoring-release hint + deprecation strictness dials), `plugins` (workspace-level Wasm plugin attachments: governance, linter, importer, and per-target provider-rendering bindings), `lint` (per-rule strictness dials), and `parse_cache` (daemon parse-cache eviction caps) blocks. Flat top-level shape, no apiVersion/kind envelope, distinct from catalog content. Schema evolution discipline: adding a new top-level key is a SemVer-MINOR bump (additive); removing or relocating a key, or tightening a constraint, is a SemVer-MAJOR break.",
+  "description": "Per-workspace configuration file consumed by the aggrega CLI. Lives at `.aggrega-config.yaml`. The `workspace` block is the root marker (its presence marks the workspace root; it holds only `catalog_dirs`). Pure settings live at the top level: `default_registry`, `offline`, `auto_pull`, `artifact_cache_dir`, plus the `build` (authoring-release hint + deprecation strictness dials), `plugins` (workspace-level Wasm plugin attachments: governance, linter, importer, and per-target provider-rendering bindings), `lint` (per-rule strictness dials), `parse_cache` (daemon parse-cache eviction caps), and `compiled_module_cache` (size cap for the on-disk compiled-module store) blocks. Flat top-level shape, no apiVersion/kind envelope, distinct from catalog content. Schema evolution discipline: adding a new top-level key is a SemVer-MINOR bump (additive); removing or relocating a key, or tightening a constraint, is a SemVer-MAJOR break.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
@@ -43,7 +43,7 @@
     "artifact_cache_dir": {
       "type": "string",
       "default": ".aggrega/cache",
-      "description": "Local artifact/content cache directory (registry pulls, OCI manifests, compiled fixtures). Defaults to `.aggrega/cache`. Should be gitignored by convention. Distinct from `parse_cache`, which caps the daemon's in-memory parse cache."
+      "description": "Local artifact/content cache directory (registry pulls, OCI manifests, compiled fixtures). Defaults to `.aggrega/cache`. Should be gitignored by convention. Distinct from `parse_cache`, which caps the daemon's in-memory parse cache, and from `compiled_module_cache`, which caps the machine-wide compiled-module store."
     },
     "skip_signature_verification": {
       "type": "boolean",
@@ -199,6 +199,19 @@
           "minimum": 0,
           "default": 100000000,
           "description": "Cap on the cumulative len(content) bytes the cache holds. Default 100000000 (100 MB). `0` disables the byte axis (no eviction triggered by byte total)."
+        }
+      }
+    },
+    "compiled_module_cache": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Size cap for the on-disk compiled-module cache, the machine-code store the compiler reuses so a Wasm plugin is compiled once per machine instead of once per build. It is shared across every workspace on the machine, so this key belongs in the global config file when you want one answer for the whole machine. The cap is applied once per invocation, before any plugin is loaded, by removing whole entries oldest-compiled first until the remainder fits — never while a build is compiling. Removing an entry costs a later recompile and nothing else, so the cap is safe to lower. `aggrega cache status` reports the store's current size, and `aggrega cache evict --max-size` trims it on demand to a cap given on the command line. Distinct from `artifact_cache_dir` (pulled registry content) and from `parse_cache` (the daemon's in-memory parse cache).",
+      "properties": {
+        "max_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 53687091200,
+          "description": "Cap on the bytes the compiled-module cache holds on disk. Default 53687091200 (50 GiB), a ceiling that stops unbounded growth rather than a budget meant to be felt — a single compiled plugin reaches hundreds of megabytes, so a machine that builds many plugin versions accumulates gigabytes. Set it above what one build compiles: the cap is applied before a build compiles anything, so a cap below a single build's own working set makes every build discard and recompile the same modules, and the store stops saving anything. Because the cap is applied first and the build then writes what it compiles, the store can sit above the cap between builds; it is trimmed again at the start of the next one. `0` disables the cap (the store grows without bound and nothing is ever removed automatically)."
         }
       }
     },
