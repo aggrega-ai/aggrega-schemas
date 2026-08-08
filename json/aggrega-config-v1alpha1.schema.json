@@ -43,7 +43,7 @@
     "artifact_cache_dir": {
       "type": "string",
       "default": ".aggrega/cache",
-      "description": "Local artifact/content cache directory (registry pulls, OCI manifests, compiled fixtures). Defaults to `.aggrega/cache`. Should be gitignored by convention. Distinct from `parse_cache`, which caps the daemon's in-memory parse cache, and from `compiled_module_cache`, which caps the machine-wide compiled-module store."
+      "description": "Local artifact/content cache directory (registry pulls, OCI manifests, compiled fixtures). Defaults to `.aggrega/cache`. Should be gitignored by convention. The path is interpreted relative to the workspace root, wherever the command is run from; an absolute value is refused when the configuration loads, because every reader of this setting resolves it against that root and an absolute path would name a location they never reach. The cache may sit inside a catalog directory — the default does, since a catalog directory commonly is the workspace root — but it must not BE one: a catalog scan steps over the cache, so a value naming a catalog directory leaves that directory's entire contents out of the scan. A value naming the workspace root itself (`.`, or any spelling that reduces to it) is refused when the configuration loads, for exactly that reason. A value naming any other catalog directory is not refused: it loads cleanly and the scan then finds nothing in that directory, so keeping the cache out of the directories listed in `workspace.catalog_dirs` is yours to check. Distinct from `parse_cache`, which caps the daemon's in-memory parse cache, and from `compiled_module_cache`, which caps the machine-wide compiled-module store."
     },
     "skip_signature_verification": {
       "type": "boolean",
