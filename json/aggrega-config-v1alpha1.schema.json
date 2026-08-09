@@ -142,13 +142,8 @@
         "publishing_discipline": {
           "type": "object",
           "additionalProperties": false,
-          "description": "Workspace-wide gates for the publishing-linter's rule set. `enforce_immutability` is a workspace-wide rule gate (default true); the `allow_*` flags relax individual discouragement checks.",
+          "description": "Workspace-wide gates for the publishing-linter's rule set. The `allow_*` flags relax individual discouragement checks. Artifact immutability is not configurable here: `aggrega push` refuses to overwrite a published version unconditionally.",
           "properties": {
-            "enforce_immutability": {
-              "type": "boolean",
-              "default": true,
-              "description": "When true (default), the publishing-linter enforces the artifact-immutability rule: a published `name:version` plus content digest is treated as final; `aggrega push` rejects overwrites. Set to false only for forensic reproduction of historical builds where overwrites occurred prior to the rule's introduction; routine use is discouraged. Required for production catalogs."
-            },
             "allow_dynamic_refs": {
               "type": "boolean",
               "default": false,

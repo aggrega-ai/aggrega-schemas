@@ -83,10 +83,6 @@
       "description": "Per-workspace publishing-discipline configuration the rule set consults. Mirrors workspaceconfig.PublishingDisciplineConfig field-for-field. Schema is the contract: both the Go workspaceconfig struct's godoc AND the Rust policies.rs struct doc cross-reference this $def. Field omission defaults each flag to false; the host's serialiser writes only fields with non-default values.",
       "additionalProperties": false,
       "properties": {
-        "enforce_immutability": {
-          "type": "boolean",
-          "description": "When true, published artefacts are immutable at the registry path; re-publishing the same version is rejected. When false, the rule is suppressed (development-only)."
-        },
         "allow_dynamic_refs": {
           "type": "boolean",
           "description": "When true, $dynamicAnchor / $dynamicRef usage in SchemaLibrary entries is permitted (suppresses the dynamic_refs rule). Default false."
