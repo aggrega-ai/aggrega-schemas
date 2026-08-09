@@ -24,7 +24,7 @@
         },
         "plugin_type": {
           "type": "string",
-          "enum": ["provider", "linter", "frp_step", "governance", "cli", "parser", "importer"],
+          "enum": ["provider", "linter", "pipeline-step", "governance", "cli", "parser", "importer"],
           "description": "The plugin's kind. It selects the minimum-export rule the host validates and, together with the export name, the default input-delivery pattern. A governance plugin serves the build-pipeline transform and verdict roles; the role it is attached at — not its kind — fixes what it may emit."
         },
         "capabilities": {
