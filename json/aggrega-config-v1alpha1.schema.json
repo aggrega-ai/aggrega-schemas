@@ -38,7 +38,7 @@
     "auto_pull": {
       "type": "boolean",
       "default": false,
-      "description": "When false (default), `aggrega build` is read-only: it never writes source pins, and a missing or incomplete per-release lockfile halts the build loudly with a diagnostic to run `aggrega pull` first. When true, `aggrega build` runs a pull step in-process before building — resolving the Release's dependencies into the lockfile and cache — so a first-time build against a Release does not require an explicit pull step. The same single-build opt-in is available on the command line as `aggrega build --auto-pull`; `pull` remains the sole writer of source pins. Independent of `offline`: `offline: true` ignores `auto_pull` and always halts on a missing lockfile because the pull step needs network access."
+      "description": "When false (default), `aggrega build` is read-only: it never writes source pins, and a missing or incomplete per-release lockfile halts the build loudly with a diagnostic to run `aggrega pull --release <release>` first. When true, `aggrega build` runs a pull step in-process before building — resolving the Release's dependencies into the lockfile and cache — so a first-time build against a Release does not require an explicit pull step. The same single-build opt-in is available on the command line as `aggrega build --auto-pull`; `pull` remains the sole writer of source pins. Independent of `offline`: `offline: true` ignores `auto_pull` and always halts on a missing lockfile because the pull step needs network access."
     },
     "artifact_cache_dir": {
       "type": "string",
