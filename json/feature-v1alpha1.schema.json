@@ -75,7 +75,7 @@
         "labels": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[string]",
-          "description": "Duck-typing labels for the Feature. The reserved label 'feature.aggrega.ai/kind' with value 'secret' marks this as a credential Feature, which routes the attachment through the credential pipeline. A credential Feature and an ordinary Feature are attached the same way, under the same attachment surface; the label selects the pipeline, not the authoring block.",
+          "description": "Duck-typing labels for the Feature. The reserved label 'feature.aggrega.ai/kind' with value 'secret' marks this as a credential Feature for the author and for the tooling that surfaces it. A credential Feature and an ordinary Feature are attached the same way, under the same attachment surface; what an attachment produces is decided by the FeatureRecipe the Manifest maps its type to, not by the label.",
           "properties": {
             "feature.aggrega.ai/kind": {
               "type": "string",
