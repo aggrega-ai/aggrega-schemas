@@ -94,11 +94,6 @@
           "enum": ["v1alpha1"],
           "description": "The host/guest ABI version the plugin targets. `v1alpha1` is the only accepted value in this iteration; a future ABI revision adds an accepted value."
         },
-        "capabilities": {
-          "type": "array",
-          "description": "The capabilities this plugin serves, interpreted per pluginType. A `provider` plugin lists the render-engine capabilities — provider engine names such as `helm` or `compose` — whose output shape it renders; a `pipeline-step` plugin lists the provider capabilities its pipeline step is compatible with; the cross-cutting sockets (`linter`, `governance`) leave it empty. A plugin is generic across artifacts that share a capability's output shape, not across all capabilities; this list is an explicit, tested-compatibility claim. Entries preserve author order. The runtime consults the list when a pipeline step touches a scope: the provider rendering that scope's documents must appear here, or the build halts. An empty or absent list declares no capability claim, so it matches nothing and the runtime halts any pipeline step that uses the plugin.",
-          "items": { "type": "string" }
-        },
         "signature": {
           "type": "object",
           "x-aggrega-go-type": "*PluginSignature",
@@ -241,8 +236,13 @@
           "type": "object",
           "x-aggrega-go-type": "*PluginProvider",
           "additionalProperties": false,
-          "description": "The provider-socket metadata for a `pluginType: provider` plugin: how its rendering engine translates the aggrega.ai/v1alpha1 Workload kind and which platform-native annotations the engine reads. Present only on provider-rendering plugins; absent on `linter`, `pipeline-step`, and `governance` plugins, and on provider plugins whose engine renders only sourced or artifact content (no Workload synthesis).",
+          "description": "The provider-socket block for a `pluginType: provider` plugin: the render-engine capabilities it serves, how its rendering engine translates the aggrega.ai/v1alpha1 Workload kind, which platform-native annotations the engine reads, and its render-behavior contract. Present only on provider-rendering plugins; absent on every other plugin type.",
           "properties": {
+            "capabilities": {
+              "type": "array",
+              "description": "The render-engine capabilities this provider serves — provider engine names such as `helm` or `compose` — whose output shape its engine renders. A provider is generic across artifacts that share a capability's output shape, not across all capabilities, so the list is an explicit, tested-compatibility claim rather than an aspiration. Entries preserve author order. A Recipe's requested provider target resolves to the provider plugin whose list contains that target; a target listed by more than one provider plugin halts as ambiguous unless the workspace configuration's `plugins.providers` selection names which plugin to use. An empty or absent list declares no capability claim, so the plugin serves no target.",
+              "items": { "type": "string" }
+            },
             "workloadSchema": {
               "type": "string",
               "description": "JSON Schema 2020-12 documenting how this provider translates the aggrega.ai/v1alpha1 Workload kind into provider-native manifests. When present, the provider supports Recipes that declare a workload: block (synthesized mode) — the compiler synthesizes provider-native manifests via a Go Engine, informed by this schema as documentation/contract. Whether a workload: Recipe is supported is determined by the bound engine's synthesis capability, not by this field's presence: a synthesized-mode Recipe bound to a provider whose engine cannot synthesize halts loudly at render time. The standard-library catalog declares workloadSchema on synthesizing providers as the documented contract, kept in sync with engine capability. Today the field acts as a presence flag (any non-empty body indicates support); the body is compiled to JSON Schema 2020-12 at load and becomes executable input to Wasm translators in a future iteration."
@@ -351,6 +351,45 @@
                   "description": "Whether the plugin wires a cross-boundary uses edge — a uses edge whose consuming and consumed ends assemble into different dispatch groups — by emitting provider-native cross-reference wiring through a paired link_publish/link_resolve export contract. Declared true only when the plugin exports both; a claim that does not match the export pair halts at load. Absent (false) declares no cross-boundary linking, so the host routes no link crossing to the plugin."
                 }
               }
+            }
+          }
+        },
+        "pipelineStep": {
+          "type": "object",
+          "x-aggrega-go-type": "*PluginPipelineStep",
+          "additionalProperties": false,
+          "description": "The pipeline-step block for a `pluginType: pipeline-step` plugin: the provider capabilities its step is compatible with. Present only on pipeline-step plugins; absent on every other plugin type.",
+          "properties": {
+            "capabilities": {
+              "type": "array",
+              "description": "The provider capabilities this plugin's pipeline step is compatible with — the provider engine names, such as `helm` or `compose`, whose rendered output the step knows how to transform. A step is written against one provider's output shape at a time, so the list is an explicit, tested-compatibility claim rather than an aspiration. Entries preserve author order. It is the catalog-readable record of that claim, published from the plugin's own describe() self-report; the build reads the same claim from the plugin when a step touches a scope and halts when the provider rendering that scope's documents is not among them. An empty or absent list declares no compatibility claim, so no scope admits the step.",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "parser": {
+          "type": "object",
+          "x-aggrega-go-type": "*PluginParser",
+          "additionalProperties": false,
+          "description": "The parser block for a `pluginType: parser` plugin: the source formats it turns into a canonical structured tree. Present only on parser plugins; absent on every other plugin type.",
+          "properties": {
+            "capabilities": {
+              "type": "array",
+              "description": "The source formats this parser turns into a canonical structured tree, each written as `parse:<format>` — for example `parse:yaml`. The prefix is part of the entry, so one plugin advertising several formats lists one entry per format. Entries preserve author order. A requested format resolves to the parser whose list contains the matching entry; a format no parser advertises halts the build, and a format advertised by more than one parser plugin halts as ambiguous. An empty or absent list declares no format claim, so the plugin parses nothing.",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "importer": {
+          "type": "object",
+          "x-aggrega-go-type": "*PluginImporter",
+          "additionalProperties": false,
+          "description": "The importer block for a `pluginType: importer` plugin: the foreign source formats it turns into draft Aggrega authoring files. Present only on importer plugins; absent on every other plugin type.",
+          "properties": {
+            "capabilities": {
+              "type": "array",
+              "description": "The foreign source formats this importer turns into draft Aggrega authoring files, each written as `import:<format>` — for example `import:terraform`. The prefix is part of the entry, so one plugin advertising several formats lists one entry per format. Entries preserve author order. A requested import format resolves to the importer whose list contains the matching entry; a format no importer advertises halts the import, and a format advertised by more than one importer plugin halts as ambiguous. An empty or absent list declares no format claim, so the plugin imports nothing.",
+              "items": { "type": "string" }
             }
           }
         }

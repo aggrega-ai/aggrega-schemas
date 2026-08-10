@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/wasm-describe-v1alpha1.schema.json",
   "title": "Aggrega Wasm Describe Socket",
-  "description": "The JSON wire shape every Wasm plugin returns from its describe() export (PluginDescriptor). describe() is the plugin's self-declaration, read once by the host when it loads the plugin: the ABI version the guest binds against, the plugin type, the exports it offers with each export's capability declaration, a plugin-level capability self-report, an optional provider render-behavior contract, optional CLI commands, an optional settings schema, and optional authorship metadata. One shape covers every plugin type — provider, linter, feature-recipe-pipeline step, governance, and CLI. The host reads describe() before dispatching any other export and refuses a descriptor it cannot admit rather than mis-invoking the plugin at dispatch.",
+  "description": "The JSON wire shape every Wasm plugin returns from its describe() export (PluginDescriptor). describe() is the plugin's self-declaration, read once by the host when it loads the plugin: the ABI version the guest binds against, the plugin type, the exports it offers with each export's capability declaration, a plugin-level capability self-report, an optional provider render-behavior contract, optional CLI commands, an optional settings schema, and optional authorship metadata. One shape covers every plugin type — provider, linter, feature-recipe-pipeline step, governance, CLI, parser, and importer. The host reads describe() before dispatching any other export and refuses a descriptor it cannot admit rather than mis-invoking the plugin at dispatch.",
   "oneOf": [
     { "$ref": "#/$defs/PluginDescriptor" }
   ],
@@ -29,7 +29,7 @@
         },
         "capabilities": {
           "type": "array",
-          "description": "What the plugin serves, interpreted per plugin type: for a provider, the render-engine capability names (such as helm or compose) whose output shape it renders; for a feature-recipe-pipeline step, the provider capabilities its step is compatible with. The cross-cutting sockets leave it empty. Entries are in declared order and are an explicit, tested-compatibility claim. An absent or empty list declares no capability claim.",
+          "description": "What the plugin serves. The list is flat on the wire and the adjacent required plugin_type fixes which of four senses each entry carries: for a provider, the render-engine capability names (such as helm or compose) whose output shape it renders; for a feature-recipe-pipeline step, the provider capabilities its step is compatible with; for a parser, the source formats it turns into a canonical structured tree, each written as parse:<format>; for an importer, the foreign source formats it turns into draft authoring files, each written as import:<format>. A linter, governance or CLI plugin is not resolved by capability and leaves it empty. Entries are in declared order and are an explicit, tested-compatibility claim. An absent or empty list declares no capability claim. The published catalog entity carries the same values under the per-type block its plugin type gives meaning to, so the entity's reader never has to decide which sense applies.",
           "items": {
             "type": "string"
           }
