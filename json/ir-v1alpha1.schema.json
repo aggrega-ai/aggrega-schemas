@@ -478,7 +478,6 @@
       "required": [
         "nodes",
         "edges",
-        "feature_markers",
         "values_mapping",
         "infra_mapping",
         "feature_values_mapping",
@@ -502,13 +501,6 @@
           "description": "Explicit logical network paths and dependencies between nodes.",
           "items": {
             "$ref": "#/$defs/IREdge"
-          }
-        },
-        "feature_markers": {
-          "type": "array",
-          "description": "The de-duplicated, lexicographically sorted set of Feature type strings — one entry per distinct Feature type attached anywhere in the graph (for example core/logging), regardless of where the attachment was declared. Sorting is what makes the set byte-identical across runs of the same input.",
-          "items": {
-            "type": "string"
           }
         },
         "values_mapping": {
