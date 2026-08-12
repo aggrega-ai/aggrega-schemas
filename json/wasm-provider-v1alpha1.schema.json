@@ -204,7 +204,7 @@
     },
     "RenderNodeOutput": {
       "type": "object",
-      "description": "The payload a Provider guest returns from its render_node export: the serialized bytes of each output file the guest emitted, and any diagnostics the guest raised while rendering. The guest returns each file's serialized bytes; the host writes them verbatim and runs no serializer. Determinism is the guest's responsibility: identical input must produce identical bytes.",
+      "description": "The payload a Provider guest returns from its render_node export: the serialized bytes of each output file the guest emitted, the names it derived into each of its own key spaces, and any diagnostics the guest raised while rendering. The guest returns each file's serialized bytes; the host writes them verbatim and runs no serializer. Determinism is the guest's responsibility: identical input must produce identical bytes.",
       "required": [
         "files"
       ],
@@ -215,6 +215,17 @@
           "description": "The output files the guest emitted, in emission order. Each names its on-disk path and carries the serialized bytes the host writes verbatim.",
           "items": {
             "$ref": "#/$defs/RenderedFile"
+          }
+        },
+        "derived_keys": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[[]string]",
+          "description": "The names the guest derived while rendering this node, keyed by the key space it derived them into, each space carrying its names in derivation order. A guest that derives the name its output addresses a resource by has put that name inside the file bytes the host writes verbatim, where the host cannot see it; declaring it here is how the guest asks the host to confirm no two derivations landed on one name. The host compares declared names for equality within one declared space and does nothing else — it does not parse a name, does not learn what a space or a name means, and never derives one itself. Two contributors to the same assembled output that declare the same name in the same space halt the build, and the halt names the space, the name, and both contributors. Both the space names and the names within them are the guest's own vocabulary: a guest wanting uniqueness across a narrower or wider scope than one assembled output expresses that scope in the space name it declares. Preserves declaration order so the payload is byte-identical across runs of identical input. Absent when the guest derives no names it wants checked, which leaves the check inert for that guest.",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "diagnostics": {
