@@ -109,7 +109,7 @@
         },
         "sync_wave": {
           "type": "integer",
-          "description": "The node's deployment wave, stamped as the aggrega.ai/sync-wave and argocd.argoproj.io/sync-wave annotations when non-zero. This is the per-node render-input carrier of the wave, distinct from the boundary context's sync wave that feeds the assemble export."
+          "description": "The deployment wave this node inherited from its containing boundary (default 0; negative permitted). Renderers that support ordering translate it into a target-native form; a target with no ordering concept carries it as a label and orders nothing."
         },
         "recipe_name": {
           "type": "string",
