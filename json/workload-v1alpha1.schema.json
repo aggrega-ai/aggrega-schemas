@@ -68,7 +68,7 @@
       "x-aggrega-go-type": "*int",
       "minimum": 0,
       "default": 1,
-      "description": "Number of replicas. Default 1. Compose ignores values > 1 unless the target compose spec supports scaling."
+      "description": "Number of replicas. Default 1. On a compose target the value reaches no part of the output, and a warning reports it whenever it is authored — including an explicit `1`."
     },
     "initContainers": {
       "type": "array",
@@ -91,14 +91,14 @@
     "services": {
       "type": "object",
       "x-aggrega-go-type": "OrderedMap[ServiceSpec]",
-      "description": "Ordered map of service name → service spec. Each becomes a separate K8s Service (helm) or port-publishing rule on the compose service (compose). Service names are suffixed by aggrega instance_id for K8s resource-name uniqueness.",
+      "description": "Ordered map of service name → service spec. On helm each entry becomes a separate K8s Service. On compose there is no separate service primitive, so entries do not map one to one: an entry whose type is NodePort or LoadBalancer publishes its ports on the workload's own compose service, an entry whose type is ClusterIP or Headless publishes nothing, and every published port is collected into that one service's port list with the host port matching the container port. Service names are suffixed by aggrega instance_id for K8s resource-name uniqueness.",
       "additionalProperties": { "$ref": "#/$defs/service" }
     },
     "scheduling": {
       "type": "object",
       "x-aggrega-go-type": "*Scheduling",
       "additionalProperties": false,
-      "description": "K8s-native scheduling constraints. Translated directly for helm; ignored (with warning) for compose except where compose has analogs.",
+      "description": "K8s-native scheduling constraints. Translated directly for helm. On a compose target these constraints reach no part of the output, and a warning reports the block when it is authored.",
       "properties": {
         "nodeSelector": {
           "type": "object",
@@ -232,7 +232,7 @@
         },
         "ports": {
           "type": "object",
-          "description": "Named container ports. Port names referenced by services.*.ports and by probe http intent (port resolution). K8s: containerPort. Compose: expose/ports.",
+          "description": "Named container ports. Port names are referenced by `services.*.ports` and by an http probe's port resolution. K8s: containerPort. Compose: a container port reaches the output only where a service spec publishes it; the container port itself has no separate compose field.",
           "additionalProperties": {
             "type": "integer",
             "minimum": 1,
@@ -250,7 +250,7 @@
         "health": {
           "type": "object",
           "additionalProperties": false,
-          "description": "Probe intents (http/tcp/exec). Translated to K8s httpGet/tcpSocket/exec for helm; CMD-SHELL healthchecks for compose (degraded — warning emitted).",
+          "description": "The container's health probes — ready, live and startup — each declared as http, tcp or exec. Translated to K8s httpGet/tcpSocket/exec for helm. For compose, a service carries a single healthcheck: http and tcp become CMD-SHELL tests, exec becomes a CMD test, and where more than one probe is declared only one is kept — a warning names the probe translated and the ones dropped.",
           "properties": {
             "ready": { "$ref": "#/$defs/probe" },
             "live": { "$ref": "#/$defs/probe" },
@@ -384,7 +384,7 @@
         "httpGet": {
           "type": "object",
           "additionalProperties": true,
-          "description": "K8s-native httpGet shape (path, port, scheme, host, httpHeaders). Passed through to helm; compose translates to HEALTHCHECK-equivalent where possible."
+          "description": "The K8s-native httpGet shape (path, port, scheme, host, httpHeaders). Passed through to helm. On a compose target a workload declaring a lifecycle hook halts, because compose has no lifecycle-hook primitive — the hook is never silently dropped."
         }
       }
     },
@@ -403,7 +403,7 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "sizeLimit": { "type": "string", "description": "K8s quantity (e.g., '1Gi'). K8s: emptyDir.sizeLimit. Compose: tmpfs (size approximation; warning emitted)." }
+            "sizeLimit": { "type": "string", "description": "K8s quantity (e.g., '1Gi'). K8s: emptyDir.sizeLimit. Compose: the volume becomes a tmpfs entry that carries no size, so this value reaches no part of the output — a warning reports it when authored." }
           }
         },
         "configmap": {
@@ -449,7 +449,7 @@
           "type": "object",
           "required": ["size"],
           "additionalProperties": false,
-          "description": "Per-replica claim template. Requires form: stateful, because only the stateful shape gives each replica the stable identity a per-replica claim needs. On Kubernetes it becomes StatefulSet.volumeClaimTemplates; compose degrades to a single named volume with a warning comment.",
+          "description": "Per-replica claim template. Requires form: stateful, because only the stateful shape gives each replica the stable identity a per-replica claim needs. On Kubernetes it becomes StatefulSet.volumeClaimTemplates. On a compose target it degrades to a single named volume shared by every replica, and a warning reports the degradation.",
           "properties": {
             "size": { "type": "string" },
             "class": { "type": "string" },

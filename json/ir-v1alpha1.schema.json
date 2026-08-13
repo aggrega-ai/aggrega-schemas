@@ -269,7 +269,7 @@
         },
         "sync_wave": {
           "type": "integer",
-          "description": "The deployment wave inherited from the IRNode's containing boundary's syncWave field (default 0; negative permitted). Renderers translate the integer to provider-native sequencing artifacts (argocd.argoproj.io/sync-wave for K8s/Helm; depends_on for Terraform; DependsOn for CloudFormation; no-op for Compose)."
+          "description": "The deployment wave inherited from the containing boundary's `syncWave` field (default 0; negative permitted). On K8s and Helm the wave is what orders the deployment: it becomes an `argocd.argoproj.io/sync-wave` annotation, and on a resource the chart already marks as a Helm hook it also becomes that hook's `helm.sh/hook-weight`. No other target sequences on it: on compose the value is recorded as a service label, and on the terraform and cloudformation targets it produces no ordering artifact."
         },
         "boundary_path": {
           "type": "string",
