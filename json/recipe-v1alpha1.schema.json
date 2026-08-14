@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/recipe-v1alpha1.schema.json",
   "title": "Aggrega Infrastructure Base (Recipe)",
-  "description": "Ops-authored pointer and mapping layer connecting Dev intent to a specific infrastructure execution engine. Strictly 1:1 with a physical provider and catalog component.",
+  "description": "Ops-authored pointer and mapping layer connecting Dev intent to a specific infrastructure provider. Strictly 1:1 with a physical provider and catalog component.",
   "type": "object",
   "required": [
     "apiVersion",
@@ -97,7 +97,7 @@
             "description": "The eval provider executes formatting in-memory. Fetching a 'source', a 'workload', 'artifacts', or utilizing base mapping fields is mathematically banned."
           },
           "else": {
-            "description": "Non-eval providers use the three-input-kinds model. At least one input kind must be present: sourced (source + values overlay), synthesized (workload), or artifacts. Pairing rules apply: valuesMapping pairs with source; and a workload: block requires a provider whose engine supports workload synthesis — a synthesized-mode Recipe bound to a non-synthesizing provider halts loudly at render time.",
+            "description": "Non-eval providers use the three-input-kinds model. At least one input kind must be present: sourced (source + values overlay), synthesized (workload), or artifacts. Pairing rules apply: valuesMapping pairs with source; and a workload: block requires a provider that supports workload synthesis — a synthesized-mode Recipe bound to a non-synthesizing provider halts loudly at render time.",
             "anyOf": [
               { "required": ["source"] },
               { "required": ["valuesMapping"] },
@@ -110,7 +110,7 @@
       "properties": {
         "capability": {
           "type": "string",
-          "description": "The explicit render-engine capability this recipe binds to (e.g., 'helm', 'terraform', 'compose', 'eval') — the provider engine kind that renders it. Accepts an optional version pin, in the same three forms as 'implements': unversioned ('helm'), exact ('helm:1.0.0'), or major-compatible range ('helm:^1.0.0'). The bare name selects the engine kind; the pin, when present, selects which version of the provider-rendering plugin serving that engine renders this recipe — highest available when unpinned, exact for an exact pin, highest-in-range for a caret. A pin that no serving plugin version satisfies halts the build loudly. Everything downstream of engine selection — output grouping, path segments, pipeline compatibility, and codec choice — keys on the bare engine kind, so two recipes pinning different plugin versions of the same engine coexist in one build."
+          "description": "The explicit provider capability this recipe binds to (e.g., 'helm', 'terraform', 'compose', 'eval') — the provider kind that renders it. Accepts an optional version pin, in the same three forms as 'implements': unversioned ('helm'), exact ('helm:1.0.0'), or major-compatible range ('helm:^1.0.0'). The bare name selects the provider kind; the pin, when present, selects which version of the provider-rendering plugin serving that capability renders this recipe — highest available when unpinned, exact for an exact pin, highest-in-range for a caret. A pin that no serving plugin version satisfies halts the build loudly. Everything downstream of provider selection — output grouping, path segments, pipeline compatibility, and codec choice — keys on the bare capability, so two recipes pinning different plugin versions of the same capability coexist in one build."
         },
         "implements": {
           "type": "string",
@@ -165,7 +165,7 @@
         },
         "workload": {
           "x-aggrega-go-type": "WorkloadTemplate",
-          "description": "Workload YAML producer with three authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output parses as 'aggrega.ai/v1alpha1 Workload'. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Mode 3 (library import): a YAML map of exactly one key, `$import: <Library>#/workloads/<entry>`, referencing a WorkloadLibrary entry by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference). The target Provider's engine must support workload synthesis; the standard-library catalog declares workloadSchema on such providers as the documented contract. A workload: Recipe bound to a provider whose engine cannot synthesize halts loudly at render time.",
+          "description": "Workload YAML producer with three authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output parses as 'aggrega.ai/v1alpha1 Workload'. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Mode 3 (library import): a YAML map of exactly one key, `$import: <Library>#/workloads/<entry>`, referencing a WorkloadLibrary entry by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference). The target Provider must support workload synthesis; the standard-library catalog declares workloadSchema on such providers as the documented contract. A workload: Recipe bound to a provider that cannot synthesize halts loudly at render time.",
           "oneOf": [
             {
               "type": "string"
@@ -215,7 +215,7 @@
         "outputLabels": {
           "type": "object",
           "x-aggrega-go-type": "map[string]string",
-          "description": "Recipe-author-declared labels stamped onto every object this recipe's rendered output produces, provider-translated onto each engine's label surface (Kubernetes metadata.labels for helm synthesis, source-render, and artifacts; Compose service labels; per-resource tags on Terraform .tf.json artifact bodies). They ride the same rail as the fixed provenance labels but are author-owned rather than compiler-owned. The aggrega.ai/ and app.kubernetes.io/ namespaces are reserved for platform-native provenance and are rejected at load. A key or value that is not a valid label for the target engine is the recipe author's responsibility; the core does not police label charset beyond the reserved-namespace rule.",
+          "description": "Recipe-author-declared labels stamped onto every object this recipe's rendered output produces, provider-translated onto each provider's label surface (Kubernetes metadata.labels for helm synthesis, source-render, and artifacts; Compose service labels; per-resource tags on Terraform .tf.json artifact bodies). They ride the same rail as the fixed provenance labels but are author-owned rather than compiler-owned. The aggrega.ai/ and app.kubernetes.io/ namespaces are reserved for platform-native provenance and are rejected at load. A key or value that is not a valid label for the target provider is the recipe author's responsibility; the core does not police label charset beyond the reserved-namespace rule.",
           "additionalProperties": {
             "type": "string"
           }

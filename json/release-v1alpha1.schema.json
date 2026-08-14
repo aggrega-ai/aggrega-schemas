@@ -274,7 +274,7 @@
         },
         "directory": {
           "type": "string",
-          "description": "Physical output path for GitOps artifact generation. Supports Go template variables ({{ .capability }}, {{ .boundary_name }}, {{ .parameters.X }}). Combined with subDirectory via filepath.Join to produce the final artifact path."
+          "description": "Physical output path for GitOps artifact generation. Supports Go template variables ({{ .capability }}, {{ .boundary_name }}, {{ .parameters.X }}). Combined with subDirectory as a path join to produce the final artifact path."
         },
         "subDirectory": {
           "type": "string",

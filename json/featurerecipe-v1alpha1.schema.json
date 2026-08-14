@@ -77,7 +77,7 @@
     },
     "spec": {
       "type": "object",
-      "description": "The render-engine capability binding, mapping, pipeline, and inject mapping for a FeatureRecipe. Carries the same three input kinds as a Recipe (sourced, synthesized, artifacts) plus the FeatureRecipe-only injectMapping; a pure-wiring FeatureRecipe declaring only capability and implements is valid and renders nothing.",
+      "description": "The provider capability binding, mapping, pipeline, and inject mapping for a FeatureRecipe. Carries the same three input kinds as a Recipe (sourced, synthesized, artifacts) plus the FeatureRecipe-only injectMapping; a pure-wiring FeatureRecipe declaring only capability and implements is valid and renders nothing.",
       "required": [
         "capability",
         "implements"
@@ -97,14 +97,14 @@
             "description": "The eval provider executes formatting in-memory. Fetching a 'source', a 'workload', or 'artifacts' is mathematically banned. injectMapping (a delivery transform applied at inject mapping, not a rendering surface) remains allowed."
           },
           "else": {
-            "description": "Non-eval capabilities use the three-input-kinds model (sourced, synthesised, artifacts) plus the FeatureRecipe-only injectMapping. Unlike a Recipe, a FeatureRecipe is not required to declare any input kind: a pure-wiring FeatureRecipe (capability + implements only) is valid and renders nothing — its effect is the uses-edge the Feature it implements carries. Pairing rules apply: valuesMapping requires source; and a workload: block requires a provider whose engine supports workload synthesis — a synthesized-mode FeatureRecipe bound to a non-synthesizing provider halts loudly at render time."
+            "description": "Non-eval capabilities use the three-input-kinds model (sourced, synthesised, artifacts) plus the FeatureRecipe-only injectMapping. Unlike a Recipe, a FeatureRecipe is not required to declare any input kind: a pure-wiring FeatureRecipe (capability + implements only) is valid and renders nothing — its effect is the uses-edge the Feature it implements carries. Pairing rules apply: valuesMapping requires source; and a workload: block requires a provider that supports workload synthesis — a synthesized-mode FeatureRecipe bound to a non-synthesizing provider halts loudly at render time."
           }
         }
       ],
       "properties": {
         "capability": {
           "type": "string",
-          "description": "The explicit render-engine capability this recipe binds to (e.g., 'helm', 'terraform', 'compose') — the provider engine kind that renders it."
+          "description": "The explicit provider capability this recipe binds to (e.g., 'helm', 'terraform', 'compose') — the provider kind that renders it."
         },
         "implements": {
           "type": "string",
@@ -159,7 +159,7 @@
         },
         "workload": {
           "x-aggrega-go-type": "WorkloadTemplate",
-          "description": "Workload YAML producer with three authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output parses as 'aggrega.ai/v1alpha1 Workload'. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Mode 3 (library import): a YAML map of exactly one key, `$import: <Library>#/workloads/<entry>`, referencing a WorkloadLibrary entry by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference). The target Provider's engine must support workload synthesis; the standard-library catalog declares workloadSchema on such providers as the documented contract. A workload: FeatureRecipe bound to a provider whose engine cannot synthesize halts loudly at render time. A synthesized FeatureRecipe workload emits its provider-native manifests under the feature's output directory.",
+          "description": "Workload YAML producer with three authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output parses as 'aggrega.ai/v1alpha1 Workload'. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Mode 3 (library import): a YAML map of exactly one key, `$import: <Library>#/workloads/<entry>`, referencing a WorkloadLibrary entry by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference). The target Provider must support workload synthesis; the standard-library catalog declares workloadSchema on such providers as the documented contract. A workload: FeatureRecipe bound to a provider that cannot synthesize halts loudly at render time. A synthesized FeatureRecipe workload emits its provider-native manifests under the feature's output directory.",
           "oneOf": [
             {
               "type": "string"

@@ -178,7 +178,7 @@
                   "infra": {
                     "type": "array",
                     "uniqueItems": true,
-                    "description": "Subkey paths routing to the Feature's infra pillar. Paths are dotted identifier sequences; each path must reference an existing property in Feature.Spec.Schema.infra.",
+                    "description": "Subkey paths routing to the Feature's infra pillar. Paths are dotted identifier sequences; each path must reference an existing property in the Feature's `spec.schema.infra`.",
                     "items": {
                       "type": "string",
                       "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*(\\.[a-zA-Z_][a-zA-Z0-9_]*)*$"
@@ -187,7 +187,7 @@
                   "values": {
                     "type": "array",
                     "uniqueItems": true,
-                    "description": "Subkey paths routing to the Feature's values pillar. Paths are dotted identifier sequences; each path must reference an existing property in Feature.Spec.Schema.values.",
+                    "description": "Subkey paths routing to the Feature's values pillar. Paths are dotted identifier sequences; each path must reference an existing property in the Feature's `spec.schema.values`.",
                     "items": {
                       "type": "string",
                       "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*(\\.[a-zA-Z_][a-zA-Z0-9_]*)*$"

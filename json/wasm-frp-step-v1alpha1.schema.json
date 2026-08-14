@@ -48,13 +48,13 @@
     },
     "FRPStepOutput": {
       "type": "object",
-      "description": "The payload a feature-recipe-pipeline guest returns for one pipeline step: the RFC 6902 patches the apply engine applies to the keyed document set, the side effects this step produced, and any diagnostics the guest raised.",
+      "description": "The payload a feature-recipe-pipeline guest returns for one pipeline step: the RFC 6902 patches the host applies to the keyed document set, the side effects this step produced, and any diagnostics the guest raised.",
       "required": [],
       "additionalProperties": false,
       "properties": {
         "patches": {
           "type": "array",
-          "description": "Structured RFC 6902 operations the step emits against documents in the keyed set. Each names its target document by scope and key, then names the op, path, and value explicitly. Distinct from the mutator socket's opaque patch slice: an FRP step's patches are applied by the apply engine and restored by snapshot on a failed step, so the operations are explicit here rather than opaque.",
+          "description": "Structured RFC 6902 operations the step emits against documents in the keyed set. Each names its target document by scope and key, then names the op, path, and value explicitly. Distinct from the mutator socket's opaque patch slice: an FRP step's patches are applied by the host and restored by snapshot on a failed step, so the operations are explicit here rather than opaque.",
           "items": {
             "$ref": "#/$defs/JSONPatchOp"
           }

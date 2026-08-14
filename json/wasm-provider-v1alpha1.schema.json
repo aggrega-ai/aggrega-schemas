@@ -156,7 +156,7 @@
         },
         "provider_name": {
           "type": "string",
-          "description": "The bare provider engine kind, stamped as the aggrega.ai/provider label when non-empty."
+          "description": "The bare provider kind, stamped as the aggrega.ai/provider label when non-empty."
         },
         "provider_version": {
           "type": "string",
@@ -877,7 +877,7 @@
         },
         "provider": {
           "type": "string",
-          "description": "The provider that rendered the endpoint (the provider engine name). Both endpoints of a wired link name the same provider; the host does not route a link whose endpoints name different providers."
+          "description": "The provider that rendered the endpoint (the bare provider name). Both endpoints of a wired link name the same provider; the host does not route a link whose endpoints name different providers."
         },
         "deployment": {
           "type": "string",

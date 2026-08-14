@@ -158,7 +158,7 @@
     "providers": {
       "type": "array",
       "default": [],
-      "description": "Resolved per-capability render-engine selections. Each entry pins one capability (e.g. `helm`) to the digest-free OCI identity of the provider-rendering plugin that renders it, resolved at pull from the `.aggrega-config.yaml` `plugins.providers` list (when the capability is ambiguously served) or from the sole serving plugin (when unambiguous). Build reads this section — never `.aggrega-config.yaml` — to select the render engine, so build output is invariant to workspace-config changes made after the pull. The plugin's content digest is NOT duplicated here: it is single-sourced in the `plugins` and `entities` sections, which this record points into by identity. Version coexistence is preserved: this record selects the plugin repository per capability; the concrete versions live in `entities` (one entry per resolved plugin version), and each Recipe's `spec.capability` version pin selects among them at render.",
+      "description": "Resolved per-capability provider selections. Each entry pins one capability (e.g. `helm`) to the digest-free OCI identity of the provider-rendering plugin that renders it, resolved at pull from the `.aggrega-config.yaml` `plugins.providers` list (when the capability is ambiguously served) or from the sole serving plugin (when unambiguous). Build reads this section — never `.aggrega-config.yaml` — to select the provider, so build output is invariant to workspace-config changes made after the pull. The plugin's content digest is NOT duplicated here: it is single-sourced in the `plugins` and `entities` sections, which this record points into by identity. Version coexistence is preserved: this record selects the plugin repository per capability; the concrete versions live in `entities` (one entry per resolved plugin version), and each Recipe's `spec.capability` version pin selects among them at render.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -166,7 +166,7 @@
         "properties": {
           "capability": {
             "type": "string",
-            "description": "The capability this binding selects an engine for — the bare engine name a Recipe binds through `spec.capability` (e.g. `helm`, `compose`)."
+            "description": "The capability this binding selects a provider for — the bare capability name a Recipe binds through `spec.capability` (e.g. `helm`, `compose`)."
           },
           "plugin": {
             "type": "string",
@@ -188,7 +188,7 @@
     "source_artifacts": {
       "type": "array",
       "default": [],
-      "description": "Source artifacts pulled from Recipe / FeatureRecipe `spec.source` fields at pull time. Each entry identifies a unique `{kind, url, chart, pinned_version}` identity with content digest, mediatype, and the structured `referenced_by:` back-pointers naming every catalog entity that resolved to this artifact. `url` is the authored identity URL; the resolved artifact location for a repo-root helm source is recorded separately under `resolved_url:` as provenance. Multiple Recipes pinning the same chart at the same version dedupe to a single entry with multiple `referenced_by:` records. The kind enum covers the four currently-supported source kinds plus one reserved (terraform-module-oci) for the future terraform engine.",
+      "description": "Source artifacts pulled from Recipe / FeatureRecipe `spec.source` fields at pull time. Each entry identifies a unique `{kind, url, chart, pinned_version}` identity with content digest, mediatype, and the structured `referenced_by:` back-pointers naming every catalog entity that resolved to this artifact. `url` is the authored identity URL; the resolved artifact location for a repo-root helm source is recorded separately under `resolved_url:` as provenance. Multiple Recipes pinning the same chart at the same version dedupe to a single entry with multiple `referenced_by:` records. The kind enum covers the four currently-supported source kinds plus one reserved (terraform-module-oci) that ships no source adapter yet.",
       "items": { "$ref": "#/$defs/SourceArtifactEntry" }
     },
     "verdict_inputs": {

@@ -236,20 +236,20 @@
           "type": "object",
           "x-aggrega-go-type": "*PluginProvider",
           "additionalProperties": false,
-          "description": "The provider-socket block for a `pluginType: provider` plugin: the render-engine capabilities it serves, how its rendering engine translates the aggrega.ai/v1alpha1 Workload kind, which platform-native annotations the engine reads, and its render-behavior contract. Present only on provider-rendering plugins; absent on every other plugin type.",
+          "description": "The provider-socket block for a `pluginType: provider` plugin: the capabilities it serves, how it translates the aggrega.ai/v1alpha1 Workload kind, which platform-native annotations it reads, and its render-behavior contract. Present only on provider-rendering plugins; absent on every other plugin type.",
           "properties": {
             "capabilities": {
               "type": "array",
-              "description": "The render-engine capabilities this provider serves — provider engine names such as `helm` or `compose` — whose output shape its engine renders. A provider is generic across artifacts that share a capability's output shape, not across all capabilities, so the list is an explicit, tested-compatibility claim rather than an aspiration. Entries preserve author order. A Recipe's requested provider target resolves to the provider plugin whose list contains that target; a target listed by more than one provider plugin halts as ambiguous unless the workspace configuration's `plugins.providers` selection names which plugin to use. An empty or absent list declares no capability claim, so the plugin serves no target.",
+              "description": "The capabilities this provider serves — capability names such as `helm` or `compose` — whose output shape it renders. A provider is generic across artifacts that share a capability's output shape, not across all capabilities, so the list is an explicit, tested-compatibility claim rather than an aspiration. Entries preserve author order. A Recipe's requested provider target resolves to the provider plugin whose list contains that target; a target listed by more than one provider plugin halts as ambiguous unless the workspace configuration's `plugins.providers` selection names which plugin to use. An empty or absent list declares no capability claim, so the plugin serves no target.",
               "items": { "type": "string" }
             },
             "workloadSchema": {
               "type": "string",
-              "description": "JSON Schema 2020-12 documenting how this provider translates the aggrega.ai/v1alpha1 Workload kind into provider-native manifests. When present, the provider supports Recipes that declare a workload: block (synthesized mode) — the compiler synthesizes provider-native manifests via a Go Engine, informed by this schema as documentation/contract. Whether a workload: Recipe is supported is determined by the bound engine's synthesis capability, not by this field's presence: a synthesized-mode Recipe bound to a provider whose engine cannot synthesize halts loudly at render time. The standard-library catalog declares workloadSchema on synthesizing providers as the documented contract, kept in sync with engine capability. Today the field acts as a presence flag (any non-empty body indicates support); the body is compiled to JSON Schema 2020-12 at load and becomes executable input to Wasm translators in a future iteration."
+              "description": "JSON Schema 2020-12 documenting how this provider translates the aggrega.ai/v1alpha1 Workload kind into provider-native manifests. When present, the provider supports Recipes that declare a workload: block (synthesized mode) — the provider translates the Workload into provider-native manifests, informed by this schema as documentation/contract. Whether a workload: Recipe is supported is determined by the bound provider's synthesis capability, not by this field's presence: a synthesized-mode Recipe bound to a provider that cannot synthesize halts loudly at render time. The standard-library catalog declares workloadSchema on synthesizing providers as the documented contract, kept in sync with that capability. Today the field acts as a presence flag (any non-empty body indicates support); the body is compiled to JSON Schema 2020-12 at load and becomes executable input to Wasm translators in a future iteration."
             },
             "wellKnownAnnotations": {
               "type": "array",
-              "description": "Documentation-of-contract: the platform-native well-known annotation keys (the aggrega.ai/ namespace) this provider's rendering engine reads, with the behavior applied when each is absent. Each entry documents one engine-consumed annotation key for catalog readers and the inspect surface. The compiler does not consume this field to gate or branch a build — it is descriptive metadata about the annotations the engine recognises, not an enforcement list, and is distinct from the runtime check that governs binding a value into the reserved namespace. Entries are an ordered list and preserve author order.",
+              "description": "Documentation-of-contract: the platform-native well-known annotation keys (the aggrega.ai/ namespace) this provider reads, with the behavior applied when each is absent. Each entry documents one provider-consumed annotation key for catalog readers and the inspect surface. The compiler does not consume this field to gate or branch a build — it is descriptive metadata about the annotations the provider recognises, not an enforcement list, and is distinct from the runtime check that governs binding a value into the reserved namespace. Entries are an ordered list and preserve author order.",
               "items": {
                 "type": "object",
                 "x-aggrega-go-type": "WellKnownAnnotation",
@@ -259,7 +259,7 @@
                   "key": {
                     "type": "string",
                     "pattern": "^aggrega\\.ai/.+",
-                    "description": "The platform-native well-known annotation key the engine reads (e.g., aggrega.ai/namespace). Sits under the platform-reserved aggrega.ai/ annotation namespace — the engine-read platform directives."
+                    "description": "The platform-native well-known annotation key the provider reads (e.g., aggrega.ai/namespace). Sits under the platform-reserved aggrega.ai/ annotation namespace — the provider-read platform directives."
                   },
                   "purpose": {
                     "type": "string",
@@ -267,7 +267,7 @@
                   },
                   "defaultBehavior": {
                     "type": "string",
-                    "description": "The behavior the engine applies when this annotation is absent."
+                    "description": "The behavior the provider applies when this annotation is absent."
                   }
                 }
               }
@@ -362,7 +362,7 @@
           "properties": {
             "capabilities": {
               "type": "array",
-              "description": "The provider capabilities this plugin's pipeline step is compatible with — the provider engine names, such as `helm` or `compose`, whose rendered output the step knows how to transform. A step is written against one provider's output shape at a time, so the list is an explicit, tested-compatibility claim rather than an aspiration. Entries preserve author order. It is the catalog-readable record of that claim, published from the plugin's own describe() self-report; the build reads the same claim from the plugin when a step touches a scope and halts when the provider rendering that scope's documents is not among them. An empty or absent list declares no compatibility claim, so no scope admits the step.",
+              "description": "The provider capabilities this plugin's pipeline step is compatible with — the provider capability names, such as `helm` or `compose`, whose rendered output the step knows how to transform. A step is written against one provider's output shape at a time, so the list is an explicit, tested-compatibility claim rather than an aspiration. Entries preserve author order. It is the catalog-readable record of that claim, published from the plugin's own describe() self-report; the build reads the same claim from the plugin when a step touches a scope and halts when the provider rendering that scope's documents is not among them. An empty or absent list declares no compatibility claim, so no scope admits the step.",
               "items": { "type": "string" }
             }
           }

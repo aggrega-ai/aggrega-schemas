@@ -314,19 +314,19 @@
           },
           "source_namespace": {
             "type": "string",
-            "description": "Raw aggrega.ai/namespace annotation of the source endpoint (empty when absent). Opaque data for a provider engine's network-identity resolution; the core does not interpret it."
+            "description": "Raw aggrega.ai/namespace annotation of the source endpoint (empty when absent). Opaque data for a provider's network-identity resolution; the core does not interpret it."
           },
           "source_boundary_path": {
             "type": "string",
-            "description": "Boundary path of the source endpoint, used by a provider engine's no-namespace network fallback."
+            "description": "Boundary path of the source endpoint, used by a provider's no-namespace network fallback."
           },
           "target_namespace": {
             "type": "string",
-            "description": "Raw aggrega.ai/namespace annotation of the target endpoint (empty when absent). Opaque data for a provider engine's network-identity resolution."
+            "description": "Raw aggrega.ai/namespace annotation of the target endpoint (empty when absent). Opaque data for a provider's network-identity resolution."
           },
           "target_boundary_path": {
             "type": "string",
-            "description": "Boundary path of the target endpoint, used by a provider engine's no-namespace network fallback."
+            "description": "Boundary path of the target endpoint, used by a provider's no-namespace network fallback."
           },
           "provides": {
             "type": "object",
