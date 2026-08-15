@@ -141,7 +141,7 @@
         "provides": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[string]",
-          "description": "The Public Developer API. Contractual output variables available for downstream Caller inject resolution. The compiler evaluates provides templates at provides evaluation (self-contained, any order among themselves — no provides entry reads another). The node's locals resolve in that stage's preamble, ahead of its provides, so a provides template may read '.locals' and receives resolved values; naming a key the locals block does not declare halts. Callers resolve inject keys against these values at inject hydration. Values are scalars — the pipe carries them blindly and stringifies deterministically at the injection boundary.",
+          "description": "The Public Developer API. Contractual output variables available for downstream Caller inject resolution. The compiler evaluates provides templates against a self-contained context, in any order among themselves — no provides entry reads another. The node's locals resolve in the locals preamble, ahead of its provides, so a provides template may read '.locals' and receives resolved values; naming a key the locals block does not declare halts. Callers resolve inject keys against these values at inject hydration. Values are scalars — the pipe carries them blindly and stringifies deterministically at the injection boundary.",
           "additionalProperties": {
             "type": ["string", "number", "boolean"]
           }

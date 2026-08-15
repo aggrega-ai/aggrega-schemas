@@ -53,7 +53,7 @@
           },
           "inject": {
             "type": "object",
-            "description": "The pre-hydrated and intercepted delivery pipe. Starts as a compiler-generated map resolving Developer inject keys to Target provides values. Mutated in-place by the injectMapping deep-merges of inject mapping. By the time the Base Recipe renders, this contains the fully resolved physical strings.",
+            "description": "The pre-hydrated and intercepted delivery pipe. Starts as a compiler-generated map resolving Developer inject keys to Target provides values. Mutated in-place by the injectMapping deep-merges. By the time the Base Recipe renders, this contains the fully resolved physical strings.",
             "properties": {
               "env": {
                 "type": "object",
