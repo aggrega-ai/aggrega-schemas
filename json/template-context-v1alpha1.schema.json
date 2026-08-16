@@ -272,6 +272,15 @@
         "description": "One attachment as a template reads it: the per-instance view of an attached Feature. Every attachment exposes the same fields regardless of what it produces, so .features.<name> reads the same way whether that name is a slot the entity declared or a free attachment.",
         "properties": {
           "type": { "type": "string", "description": "The Catalog Feature URI of the attached Feature." },
+          "resolved_version": {
+            "type": "string",
+            "description": "The attached Feature's version after Manifest resolution — the version actually bound for this build, read as .features.<name>.resolved_version. Mirrors .context.uses.<alias>.resolved_version, so an attachment and an edge report a bound version the same way. Empty when the attachment's type resolves to no Catalog entity."
+          },
+          "labels": {
+            "type": "object",
+            "description": "The attached Feature's Catalog labels, carried verbatim in the order the Feature declares them — nothing is filtered, renamed or prefix-stripped, so a template reads exactly what the Feature's author wrote. Lets a template branch on what the attached Feature is rather than on its name or its URI. Mirrors .context.uses.<alias>.labels. The key is absent altogether when the Feature declares no labels and when the attachment's type resolves to no Catalog entity, so guard with `if` or range over the map before addressing an individual label.",
+            "additionalProperties": { "type": "string" }
+          },
           "values": {
             "type": "object",
             "description": "The attachment's own developer-intent pillar, carried verbatim from the attachment declaration.",
