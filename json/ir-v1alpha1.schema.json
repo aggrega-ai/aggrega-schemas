@@ -383,7 +383,7 @@
         "infra": {
           "type": "object",
           "additionalProperties": true,
-          "description": "Resolved per-connection infra for this edge (Aggregate-seeded and/or Release-supplied), validated at resolution against the infraSchema declared by the source socket (the socket on the consuming component, which is the edge's source) and projected at .uses.<alias>.infra. Keys the author omitted are filled from the socket's declared defaults; an authored value wins.",
+          "description": "Resolved per-connection infra for this edge, supplied by a Release edge entry, validated at resolution against the infraSchema declared by the source socket (the socket on the consuming component, which is the edge's source) and projected at .uses.<alias>.infra. Keys the author omitted are filled from the socket's declared defaults; an authored value wins.",
           "x-aggrega-go-type": "json.RawMessage"
         },
         "inject": {
