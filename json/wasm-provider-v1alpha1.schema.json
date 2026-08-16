@@ -407,7 +407,8 @@
           "description": "The failure message on failure, naming the selection and the reason; absent on success."
         },
         "error_code": {
-          "type": "string",
+          "$ref": "wasm-hostfunc-error-v1alpha1.schema.json#/properties/code",
+          "x-aggrega-go-type": "string",
           "description": "The machine-matchable failure identity on failure, from the closed host-function error-code catalog, set beside the human error message; absent on success. A guest branches on this code without parsing the message, tolerating an absent code (older host) or an unrecognized one (newer host) by falling back to the message."
         }
       }
@@ -441,7 +442,8 @@
           "description": "The failure message on failure, naming the file and the reason; absent on success."
         },
         "error_code": {
-          "type": "string",
+          "$ref": "wasm-hostfunc-error-v1alpha1.schema.json#/properties/code",
+          "x-aggrega-go-type": "string",
           "description": "The machine-matchable failure identity on failure, from the closed host-function error-code catalog, set beside the human error message; absent on success. A guest branches on this code without parsing the message, tolerating an absent code (older host) or an unrecognized one (newer host) by falling back to the message."
         }
       }
@@ -461,7 +463,8 @@
           "description": "The failure message on failure, naming the URL and the remedy; absent on success."
         },
         "error_code": {
-          "type": "string",
+          "$ref": "wasm-hostfunc-error-v1alpha1.schema.json#/properties/code",
+          "x-aggrega-go-type": "string",
           "description": "The machine-matchable failure identity on failure, from the closed host-function error-code catalog, set beside the human error message; absent on success. A guest branches on this code without parsing the message, tolerating an absent code (older host) or an unrecognized one (newer host) by falling back to the message."
         }
       }
