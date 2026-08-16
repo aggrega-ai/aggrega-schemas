@@ -19,7 +19,7 @@
   "$defs": {
     "RenderNodeInput": {
       "type": "object",
-      "description": "The payload a Provider guest receives on its render_node export: the per-node IR projection the guest renders, the render-time context, and an optional pre-packaged catalog projection. When the catalog projection is present the guest renders from the payload alone and needs no host round-trips for catalog content; when it is omitted the guest fetches catalog entries through the read-only host functions bound at load time.",
+      "description": "The payload a Provider guest receives on its render_node export: the per-node IR projection the guest renders, the render-time context, and the pre-evaluated inputs the node's bound Recipe declares — an acquired-source listing, a workload, an artifact set — each present only when that Recipe declares it.",
       "required": [
         "node",
         "context"
@@ -34,11 +34,6 @@
           "x-aggrega-go-type": "renderctx.RenderContext",
           "description": "The render-time context the host hands the guest. The guest reads it to resolve parameters, annotations, and boundary metadata; the schema does not interpret its internal shape (an opaque passthrough), so the provider socket schema does not rebind the cross-boundary render-context shape. The render context's own contract is the render-context wire shape; a guest that reads it consults that contract.",
           "additionalProperties": true
-        },
-        "catalog_projection": {
-          "$ref": "#/$defs/CatalogProjection",
-          "x-aggrega-go-type": "*CatalogProjection",
-          "description": "The pre-packaged catalog content the guest renders against when the host supplies catalog entries in the payload rather than behind host functions. Absent when the guest fetches catalog entries through the read-only host functions instead."
         },
         "source_listing": {
           "$ref": "#/$defs/SourceListing",
@@ -161,44 +156,6 @@
         "provider_version": {
           "type": "string",
           "description": "The resolved provider-rendering plugin version, stamped as the aggrega.ai/provider-version label when non-empty."
-        }
-      }
-    },
-    "CatalogProjection": {
-      "type": "object",
-      "description": "The pre-packaged catalog content a Provider guest renders against when the host supplies catalog entries in the payload rather than behind host functions. It is a closure walk outward from the IR node: only the catalog entries transitively referenced by the node being rendered are included, not the whole catalog. Each map is keyed by catalog URI and preserves key order so the payload is byte-identical across runs of identical input. Opaque at this schema layer; the guest reads each entry through the catalog entity's own wire contract.",
-      "required": [],
-      "additionalProperties": false,
-      "properties": {
-        "components": {
-          "type": "object",
-          "x-aggrega-go-type": "OrderedMap[types.Component]",
-          "description": "The Component entries the node transitively references, keyed by catalog URI.",
-          "additionalProperties": true
-        },
-        "features": {
-          "type": "object",
-          "x-aggrega-go-type": "OrderedMap[types.Feature]",
-          "description": "The Feature entries the node transitively references, keyed by catalog URI.",
-          "additionalProperties": true
-        },
-        "recipes": {
-          "type": "object",
-          "x-aggrega-go-type": "OrderedMap[types.Recipe]",
-          "description": "The Recipe entries the node transitively references, keyed by catalog URI.",
-          "additionalProperties": true
-        },
-        "feature_recipes": {
-          "type": "object",
-          "x-aggrega-go-type": "OrderedMap[types.FeatureRecipe]",
-          "description": "The FeatureRecipe entries the node transitively references, keyed by catalog URI.",
-          "additionalProperties": true
-        },
-        "mapping_libraries": {
-          "type": "object",
-          "x-aggrega-go-type": "OrderedMap[types.MappingLibrary]",
-          "description": "The MappingLibrary entries the node transitively references, keyed by catalog URI.",
-          "additionalProperties": true
         }
       }
     },
