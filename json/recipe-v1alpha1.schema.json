@@ -220,6 +220,13 @@
             "type": "string"
           }
         },
+        "outputComponentLabels": {
+          "type": "array",
+          "description": "Component identity-label keys this recipe promotes onto its rendered output. Each entry names a label key; the value is taken from the labels of the component instance this recipe renders, so the stamped label carries that component's declared value rather than one repeated here. Promoted labels reach the same label surface as outputLabels, which instead carries literal key-value pairs authored in place. A key declared in both blocks is rejected at load, so each stamped key has a single source. The aggrega.ai/ and app.kubernetes.io/ namespaces are reserved for platform-native provenance and are rejected at load; a scoped key such as component.aggrega.ai/hosting lies outside those reserved roots and may be promoted.",
+          "items": {
+            "type": "string"
+          }
+        },
         "pipeline": {
           "type": "array",
           "description": "Sequential list of Wasm plugins to execute for stateful AST mutation directly on the base infrastructure.",
