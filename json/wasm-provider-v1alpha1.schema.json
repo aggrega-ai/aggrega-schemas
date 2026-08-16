@@ -54,7 +54,7 @@
     },
     "IRNodeProjection": {
       "type": "object",
-      "description": "The per-node IR data a Provider guest renders — a bounded projection of the full IR node carrying the per-node identity and the provenance the guest stamps onto every emitted manifest: its id, type, resolved recipe, values, feature attachments, outbound uses edges, boundary path, deployment wave, Recipe identity, component-id override, and build provenance. Source-file content is not carried here; it travels separately in the source projection. Values, features, and uses preserve author order so the wire payload is byte-identical across runs of identical input.",
+      "description": "The per-node IR data a Provider guest renders — a bounded projection of the full IR node carrying the per-node identity and the provenance the guest stamps onto every emitted manifest: its id, type, resolved recipe, values, feature attachments, outbound uses edges, boundary path, deployment wave, Recipe identity, component-id override, and build provenance. Source-file content is not carried here; it travels separately in the source projection. Every key set here has a fixed order — features and uses in author order, values in sorted key order — so the wire payload is byte-identical across runs of identical input.",
       "required": [
         "id",
         "type",
@@ -78,7 +78,7 @@
         "values": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[any]",
-          "description": "The node's rendered values dictionary, an author-ordered key set the guest renders from. Preserves author order so the payload is byte-identical across runs of identical input.",
+          "description": "The node's rendered values dictionary, the key set the guest renders from. Keys arrive in sorted order, not author order, and that sorting is what makes the payload byte-identical across runs of identical input; a guest needing any other ordering imposes it itself.",
           "additionalProperties": true
         },
         "features": {
@@ -444,15 +444,7 @@
           "type": "object",
           "x-aggrega-go-type": "map[string]types.OrderedMap[string]",
           "additionalProperties": true,
-          "description": "Every attachment on the node, projected to its resolved provides and keyed by the attachment instance name a workload attachment reference carries; absent when the node carries no attachments. The host copies the strings through without interpreting them, so the guest reads whichever entries of an attachment's provides it needs to resolve a reference to the resource that attachment produced."
-        },
-        "attachment_sensitive": {
-          "type": "object",
-          "x-aggrega-go-type": "map[string]bool",
-          "additionalProperties": {
-            "type": "boolean"
-          },
-          "description": "Which of the node's attachments handle material an author declared sensitive, keyed by the same attachment instance name attachment_provides uses. Only a marked attachment appears, so an attachment absent from the map is not declared sensitive and the whole field is absent when none is. The marking is derived from declarations alone — a sensitive leaf declared on the Feature filling the attachment, or a sensitive attachment slot the attachment binds — never from a value's content. The field carries the marking so a guest whose target offers a native sensitivity primitive can mark the value there; a guest whose target offers none ignores it, and the marking changes nothing that guest emits."
+          "description": "Every attachment on the node, projected to its resolved provides and keyed by the attachment instance name a workload attachment reference carries; absent when the node carries no attachments. The host copies the strings through without interpreting them, so the guest reads whichever entries of an attachment's provides it needs to resolve a reference to the resource that attachment produced. Whether an attachment handles declared-sensitive material is not repeated here: it travels on the node projection's matching feature entry, which a guest reads by the same instance name."
         }
       }
     },
@@ -639,7 +631,7 @@
         "values": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[any]",
-          "description": "The per-instance values the umbrella scopes under the sub-chart's alias in the umbrella values.yaml, an author-ordered key set. Preserves author order so the payload is byte-identical across runs of identical input.",
+          "description": "The per-instance values the umbrella scopes under the sub-chart's alias in the umbrella values.yaml file. Keys arrive in sorted order, not author order, and that sorting is what makes the payload byte-identical across runs of identical input; a guest needing any other ordering imposes it itself.",
           "additionalProperties": true
         },
         "chart_yaml": {
