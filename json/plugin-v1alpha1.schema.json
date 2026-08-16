@@ -249,7 +249,7 @@
             },
             "wellKnownAnnotations": {
               "type": "array",
-              "description": "Documentation-of-contract: the platform-native well-known annotation keys (the aggrega.ai/ namespace) this provider reads, with the behavior applied when each is absent. Each entry documents one provider-consumed annotation key for catalog readers and the inspect surface. The compiler does not consume this field to gate or branch a build — it is descriptive metadata about the annotations the provider recognises, not an enforcement list, and is distinct from the runtime check that governs binding a value into the reserved namespace. Entries are an ordered list and preserve author order.",
+              "description": "The provider's support claim: the platform-native well-known annotation keys (the aggrega.ai/ namespace) this provider reads, each with the scope it is read at and the behavior applied when it is absent. Declare a key only where the provider reads it — the published support matrix is rendered from these declarations, so a key listed here is a key an author can expect to change the rendered output at the scope it names. The compiler reads the declaration in one way: a `scope` naming an input kind the provider's own `contract.inputKinds` does not claim contradicts an adjacent claim in the same entity, and the build halts naming the key and the contradiction. Nothing else about a build branches on this field, and it is distinct from the rule that governs binding a value under the reserved aggrega.ai/ prefix. Absent declares no support claim. Entries are an ordered list and preserve author order.",
               "items": {
                 "type": "object",
                 "x-aggrega-go-type": "WellKnownAnnotation",
@@ -268,6 +268,16 @@
                   "defaultBehavior": {
                     "type": "string",
                     "description": "The behavior the provider applies when this annotation is absent."
+                  },
+                  "scope": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "enum": ["sourced", "synthesized", "artifactsStandalone", "boundary"]
+                    },
+                    "description": "Where this provider reads the key. The first three values are the Recipe input kinds and name the render path the key is read on — `sourced` a vendored file set, `synthesized` a Workload the provider materialises, `artifactsStandalone` a node whose whole output is imported artifact documents. Each of those must be an input kind this provider's `contract.inputKinds` claims; naming one it does not halts the build. `boundary` is for a key resolved once per boundary rather than per node — the name of an assembled artifact, or the placement context a cross-boundary reference is shaped from — where input kind is not a meaningful axis, so it is not matched against `contract.inputKinds`. A key read on more than one path lists every one. Absent makes no per-path claim: nothing is checked, and the key states only that the provider reads it somewhere."
                   }
                 }
               }
