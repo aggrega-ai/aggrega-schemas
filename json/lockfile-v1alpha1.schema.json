@@ -55,7 +55,7 @@
     "generated_at": {
       "type": "string",
       "format": "date-time",
-      "description": "ISO-8601 timestamp of the pull that produced this lockfile. Diagnostic provenance — records the wall-clock moment of resolution. Intentionally changes between pulls; not part of the WriteLockfile byte-identity guarantee."
+      "description": "ISO-8601 timestamp of the pull that produced this lockfile. Diagnostic provenance — records the wall-clock moment of resolution. Intentionally changes between pulls; not part of the lockfile's byte-identity guarantee."
     },
     "mapping_libraries": {
       "type": "array",
@@ -190,6 +190,38 @@
       "default": [],
       "description": "Source artifacts pulled from Recipe / FeatureRecipe `spec.source` fields at pull time. Each entry identifies a unique `{kind, url, chart, pinned_version}` identity with content digest, mediatype, and the structured `referenced_by:` back-pointers naming every catalog entity that resolved to this artifact. `url` is the authored identity URL; the resolved artifact location for a repo-root helm source is recorded separately under `resolved_url:` as provenance. Multiple Recipes pinning the same chart at the same version dedupe to a single entry with multiple `referenced_by:` records. The kind enum covers the four currently-supported source kinds plus one reserved (terraform-module-oci) that ships no source adapter yet.",
       "items": { "$ref": "#/$defs/SourceArtifactEntry" }
+    },
+    "toolchain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["compiler_version", "core_plugins"],
+      "description": "Versions of the toolchain that produced this lockfile: the compiler's own version, and the version of each core plugin the compiler carries. Recorded so a lockfile answers after the fact which compiler and which core plugins resolved and rendered a build — a question the pinned sections cannot always answer, because a core provider plugin served from inside the compiler binary is left unpinned and so carries no recorded version of its own. VERSIONS ONLY: the stamp never records where a plugin's bytes came from, so two machines that pinned the same closure with the same compiler write the same stamp. NOT ENFORCED, BY DESIGN — nothing compares this section, warns about it, or refuses a build over it, and its absence from a lockfile is silent: the toolchain is not part of the dependency closure the lockfile pins, so enforcing the stamp would pin the compiler by proxy and impose a version lock nobody chose to adopt. For the same reason the section is waived by the byte-identity comparison between two pulls of the same inputs, on the same footing as `generated_at`.",
+      "properties": {
+        "compiler_version": {
+          "type": "string",
+          "description": "Version of the compiler that wrote this lockfile, in the v-less form every Aggrega surface reports (`1.2.0`, not `v1.2.0`). A tagged release build records its tag; a build from source records the `(devel)` marker, so a lockfile produced by an unreleased compiler is not mistaken for release output."
+        },
+        "core_plugins": {
+          "type": "array",
+          "default": [],
+          "description": "Version of each core plugin the compiler carries, one entry per plugin, ordered by plugin coordinate. A core plugin is published on the compiler's own tag at the same version, so these versions read the same whether the compiler served a plugin from inside itself or fetched it from a registry — which is what keeps the stamp free of machine-specific detail. Empty for a build that carries no core plugins.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["plugin", "version"],
+            "properties": {
+              "plugin": {
+                "type": "string",
+                "description": "Coordinate of the core plugin — a Plugin entity's `<pluginType>/<name>` identity (e.g. `provider/helm`), the same identity the `providers` and `mutators` sections name a plugin by."
+              },
+              "version": {
+                "type": "string",
+                "description": "Version of this core plugin, in the v-less form every Aggrega surface reports."
+              }
+            }
+          }
+        }
+      }
     },
     "verdict_inputs": {
       "type": "array",
