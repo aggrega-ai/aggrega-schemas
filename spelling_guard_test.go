@@ -252,6 +252,13 @@ var ruledBenign = map[string]string{
 	"WorkloadV1alpha1|/$defs/volume/properties/persistent/properties/accessModes/description|accessModes":         "field name beside the concept it configures",
 	"WorkloadV1alpha1|/$defs/volume/properties/persistentTemplate/properties/accessModes/description|accessModes": "field name beside the concept it configures",
 
+	// A field name beside the English noun for what it claims:
+	// `contract.inputKinds` is the key an author types, and "an input kind" names
+	// the thing that key claims support for. Prose describing a key's subject in
+	// English is not a second spelling of the key.
+	"PluginV1alpha1|/properties/spec/properties/provider/properties/wellKnownAnnotations/description|inputKinds":                        "field name beside the English noun for the kinds it claims",
+	"PluginV1alpha1|/properties/spec/properties/provider/properties/wellKnownAnnotations/items/properties/scope/description|inputKinds": "field name beside the English noun for the kinds it claims",
+
 	// An enum value quoted, then read back as English.
 	"WorkloadV1alpha1|/$defs/container/properties/imagePullPolicy/description|IfNotPresent": "enum value quoted, then read back as English",
 
