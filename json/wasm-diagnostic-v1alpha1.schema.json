@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/wasm-diagnostic-v1alpha1.schema.json",
   "title": "Aggrega Wasm-plugin shared diagnostic",
-  "description": "The single diagnostic shape every Wasm socket shares. A plugin reports one entry per issue it raises; the host surfaces it. The shape is a superset: every socket populates the subset it uses and omits the rest, so a diagnostic from any socket is one uniform structure. severity is an open string so each socket keeps its own vocabulary (a parser reports its own severities, an import reports error/warning/info, a publishing linter reports error/warning, a policy reports the build-outcome verdict deny/warn/audit); the host reads the severity value without the schema constraining it to one vocabulary.",
+  "description": "The single diagnostic shape every Wasm socket shares. A plugin reports one entry per issue it raises; the host surfaces it. The shape is a superset: every socket populates the subset it uses and omits the rest, so a diagnostic from any socket is one uniform structure. severity is one of three values every socket shares — halt, warn, or info — so a diagnostic carries the same meaning whichever socket raised it.",
   "type": "object",
   "$defs": {
     "Diagnostic": {
@@ -16,7 +16,12 @@
       "properties": {
         "severity": {
           "type": "string",
-          "description": "The diagnostic's severity, as an open string so each socket keeps its own vocabulary. A parser reports its own severities; an import reports error, warning, or info; a publishing linter reports error or warning; a policy reports the build-outcome verdict deny, warn, or audit. The host reads the value without the schema constraining it to one vocabulary."
+          "enum": [
+            "halt",
+            "warn",
+            "info"
+          ],
+          "description": "The diagnostic's severity, drawn from one closed set every socket shares. halt stops the build and names what to fix. warn surfaces alongside a build that still completes. info records the observation and leaves the build outcome unchanged. A parser, an import, a publishing linter and a governance verdict all report from this one set, so a reader interprets a severity the same way whichever socket raised it."
         },
         "message": {
           "type": "string",
