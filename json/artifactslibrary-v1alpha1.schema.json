@@ -78,7 +78,7 @@
               "type": "string",
               "description": "One file in the bundle. The value is a Go template fragment authored as a YAML string whose output is the artifact body emitted to that file. The compiler stores the fragment verbatim at ArtifactsLibrary load; parsing happens at consumption time when the bundle is imported via `artifacts.<name>: { $import: ... }`."
             },
-            "description": "A named bundle: a map of output filename to Go-template file body. Importing the bundle at a single `artifacts.<name>` site expands into one output per file. Filenames are free-form (they become output filenames); at least one file is required."
+            "description": "A named bundle: a map of filename to Go-template file body. Importing the bundle at a single `artifacts.<name>` site expands into one output per file, each nested under the key the bundle was imported at as `<key>/<filename>`. Filenames are free-form (each names the bundle's own file within that key); at least one file is required."
           },
           "description": "Named map of reusable artifact bundles. Each bundle groups the output files that belong together (for example a CRD, its RBAC, and a ConfigMap). Each file body is opaque to the envelope validation — content semantics are handled by the Go template parser at consumption time."
         }
