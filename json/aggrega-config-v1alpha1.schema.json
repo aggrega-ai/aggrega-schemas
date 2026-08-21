@@ -371,7 +371,7 @@
         },
         "function": {
           "type": "string",
-          "description": "Optional override for the socket's default entry function. When omitted, the socket's documented default applies (governance `annotation-transform` → `transform_annotations`, governance `label-transform` → `mutate`, governance verdict roles → `validate`, linter → `lint`, importer → `import`)."
+          "description": "Optional override for the socket's default entry function. When omitted, the socket's documented default applies (governance `annotation-transform` → `transform_annotations`, governance `label-transform` → `mutate`, governance verdict roles → `validate`, linter → `lint`, importer → `import`). The override may name any export the plugin declares, and the export it names must return the output shape that socket reads: the build halts when that output carries a top-level field the shape does not declare, naming the export called and the unexpected field. The check reads which top-level field names are present, not which are absent or what nests beneath them, so it is not a full validation of the output."
         },
         "with": {
           "$ref": "#/$defs/PluginRefWith",
