@@ -10,7 +10,7 @@
   "$defs": {
     "LinterInput": {
       "type": "object",
-      "description": "The payload the host hands the publishing-linter plugin on each invocation. rule_id selects which rule the plugin dispatches to. entity_kind identifies the entity kind being linted (Component, Feature, Recipe, FeatureRecipe, SchemaLibrary, MappingLibrary, Aggregate). proposed carries the parsed entity structure being classified (the host parses YAML to JSON before sending; the plugin never sees raw bytes). previous carries the parsed previous-version entity for the schema-evolution rule; omitted when not applicable. policies carries the per-workspace publishing-discipline configuration the rule consults.",
+      "description": "The payload the host hands the publishing-linter plugin on each invocation. rule_id selects which rule the plugin dispatches to. entity_kind identifies the entity kind being linted (Component, Feature, Recipe, FeatureRecipe, SchemaLibrary, MappingLibrary, Aggregate). proposed carries the parsed entity structure being classified (the host parses YAML to JSON before sending; the plugin never sees raw bytes). previous carries the parsed previous-version entity for the schema-evolution rule; omitted when not applicable. implemented_component carries a related entity of a different kind — the Component a linted Recipe realizes — for rules that compare an entity against a contract another entity declares; omitted when not applicable. policies carries the per-workspace publishing-discipline configuration the rule consults.",
       "required": [
         "rule_id",
         "entity_kind",
@@ -42,6 +42,11 @@
         },
         "previous": {
           "description": "Parsed structure of the previous-version entity, for rules that perform pairwise comparison (schema-evolution). Omitted when the rule does not need a previous-version reference (e.g., first publication, structural-only rules).",
+          "type": "object",
+          "x-aggrega-go-type": "json.RawMessage"
+        },
+        "implemented_component": {
+          "description": "Parsed structure of the Component a linted Recipe names in spec.implements, resolved by the host. It is a related entity of a DIFFERENT kind from the one being linted, which is what distinguishes it from previous: previous carries another version of the same entity, while this carries the Component whose declared output contract the Recipe realizes. The host resolves it through the same catalog lookup a build uses, keyed on the Component's name, so all three pin forms spec.implements accepts (unversioned, exact, major-compatible range) reach the same entry. Omitted when the linted entity is not a Recipe, when it names no Component, or when no Component of that name is reachable in the workspace's catalog directories. An absent value means the comparison is unavailable, not that the contract is empty: a rule that reads this field emits no finding when it is absent.",
           "type": "object",
           "x-aggrega-go-type": "json.RawMessage"
         },
@@ -106,6 +111,10 @@
         "allow_category_mismatches": {
           "type": "boolean",
           "description": "When true, suppress the category-matches-directory rule's findings. The standard-catalog convention requires Components under core/<category>/ to declare component.aggrega.ai/category={category} matching the directory segment, where {category} is one of the 15 closed-set values. Workspaces with legitimate persistent exceptions opt out here. Default false."
+        },
+        "allow_undeclared_recipe_provides": {
+          "type": "boolean",
+          "description": "When true, suppress the provides-declared-by-component rule's findings. That rule reports each key a Recipe publishes in spec.provides that the Component named by its spec.implements does not declare in the provides pillar of its spec.schema. Publishing beyond the declared contract is accepted at build time, so the finding is advisory; a workspace whose Recipes deliberately publish keys their Component does not declare opts out here. Default false."
         }
       }
     }

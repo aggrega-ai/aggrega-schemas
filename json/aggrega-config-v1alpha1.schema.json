@@ -173,6 +173,11 @@
               "type": "boolean",
               "default": false,
               "description": "When true, the publishing-linter suppresses the category-matches-directory rule. The standard-catalog convention requires Components under core/<category>/ to declare component.aggrega.ai/category={category} matching the directory segment, where {category} is one of the closed-set values (like ai-agent, ai-model, ai-tool, datastore, gateway, compute, ...). Workspaces with legitimate persistent exceptions opt out here. Default false."
+            },
+            "allow_undeclared_recipe_provides": {
+              "type": "boolean",
+              "default": false,
+              "description": "When true, the publishing-linter suppresses the provides-declared-by-component rule. That rule reports each key a Recipe publishes in `spec.provides` that the Component named by its `spec.implements` does not declare in the `provides` pillar of its `spec.schema`. The two are separate surfaces: what a Recipe publishes is the value a consumer receives, while what the Component declares is the output contract an `inject` `from:` reference is checked against — so a key that is published without being declared makes such a reference halt. A Recipe publishing more than its Component declares is otherwise accepted at build time, which is why the finding is advisory rather than a refusal to publish. Default false."
             }
           }
         }

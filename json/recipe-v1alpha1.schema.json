@@ -114,7 +114,7 @@
         },
         "implements": {
           "type": "string",
-          "description": "Declares which catalog component type this recipe is able to implement (exact version 'core/api-server:1.0.0', major-compatible range 'core/api-server:^1.0.0', or unversioned 'core/api-server'). The compiler uses it to verify Manifest mappings and to suggest candidates in diagnostics and editor completion; it never resolves a build. The Manifest mapping is the user's explicit deployment choice, pinned in the lockfile."
+          "description": "Declares which catalog component type this recipe is able to implement (exact version 'core/api-server:1.0.0', major-compatible range 'core/api-server:^1.0.0', or unversioned 'core/api-server'). The compiler uses it to verify Manifest mappings and to suggest candidates in diagnostics and editor completion; it never resolves a build. `aggrega lint` reads it as well, to locate the Component whose declared `provides` contract a Recipe's published keys are compared against. The Manifest mapping is the user's explicit deployment choice, pinned in the lockfile."
         },
         "source": {
           "description": "The location of the infrastructure code. Accepts a Universal URI string, or an open structured object whose provider-defined keys are exposed to the Recipe's templates as '.source.*'.",
