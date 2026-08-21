@@ -281,7 +281,7 @@
         },
         "sync_wave": {
           "type": "integer",
-          "description": "The deployment wave inherited from the containing boundary's `syncWave` field (default 0; negative permitted). On K8s and Helm the wave is what orders the deployment: it becomes an `argocd.argoproj.io/sync-wave` annotation, and on a resource the chart already marks as a Helm hook it also becomes that hook's `helm.sh/hook-weight`. On compose the value both is recorded as a service label and orders the services of the file it renders into, through `depends_on` between them; on the terraform and cloudformation targets it produces no ordering artifact."
+          "description": "The deployment wave inherited from the containing boundary's `syncWave` field (default 0; negative permitted). On K8s and Helm the wave is what orders the deployment: it becomes an `argocd.argoproj.io/sync-wave` annotation, and on a resource the chart already marks as a Helm hook it also becomes that hook's `helm.sh/hook-weight`. On compose the value both is recorded as a service label and orders the services of the file it renders into, through `depends_on` between them. On cloudformation it orders provisioning of the stack a dispatch group assembles into, every resource in a wave being declared to depend on the resources of the wave before it: the order they are created in and, in reverse, the order they are deleted in, never readiness, because a stack template expresses no notion of a resource being ready. On terraform it produces no ordering artifact and travels with the node's build provenance."
         },
         "boundary_path": {
           "type": "string",
