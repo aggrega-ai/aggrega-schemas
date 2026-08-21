@@ -85,9 +85,10 @@ func TestSchemaByKindUnknownKind(t *testing.T) {
 // form, matching its filename-derived served path.
 //
 // The machine schemas fall in two roles: wire formats and ABI contracts
-// (ir, lockfile, cache-metadata, the wasm-*), and compiler-internal
-// render-context shapes (template-context, path-template-context). That
-// distinction is convention, not encoded in the `$id`. What marks all of
+// (ir, lockfile, plugins-trust, cache-metadata, the wasm-*), and
+// compiler-internal render-context shapes (template-context,
+// path-template-context). That distinction is convention, not encoded in
+// the `$id`. What marks all of
 // them non-published is their exclusion from catalog.json — none is
 // hand-authored or editor-associated — so the `$id` need not carry the
 // role, and identity matches the served location for every schema.
@@ -109,6 +110,7 @@ var allSchemas = []struct {
 	{"MappingLibraryV1alpha1", MappingLibraryV1alpha1, "https://aggrega.ai/schemas/mappinglibrary-v1alpha1.schema.json"},
 	{"PathTemplateContextV1alpha1", PathTemplateContextV1alpha1, "https://aggrega.ai/schemas/path-template-context-v1alpha1.schema.json"},
 	{"PluginV1alpha1", PluginV1alpha1, "https://aggrega.ai/schemas/plugin-v1alpha1.schema.json"},
+	{"PluginsTrustV1alpha1", PluginsTrustV1alpha1, "https://aggrega.ai/schemas/plugins-trust-v1alpha1.schema.json"},
 	{"RecipeV1alpha1", RecipeV1alpha1, "https://aggrega.ai/schemas/recipe-v1alpha1.schema.json"},
 	{"ReleaseV1alpha1", ReleaseV1alpha1, "https://aggrega.ai/schemas/release-v1alpha1.schema.json"},
 	{"SchemaLibraryV1alpha1", SchemaLibraryV1alpha1, "https://aggrega.ai/schemas/schemalibrary-v1alpha1.schema.json"},

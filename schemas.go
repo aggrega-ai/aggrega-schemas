@@ -14,7 +14,7 @@
 // (IRSchemaV1alpha1) to disambiguate the two-letter-initialism parse
 // ambiguity (`IRV1alpha1` reads as either `IR_V1alpha1` or
 // `IRV_1alpha1`). The package namespace `schemas.` already provides
-// "this is a schema" context for the other 22 identifiers.
+// "this is a schema" context for every other identifier.
 //
 // The string-vs-[]byte choice matches the pre-existing
 // WorkloadJSONSchema string convention at
@@ -81,6 +81,9 @@ var PathTemplateContextV1alpha1 string
 
 //go:embed json/plugin-v1alpha1.schema.json
 var PluginV1alpha1 string
+
+//go:embed json/plugins-trust-v1alpha1.schema.json
+var PluginsTrustV1alpha1 string
 
 //go:embed json/recipe-v1alpha1.schema.json
 var RecipeV1alpha1 string
