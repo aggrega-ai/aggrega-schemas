@@ -105,25 +105,25 @@
         "importer": {
           "type": "array",
           "default": [],
-          "items": { "$ref": "#/$defs/PluginRef" },
-          "description": "Importer-socket plugins. Default entry function: `import`."
+          "items": { "$ref": "#/$defs/FixedEntryPluginRef" },
+          "description": "Importer-socket plugins. The socket calls the `import` entry function; an attachment does not name one."
         },
         "importer_append": {
           "type": "array",
           "default": [],
-          "items": { "$ref": "#/$defs/PluginRef" },
+          "items": { "$ref": "#/$defs/FixedEntryPluginRef" },
           "description": "Append-only addition to the effective `importer` list. Same compose-don't-shadow semantic as `governance_append`."
         },
         "providers": {
           "type": "array",
           "default": [],
-          "items": { "$ref": "#/$defs/PluginRef" },
+          "items": { "$ref": "#/$defs/FixedEntryPluginRef" },
           "description": "Per-capability provider selections. Each entry binds one provider capability (the bare capability name a Recipe binds through `spec.capability`, e.g. `helm` or `compose`) to the bare identity of the provider-rendering plugin that serves it (a Plugin entity's `metadata.name`, the `<socket>/<name>` path, e.g. `provider/helm`), with an optional trailing `:version` in the same three forms as a version pin (bare, exact `:1.0.0`, or major-compatible range `:^1.0.0`). This is the disambiguation and override surface for a federated catalog where more than one provider plugin serves the same capability: the binding selects which publisher's plugin renders that capability. When a capability is served by exactly one provider plugin no entry is needed. Exactly one entry per capability is permitted across the composed list; a duplicate capability halts resolution loudly. Resolution is at pull: the pull records the resolved binding into the per-Release lockfile, and the build reads the lockfile — a change here after a pull is not adopted until the next pull, so build output is invariant to it (deterministic output). A missing entry for an unambiguously-served capability is not an error; a missing entry for an ambiguously-served capability halts the pull loudly, listing the candidate plugins. Version coexistence is preserved: the binding selects the plugin repository per capability, and each Recipe's own `spec.capability` version pin selects the version within that repository, so two Recipes pinning different versions of one provider still coexist."
         },
         "providers_append": {
           "type": "array",
           "default": [],
-          "items": { "$ref": "#/$defs/PluginRef" },
+          "items": { "$ref": "#/$defs/FixedEntryPluginRef" },
           "description": "Append-only addition to the effective `providers` list. Entries here are concatenated onto the resolved base list at each precedence layer, letting workspace and global configs compose provider bindings rather than shadow them. Same compose-don't-shadow semantic as `governance_append`. The one-entry-per-capability rule applies to the composed list, so an appended entry naming a capability already bound by a lower layer halts resolution loudly."
         },
         "cli": {
@@ -359,7 +359,7 @@
     "PluginRef": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Reference to a Wasm plugin attached at a workspace-level socket — the one unified attachment shape every socket uses (the four cross-cutting sockets and the provider-rendering bindings alike). `uri` and `capability` together select the plugin: `uri` only is a direct attach (the plugin at that identity is attached verbatim — the cross-cutting sockets' path, since their plugins declare no served capabilities); `capability` only resolves the plugin serving that capability (the bare capability name a Recipe binds through `spec.capability`, e.g. `helm`); both together disambiguate — `capability` names what to resolve and `uri` selects which publisher's plugin serves it, by that plugin's bare identity, in a federated catalog where more than one plugin serves the capability. `function` overrides the socket's default entry function (`mutate`, `validate`, `lint`, `import` per socket); when omitted, the socket's documented default applies. `role` names the governance attachment role and is read on a governance entry only. `with` carries optional attachment-time inputs the plugin reads.",
+      "description": "Reference to a Wasm plugin attached at a socket whose entry function the attachment may name — the `governance` and `linter` lists. The sockets whose entry point is fixed instead use `FixedEntryPluginRef`, which carries these same fields without `function`. `uri` and `capability` together select the plugin: `uri` only is a direct attach (the plugin at that identity is attached verbatim — the cross-cutting sockets' path, since their plugins declare no served capabilities); `capability` only resolves the plugin serving that capability (the bare capability name a Recipe binds through `spec.capability`, e.g. `helm`); both together disambiguate — `capability` names what to resolve and `uri` selects which publisher's plugin serves it, by that plugin's bare identity, in a federated catalog where more than one plugin serves the capability. `function` overrides the socket's default entry function (`mutate`, `validate`, `lint` per socket); when omitted, the socket's documented default applies. `role` names the governance attachment role and is read on a governance entry only. `with` carries optional attachment-time inputs the plugin reads.",
       "properties": {
         "uri": {
           "type": "string",
@@ -376,7 +376,31 @@
         },
         "function": {
           "type": "string",
-          "description": "Optional override for the socket's default entry function. When omitted, the socket's documented default applies (governance `annotation-transform` → `transform_annotations`, governance `label-transform` → `mutate`, governance verdict roles → `validate`, linter → `lint`, importer → `import`). The override may name any export the plugin declares, and the export it names must return the output shape that socket reads: the build halts when that output carries a top-level field the shape does not declare, naming the export called and the unexpected field. The check reads which top-level field names are present, not which are absent or what nests beneath them, so it is not a full validation of the output."
+          "description": "Optional override for the socket's default entry function. When omitted, the socket's documented default applies (governance `annotation-transform` → `transform_annotations`, governance `label-transform` → `mutate`, governance verdict roles → `validate`, linter → `lint`). The override may name any export the plugin declares, and the export it names must return the output shape that socket reads: the build halts when that output carries a top-level field the shape does not declare, naming the export called and the unexpected field. The check reads which top-level field names are present, not which are absent or what nests beneath them, so it is not a full validation of the output."
+        },
+        "with": {
+          "$ref": "#/$defs/PluginRefWith",
+          "description": "Optional attachment-time inputs the plugin reads. Both members are optional and socket-agnostic, so any socket may reuse this surface."
+        }
+      }
+    },
+    "FixedEntryPluginRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Reference to a Wasm plugin attached at a socket whose entry point is fixed rather than named by the attachment — the `importer` list and the `providers` bindings. It carries the same fields as `PluginRef` without `function`: the importer socket calls the one entry function its socket contract names, and a provider drives a fixed set of phase-keyed exports rather than one selectable entry, so on neither list is there an entry for `function` to name and the key is not accepted there. `uri` and `capability` together select the plugin: `uri` only is a direct attach (the plugin at that identity is attached verbatim — the importer socket's path, since its plugins declare no served capabilities); `capability` only resolves the plugin serving that capability (the bare capability name a Recipe binds through `spec.capability`, e.g. `helm`); both together disambiguate — `capability` names what to resolve and `uri` selects which publisher's plugin serves it, by that plugin's bare identity, in a federated catalog where more than one plugin serves the capability. `role` is accepted here but read on neither list this shape serves: the governance attachment role it names is read on a `governance` entry, which uses `PluginRef`, so a role set on one of these entries has no effect. `with` carries optional attachment-time inputs the plugin reads; a provider binding takes its render configuration from the Recipe instead, so `with:` on one is refused at load.",
+      "properties": {
+        "uri": {
+          "type": "string",
+          "description": "Plugin identifier: a Plugin entity's bare identity — the `<socket>/<name>` path, e.g. `governance/redact` or `provider/helm` — a local filesystem path, or a registry alias. Optional: an entry may instead select the plugin by `capability`. An optional trailing `:version` pins the version in the same three forms as any version pin (bare, exact `:1.0.0`, or major-compatible range `:^1.0.0`)."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["annotation-transform", "label-transform", "ir-verdict", "render-verdict"],
+          "description": "The governance attachment role. Neither list that uses this shape reads it — the role is read on a `governance` entry, and those entries use `PluginRef` — so a role set here is accepted and has no effect. The permitted values are the four governance roles, and what each one means is described on `PluginRef`."
+        },
+        "capability": {
+          "type": "string",
+          "description": "The provider capability this entry selects a plugin for — the bare capability name a Recipe binds through `spec.capability` (e.g. `helm`, `compose`). Optional: an entry may instead attach a plugin directly by `uri`. The provider bindings use this to select which publisher's plugin serves a capability in a federated catalog; the cross-cutting sockets leave it empty and attach by `uri`."
         },
         "with": {
           "$ref": "#/$defs/PluginRefWith",
