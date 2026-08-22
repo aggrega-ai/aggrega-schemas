@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/wasm-frp-step-v1alpha1.schema.json",
   "title": "Aggrega Wasm FeatureRecipe-Pipeline Step Socket",
-  "description": "The JSON wire shapes a feature-recipe-pipeline step plugin socket consumes (FRPStepInput) and emits (FRPStepOutput). An FRP step runs per inline pipeline entry declared in a Recipe or FeatureRecipe: the host hands the step the keyed document set whole, the step selects the documents it targets by content, and it returns key-addressed RFC 6902 patches plus side effects and diagnostics. This is a distinct guest contract from the mutator socket, which runs once over the whole topology graph and returns opaque label patches. The two wire shapes are co-canonical with the host's Go types for this socket; a field-coverage parity test catches drift.",
+  "description": "The wire shapes a feature-recipe-pipeline step plugin socket consumes (FRPStepInput) and emits (FRPStepOutput). An FRP step runs per inline pipeline entry declared in a Recipe or FeatureRecipe: the host hands the step the keyed document set whole, the step selects the documents it targets by content, and it returns key-addressed RFC 6902 patches plus side effects and diagnostics. This is a distinct guest contract from the mutator socket, which runs once over the whole topology graph and returns opaque label patches. The two wire shapes are co-canonical with the host's Go types for this socket; a field-coverage parity test catches drift.",
   "oneOf": [
     { "$ref": "#/$defs/FRPStepInput" },
     { "$ref": "#/$defs/FRPStepOutput" }

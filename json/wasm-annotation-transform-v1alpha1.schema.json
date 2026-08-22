@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/wasm-annotation-transform-v1alpha1.schema.json",
   "title": "Aggrega Wasm Annotation-Transform Socket",
-  "description": "The JSON wire shapes a governance plugin attached at the annotation-transform role consumes (AnnotationTransformInput) and emits (AnnotationTransformOutput). The role runs after resolve and before annotation expansion: the plugin reads the resolved injection targets and the Manifest's registered binding keys, and returns a list of annotation injections the host applies to those targets before expansion turns bound annotations into Feature attachments. The two wire shapes are co-canonical with the Go host types and with each per-language PDK's mirror; per-language round-trip tests catch drift.",
+  "description": "The wire shapes a governance plugin attached at the annotation-transform role consumes (AnnotationTransformInput) and emits (AnnotationTransformOutput). The role runs after resolve and before annotation expansion: the plugin reads the resolved injection targets and the Manifest's registered binding keys, and returns a list of annotation injections the host applies to those targets before expansion turns bound annotations into Feature attachments. The two wire shapes are co-canonical with the Go host types and with each per-language PDK's mirror; per-language round-trip tests catch drift.",
   "oneOf": [
     { "$ref": "#/$defs/AnnotationTransformInput" },
     { "$ref": "#/$defs/AnnotationTransformOutput" }
