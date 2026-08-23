@@ -267,7 +267,7 @@
         "content": {
           "type": "string",
           "x-aggrega-go-type": "[]byte",
-          "description": "The file's raw bytes exactly as the host read them from the local source (base64 on the JSON wire)."
+          "description": "The file's raw bytes exactly as the host read them from the local source. Each kit carries them in its own field type — raw where that type is a byte type, base64-encoded where it is a string the guest decodes to recover them — and the generated encoder converts between the field and the form the wire carries bytes in."
         }
       }
     },
@@ -400,7 +400,7 @@
         "content": {
           "type": "string",
           "x-aggrega-go-type": "[]byte",
-          "description": "The file's raw bytes on success; absent on failure (base64 on the JSON wire)."
+          "description": "The file's raw bytes on success; absent on failure. Each kit carries them in its own field type — raw where that type is a byte type, base64-encoded where it is a string the guest decodes to recover them — and the generated encoder converts between the field and the form the wire carries bytes in."
         },
         "error": {
           "type": "string",
