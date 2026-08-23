@@ -24,7 +24,7 @@
         "bytes": {
           "type": "string",
           "x-aggrega-go-type": "[]byte",
-          "description": "The source bytes to parse, base64-encoded on the wire. The parser decodes the base64 to recover the original bytes and reads them as the named format."
+          "description": "The source bytes to parse. Each kit carries them in its own field type — raw where that type is a byte type, base64-encoded where it is a string the parser decodes to recover them — and the generated encoder converts between the field and the form the wire carries bytes in. The parser reads the recovered bytes as the named format."
         },
         "options": {
           "x-aggrega-go-type": "json.RawMessage",
