@@ -573,7 +573,7 @@
     },
     "RenderedNode": {
       "type": "object",
-      "description": "One node's render output as it appears in an assemble_boundary input: the node id, its type, its merged annotations, its deployment wave, its rendered values, and the render output the render_node export produced for it.",
+      "description": "One node's render output as it appears in an assemble_boundary input: the node id, its type, its merged annotations, its deployment wave, the values the compiler resolved for it where those are the compiler's to supply, and the render output the render_node export produced for it.",
       "required": [
         "id",
         "type",
@@ -608,7 +608,7 @@
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[any]",
           "additionalProperties": true,
-          "description": "The node's rendered values dictionary, the same key set the render_node export received for this node, so a boundary assembler can place each contributor's inputs in the assembled artifact itself rather than beside that contributor's own files. Where the assembled artifact is the only position the target evaluates, that is the difference between an input the target reads and one it never reaches. Keys arrive in sorted order, not author order, and that sorting is what makes the payload byte-identical across runs of identical input; a guest needing any other ordering imposes it itself. An assembler whose output shape carries no per-contributor inputs ignores it."
+          "description": "The values the compiler resolved for this node, present only for a node rendered from a source \u2014 the render_node call that produced its files carried a source_listing. That is the one case where the files came from elsewhere and the values could not be written into them, so a position outside them has to supply them: a boundary assembler places a present dictionary as that contributor's inputs in the assembled artifact itself, rather than beside the contributor's own files, and where the assembled artifact is the only position the target evaluates, that is the difference between an input the target reads and one it never reaches. A node rendered from a workload_projection or an artifacts_projection resolved these values into the files it produced, so it carries none here and the field is absent: supplying them a second time would offer the assembled artifact inputs that node's own files never declare, which the target is free to reject. Keys arrive in sorted order, not author order, and that sorting is what makes the payload byte-identical across runs of identical input; a guest needing any other ordering imposes it itself. An assembler whose output shape carries no per-contributor inputs ignores the field."
         }
       }
     },
