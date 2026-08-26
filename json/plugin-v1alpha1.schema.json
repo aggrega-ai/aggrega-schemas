@@ -63,7 +63,7 @@
         },
         "license": {
           "type": "string",
-          "description": "Legal compliance license (e.g., Apache-2.0)."
+          "description": "SPDX identifier for the license of the software this entity describes, such as MIT or AGPL-3.0. It records the terms of that software, not the terms of this file."
         },
         "repository": {
           "type": "string",
