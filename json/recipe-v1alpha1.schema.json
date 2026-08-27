@@ -157,7 +157,13 @@
               "type": "object",
               "required": ["$import"],
               "properties": {
-                "$import": { "type": "string" }
+                "$import": {
+                  "type": "string",
+                  "not": {
+                    "pattern": "^oci://"
+                  },
+                  "description": "A local file path, or a bare-name MappingLibrary reference `<Library>#/mappings/<entry>`. A registry host (`oci://…`) is rejected: a library is addressed by identity, and the version is supplied by the per-Release lockfile."
+                }
               },
               "additionalProperties": false
             }
