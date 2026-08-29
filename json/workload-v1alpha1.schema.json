@@ -232,11 +232,35 @@
         },
         "ports": {
           "type": "object",
-          "description": "Named container ports. Port names are referenced by `services.*.ports` and by an http probe's port resolution. K8s: containerPort. Compose: a container port reaches the output only where a service spec publishes it; the container port itself has no separate compose field.",
+          "description": "Named container ports. A port is authored either as the bare port number (`web: 8080`) or as an object carrying the number together with the transport protocol the port carries (`dns: { port: 53, protocol: UDP }`); where no protocol is declared the two forms mean the same thing. The allowed protocol values are `TCP`, `UDP` and `SCTP`, and omitting the key leaves the target's own default in force. Port names are referenced by `services.*.ports` and by an http probe's port resolution, and a service port takes its transport from the container port its name resolves to, so the transport is declared once. K8s: containerPort, carrying protocol only where one is declared. Compose: a container port reaches the output only where a service spec publishes it; the container port itself has no separate compose field, and a published port carries a declared transport as the `/protocol` suffix on the published entry — a transport compose cannot spell halts the build rather than publishing a port that would carry a different one.",
           "additionalProperties": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 65535
+            "oneOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 65535,
+                "description": "The port number on its own, declaring no transport. A target applies its own default, which is TCP on every target that has one."
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["port"],
+                "description": "The port number together with the transport protocol carried over it. Author this form when the port carries anything other than the target's default transport — a datagram or message-oriented port opened as a stream port accepts no traffic from its clients.",
+                "properties": {
+                  "port": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65535,
+                    "description": "The port number."
+                  },
+                  "protocol": {
+                    "type": "string",
+                    "enum": ["TCP", "UDP", "SCTP"],
+                    "description": "The transport protocol this port carries. Omitting it leaves the target's own default in force; declaring TCP explicitly emits it explicitly. The value is piped through to the target verbatim — nothing reads a protocol out of the port's name, and nothing checks the value against what the process behind the port actually speaks. A target whose port syntax cannot express the declared transport halts rather than emitting a port that would carry a different one."
+                  }
+                }
+              }
+            ]
           }
         },
         "resources": {
@@ -479,7 +503,7 @@
             "minimum": 1,
             "maximum": 65535
           },
-          "description": "Map of service port name → container port number. Port names must match keys in containers.<any>.ports."
+          "description": "Map of service port name → container port number. Port names must match keys in containers.<any>.ports. A service port carries no transport protocol of its own: it takes the transport of the container port its name resolves to, so a port's transport is declared once, on the container port, and the service exposure cannot disagree with what the container opened."
         }
       }
     }
