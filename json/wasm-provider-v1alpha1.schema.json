@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/wasm-provider-v1alpha1.schema.json",
   "title": "Aggrega Wasm Provider Render Socket",
-  "description": "The wire shapes a Provider render plugin socket consumes and emits. A Provider guest renders one IR node into output files on its render_node export (RenderNodeInput to RenderNodeOutput), and optionally merges the per-node outputs at one boundary into a single assembled artifact on its assemble_boundary export (AssembleBoundaryInput to AssembleBoundaryOutput). AssembleBoundaryOutput carries the assembled files and diagnostics like RenderNodeOutput, plus a nest-per-node signal telling the orchestrator whether to nest each contributor's per-node files under a per-node sub-directory. A guest may also declare an optional validate_node_input export that structurally checks a node's resolved input before render dispatch: it consumes the same RenderNodeInput projection render_node receives and returns a ValidateNodeOutput carrying only diagnostics — a halt-severity diagnostic stops the build loudly, a warn-severity diagnostic surfaces to the build result. The guest returns each output file's serialized bytes; the host writes them verbatim and runs no serializer, so determinism is the guest's responsibility: identical input must produce identical bytes. The wire shapes are co-canonical with the host's Go render types and with each per-language plugin-development-kit mirror; cross-language round-trip tests catch drift.",
+  "description": "The wire shapes a Provider render plugin socket consumes and emits. A Provider guest renders one IR node into output files on its render_node export (RenderNodeInput to RenderNodeOutput), and optionally merges the per-node outputs at one boundary into a single assembled artifact on its assemble_boundary export (AssembleBoundaryInput to AssembleBoundaryOutput). AssembleBoundaryOutput carries the assembled files and diagnostics like RenderNodeOutput, plus a nest-per-node signal telling the orchestrator whether to nest each contributor's per-node files under a per-node sub-directory. A guest may also declare an optional validate_node_input export that structurally checks a node's resolved input before render dispatch: it consumes the same RenderNodeInput projection render_node receives and returns a ValidateNodeOutput carrying only diagnostics — a halt-severity diagnostic stops the build loudly, a warn-severity diagnostic surfaces to the build result. A guest whose target bounds or restricts the names it accepts may also declare an optional name_bound export, which the host asks before it settles a node's component identity: it consumes a NameBoundInput carrying one proposed name and returns a NameBoundOutput carrying one verdict per kind of name the guest would derive from it. A verdict carries a constraint — usable, or bounded to a shorter length — and never a name the guest built, so the knowledge of what the target accepts stays in the guest. The guest returns each output file's serialized bytes; the host writes them verbatim and runs no serializer, so determinism is the guest's responsibility: identical input must produce identical bytes. The wire shapes are co-canonical with the host's Go render types and with each per-language plugin-development-kit mirror; cross-language round-trip tests catch drift.",
   "oneOf": [
     { "$ref": "#/$defs/RenderNodeInput" },
     { "$ref": "#/$defs/RenderNodeOutput" },
@@ -11,6 +11,8 @@
     { "$ref": "#/$defs/AssembleBoundaryOutput" },
     { "$ref": "#/$defs/BoundaryEnvOverridesInput" },
     { "$ref": "#/$defs/BoundaryEnvOverridesOutput" },
+    { "$ref": "#/$defs/NameBoundInput" },
+    { "$ref": "#/$defs/NameBoundOutput" },
     { "$ref": "#/$defs/LinkPublishInput" },
     { "$ref": "#/$defs/LinkPublishOutput" },
     { "$ref": "#/$defs/LinkResolveInput" },
@@ -828,6 +830,70 @@
           "x-aggrega-go-type": "map[string]map[string]string",
           "additionalProperties": true,
           "description": "The per-consumer environment overrides, keyed by consumer node id to a map of environment-variable name to override value. An empty or absent map means the guest computed no overrides."
+        }
+      }
+    },
+    "NameBoundInput": {
+      "type": "object",
+      "description": "The payload a Provider guest receives on its optional name_bound export: one name the host proposes to use as a node's component identity, for the guest to judge against every name it would derive from that identity for its target. The guest answers with a constraint rather than with a name of its own — a derived name travelling back would put the host in the business of composing names for a target it knows nothing about, which is exactly what asking the question removes. A provider whose target bounds or restricts the names it accepts advertises the export; a provider whose target accepts any name omits it and is never asked, and its rendering is unchanged.",
+      "required": [
+        "proposed"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "proposed": {
+          "type": "string",
+          "description": "The name the host proposes as the node's component identity. The guest derives from it, in memory, each name it would emit for its target and reports whether every one of them is a name that target accepts."
+        },
+        "authored": {
+          "type": "boolean",
+          "description": "Whether the proposed name is one a person wrote rather than one the compiler composed from authored parts. It is carried so a guest can phrase its reason for the reader who is able to act on it. It does not decide what a refusal does: an authored name is refused and a composed one is shortened, and that decision is the host's."
+        }
+      }
+    },
+    "DerivedNameVerdict": {
+      "type": "object",
+      "description": "One name kind's verdict on a proposed identity: whether the name the guest would derive for that kind is one its target accepts, and — where a shorter identity would be accepted — the greatest length that would be. It carries a constraint and a reason, never a name the guest built.",
+      "required": [
+        "kind",
+        "usable"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "description": "The guest's own name for the kind of name this verdict covers, written in the target's vocabulary rather than the compiler's — a chart installer's release name, a container orchestrator's service name. It reaches a reader verbatim in a refusal, so it is written for somebody who knows the target."
+        },
+        "usable": {
+          "type": "boolean",
+          "description": "Whether the name the guest would derive for this kind from the proposed identity is one the target accepts."
+        },
+        "bound": {
+          "type": "integer",
+          "x-aggrega-go-type": "*int",
+          "description": "The greatest number of characters a proposed identity may carry for this kind's derived name to be one the target accepts. Present only on a refusal that a shorter identity would satisfy. ABSENT means length is not what the target objected to — either there is no length limit at all, or the objection is one no shortening repairs, such as a character the target's grammar refuses in the position it landed in. Absent is therefore distinct from a bound of zero, which does state a length: that no identity of any length yields an acceptable name of this kind. The host shortens to a present bound and asks again; on an absent bound it stops, because there is nothing left to try."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Why the target does not accept the derived name, in the target's own terms, for a reader deciding what to write instead. Empty when the verdict is usable."
+        }
+      }
+    },
+    "NameBoundOutput": {
+      "type": "object",
+      "description": "The payload a Provider guest returns from its name_bound export: one verdict per kind of name it would derive from the proposed identity. A proposal is usable when every verdict is; where one is not, the host shortens the proposal to the smallest bound the refusing verdicts carry and asks again, and it stops when a refusing verdict carries no bound. An empty list of verdicts means the guest derives no name from a component identity, which is the same answer as accepting the proposal.",
+      "additionalProperties": false,
+      "properties": {
+        "names": {
+          "type": "array",
+          "description": "One entry per kind of name the guest derives from a component identity, in the guest's own order. A guest reports every kind it would derive rather than only the kinds that refused, so a reader sees which names were judged and a host reading the entries needs no second call to learn the rest.",
+          "items": {
+            "$ref": "#/$defs/DerivedNameVerdict"
+          }
+        },
+        "error": {
+          "type": "string",
+          "description": "A failure message set when the guest ran but could not complete the operation; absent on success. It is distinct from a refusing verdict: a verdict reports a name the target will not accept, while error reports that the question itself could not be answered. The host surfaces a present error as a failed plugin invocation."
         }
       }
     },
