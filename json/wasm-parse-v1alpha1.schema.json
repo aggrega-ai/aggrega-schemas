@@ -136,10 +136,10 @@
           "type": "string",
           "description": "The failure message on failure, naming the format and the reason; absent on success."
         },
-        "error_code": {
+        "hostfunc_error_code": {
           "$ref": "wasm-hostfunc-error-v1alpha1.schema.json#/properties/code",
           "x-aggrega-go-type": "string",
-          "description": "The machine-matchable failure identity on failure, from the closed host-function error-code catalog, set beside the human error message; absent on success. A guest branches on this code without parsing the message, tolerating an absent code (older host) or an unrecognized one (newer host) by falling back to the message."
+          "description": "The machine-matchable failure identity on failure, drawn from the closed host-function error-code catalog, set beside the human error message; absent on success. That catalog is a fixed vocabulary naming the ways a host function can fail, and it is a different vocabulary from the halting conditions the compiler registers, whose identifiers a guest reports on a socket output as condition_code and condition_short_code — the key name says which of the two a value belongs to, so the two are never read as one set. A guest branches on this code without parsing the message, tolerating an absent code (older host) or an unrecognized one (newer host) by falling back to the message."
         }
       }
     }

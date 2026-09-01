@@ -266,6 +266,19 @@ var ruledBenign = map[string]string{
 	// written twice: `$dynamicRef` is the JSON Schema keyword, dynamic_refs is
 	// the lint rule this key suppresses.
 	"WasmLinterV1alpha1|/$defs/Policies/properties/allow_dynamic_refs/description|dynamicRef": "schema keyword beside the lint rule name that governs it",
+
+	// The contrast IS the sentence. Each of these descriptions teaches that
+	// segment-wise matching over a dotted path covers `db.password` and does not
+	// reach a sibling leaf named `dbPassword` — so the two spellings name two
+	// different leaves, and the whole point is that they are not the same one.
+	// Rewriting either to match the other destroys the example: the sentence would
+	// then say a declaration at `db` does not reach `db.password`, which is the
+	// opposite of the rule. The detector reads the dotted path as the spaced
+	// spelling of the fused one, which is correct in general and is exactly why
+	// this deliberate near-miss needs a ruling rather than a rewrite.
+	"IRSchemaV1alpha1|/$defs/IRNode/properties/sensitive_authored_leaves/description|dbPassword":            "a dotted path contrasted with a differently-named sibling leaf",
+	"IRSchemaV1alpha1|/$defs/IRFeatureEntry/properties/sensitive_authored_leaves/description|dbPassword":    "a dotted path contrasted with a differently-named sibling leaf",
+	"IRSchemaV1alpha1|/$defs/IRBoundaryFeature/properties/sensitive_authored_leaves/description|dbPassword": "a dotted path contrasted with a differently-named sibling leaf",
 }
 
 // TestNoIdentifierSpelledTwoWaysInOneDescription fails when a schema
