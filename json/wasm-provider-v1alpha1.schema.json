@@ -210,6 +210,14 @@
         "error": {
           "type": "string",
           "description": "A failure message set when the guest ran but could not complete the operation; absent on success. It is distinct from any diagnostics the output carries: diagnostics report issues found during a run that still produced a result, while error reports that the operation itself did not complete. The host surfaces a present error as a failed plugin invocation."
+        },
+        "error_code": {
+          "type": "string",
+          "description": "The descriptive, machine-matchable identity of the condition the failure names, set beside the human error message; absent on success, and absent when the guest names no such condition. A guest that halts on a condition it publishes reports that condition's own identifier here, so a consumer branches on it instead of recovering an identity by reading the message. The host carries the value verbatim onto the structured diagnostic it publishes and derives nothing from it. This identifier and error_short_code are reported together, because they name one condition in two forms: a guest that sets one and not the other has named a condition the host cannot resolve, and the host then reports its own generic plugin-failure condition instead while the message still carries the whole failure."
+        },
+        "error_short_code": {
+          "type": "string",
+          "description": "The compact identifier of the same condition — the letter E and four digits, the form a reader quotes, searches for and pastes into a report — set beside the human error message; absent on success, and absent when the guest names no such condition. The host prints it in the bracketed head of the diagnostic it renders for this failure, so a condition a guest raises is quotable exactly as one the compiler raises is. The host carries the value verbatim and never derives one, so a value of another shape reaches the reader as the guest wrote it. It is reported together with error_code, for the reason stated there."
         }
       }
     },
@@ -230,6 +238,14 @@
         "error": {
           "type": "string",
           "description": "A failure message set when the guest ran but could not complete the operation; absent on success. It is distinct from any diagnostics the output carries: diagnostics report issues found during a run that still produced a result, while error reports that the operation itself did not complete. The host surfaces a present error as a failed plugin invocation."
+        },
+        "error_code": {
+          "type": "string",
+          "description": "The descriptive, machine-matchable identity of the condition the failure names, set beside the human error message; absent on success, and absent when the guest names no such condition. A guest that halts on a condition it publishes reports that condition's own identifier here, so a consumer branches on it instead of recovering an identity by reading the message. The host carries the value verbatim onto the structured diagnostic it publishes and derives nothing from it. This identifier and error_short_code are reported together, because they name one condition in two forms: a guest that sets one and not the other has named a condition the host cannot resolve, and the host then reports its own generic plugin-failure condition instead while the message still carries the whole failure."
+        },
+        "error_short_code": {
+          "type": "string",
+          "description": "The compact identifier of the same condition — the letter E and four digits, the form a reader quotes, searches for and pastes into a report — set beside the human error message; absent on success, and absent when the guest names no such condition. The host prints it in the bracketed head of the diagnostic it renders for this failure, so a condition a guest raises is quotable exactly as one the compiler raises is. The host carries the value verbatim and never derives one, so a value of another shape reaches the reader as the guest wrote it. It is reported together with error_code, for the reason stated there."
         }
       }
     },
@@ -699,6 +715,14 @@
         "error": {
           "type": "string",
           "description": "A failure message set when the guest ran but could not complete the operation; absent on success. It is distinct from any diagnostics the output carries: diagnostics report issues found during a run that still produced a result, while error reports that the operation itself did not complete. The host surfaces a present error as a failed plugin invocation."
+        },
+        "error_code": {
+          "type": "string",
+          "description": "The descriptive, machine-matchable identity of the condition the failure names, set beside the human error message; absent on success, and absent when the guest names no such condition. A guest that halts on a condition it publishes reports that condition's own identifier here, so a consumer branches on it instead of recovering an identity by reading the message. The host carries the value verbatim onto the structured diagnostic it publishes and derives nothing from it. This identifier and error_short_code are reported together, because they name one condition in two forms: a guest that sets one and not the other has named a condition the host cannot resolve, and the host then reports its own generic plugin-failure condition instead while the message still carries the whole failure."
+        },
+        "error_short_code": {
+          "type": "string",
+          "description": "The compact identifier of the same condition — the letter E and four digits, the form a reader quotes, searches for and pastes into a report — set beside the human error message; absent on success, and absent when the guest names no such condition. The host prints it in the bracketed head of the diagnostic it renders for this failure, so a condition a guest raises is quotable exactly as one the compiler raises is. The host carries the value verbatim and never derives one, so a value of another shape reaches the reader as the guest wrote it. It is reported together with error_code, for the reason stated there."
         }
       }
     },
@@ -898,6 +922,14 @@
         "error": {
           "type": "string",
           "description": "A failure message set when the guest ran but could not complete the operation; absent on success. It is distinct from a refusing verdict: a verdict reports a name the target will not accept, while error reports that the question itself could not be answered. The host surfaces a present error as a failed plugin invocation."
+        },
+        "error_code": {
+          "type": "string",
+          "description": "The descriptive, machine-matchable identity of the condition the failure names, set beside the human error message; absent on success, and absent when the guest names no such condition. A guest that halts on a condition it publishes reports that condition's own identifier here, so a consumer branches on it instead of recovering an identity by reading the message. The host carries the value verbatim onto the structured diagnostic it publishes and derives nothing from it. This identifier and error_short_code are reported together, because they name one condition in two forms: a guest that sets one and not the other has named a condition the host cannot resolve, and the host then reports its own generic plugin-failure condition instead while the message still carries the whole failure."
+        },
+        "error_short_code": {
+          "type": "string",
+          "description": "The compact identifier of the same condition — the letter E and four digits, the form a reader quotes, searches for and pastes into a report — set beside the human error message; absent on success, and absent when the guest names no such condition. The host prints it in the bracketed head of the diagnostic it renders for this failure, so a condition a guest raises is quotable exactly as one the compiler raises is. The host carries the value verbatim and never derives one, so a value of another shape reaches the reader as the guest wrote it. It is reported together with error_code, for the reason stated there."
         }
       }
     },
@@ -1051,6 +1083,18 @@
           "items": {
             "$ref": "#/$defs/LinkPatch"
           }
+        },
+        "error": {
+          "type": "string",
+          "description": "A failure message set when the guest ran but could not publish the link; absent on success. The host surfaces a present error as a failed plugin invocation. A publish that cannot proceed — an export name the stack already declares under another entry, say — is reported here rather than only as a crash, so the condition behind it can be named."
+        },
+        "error_code": {
+          "type": "string",
+          "description": "The descriptive, machine-matchable identity of the condition the failure names, set beside the human error message; absent on success, and absent when the guest names no such condition. A guest that halts on a condition it publishes reports that condition's own identifier here, so a consumer branches on it instead of recovering an identity by reading the message. The host carries the value verbatim onto the structured diagnostic it publishes and derives nothing from it. This identifier and error_short_code are reported together, because they name one condition in two forms: a guest that sets one and not the other has named a condition the host cannot resolve, and the host then reports its own generic plugin-failure condition instead while the message still carries the whole failure."
+        },
+        "error_short_code": {
+          "type": "string",
+          "description": "The compact identifier of the same condition — the letter E and four digits, the form a reader quotes, searches for and pastes into a report — set beside the human error message; absent on success, and absent when the guest names no such condition. The host prints it in the bracketed head of the diagnostic it renders for this failure, so a condition a guest raises is quotable exactly as one the compiler raises is. The host carries the value verbatim and never derives one, so a value of another shape reaches the reader as the guest wrote it. It is reported together with error_code, for the reason stated there."
         }
       }
     },
@@ -1098,6 +1142,18 @@
           "items": {
             "$ref": "#/$defs/LinkPatch"
           }
+        },
+        "error": {
+          "type": "string",
+          "description": "A failure message set when the guest ran but could not resolve the link; absent on success. The host surfaces a present error as a failed plugin invocation. A resolve that cannot proceed — a reference the target can only carry as a whole scalar, met inside a larger string — is reported here rather than only as a crash, so the condition behind it can be named."
+        },
+        "error_code": {
+          "type": "string",
+          "description": "The descriptive, machine-matchable identity of the condition the failure names, set beside the human error message; absent on success, and absent when the guest names no such condition. A guest that halts on a condition it publishes reports that condition's own identifier here, so a consumer branches on it instead of recovering an identity by reading the message. The host carries the value verbatim onto the structured diagnostic it publishes and derives nothing from it. This identifier and error_short_code are reported together, because they name one condition in two forms: a guest that sets one and not the other has named a condition the host cannot resolve, and the host then reports its own generic plugin-failure condition instead while the message still carries the whole failure."
+        },
+        "error_short_code": {
+          "type": "string",
+          "description": "The compact identifier of the same condition — the letter E and four digits, the form a reader quotes, searches for and pastes into a report — set beside the human error message; absent on success, and absent when the guest names no such condition. The host prints it in the bracketed head of the diagnostic it renders for this failure, so a condition a guest raises is quotable exactly as one the compiler raises is. The host carries the value verbatim and never derives one, so a value of another shape reaches the reader as the guest wrote it. It is reported together with error_code, for the reason stated there."
         }
       }
     }
