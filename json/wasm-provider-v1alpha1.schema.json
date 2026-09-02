@@ -71,11 +71,11 @@
         },
         "type": {
           "type": "string",
-          "description": "The node's component-type label — opaque metadata for the guest, not a behavior switch."
+          "description": "Declared and deliberately withheld: the host always emits this as the empty string. The node's component-type label is opaque metadata rather than a behavior switch, so carrying it here would only invite a guest to branch on it. A guest reads an empty string and must not read that as a node whose component type is unset. (The boundary-assembly node shape carries a type of its own, for a different purpose.)"
         },
         "resolved_recipe": {
           "type": "string",
-          "description": "The Universal URI of the Recipe the resolver pinned for this node."
+          "description": "Declared and deliberately withheld: the host always emits this as the empty string. The bound Recipe's identity already reaches the guest as the recipe name and version it stamps into provenance, so the resolved URI adds nothing a guest renders from. A guest that needs to attribute output to a Recipe reads those provenance fields instead."
         },
         "values": {
           "type": "object",
@@ -100,7 +100,7 @@
         "uses": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[[]string]",
-          "description": "The node's outbound uses edges keyed by socket alias, each carrying the ordered target node ids bound to that socket. Preserves author order so the payload is byte-identical across runs of identical input.",
+          "description": "Declared and deliberately withheld: the host never populates this, so the map is absent from every render payload. An outbound edge is consumed before dispatch — the edge's published values are rehydrated into the node's own inject pipe, which the Recipe has already evaluated into the values and workload the guest receives — and a guest assembling a boundary receives the edge list on its own input instead. Were it populated it would key the node's outbound uses edges by socket alias, each carrying that socket's ordered target node ids in author order.",
           "additionalProperties": {
             "type": "array",
             "items": {
@@ -138,7 +138,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "The recipe-author-declared output labels (recipe.spec.outputLabels) the guest stamps onto every emitted manifest alongside the build-identity provenance, keyed by label name. Disjoint from the provenance keyspace by load-time validation (no aggrega.ai/ or app.kubernetes.io/ key), so stamping never collides with a provenance label. A guest whose output is not Kubernetes YAML translates them onto its own label surface (Compose service labels) or ignores them."
+          "description": "The recipe-author-declared output labels the guest stamps onto every emitted manifest alongside the build-identity provenance, keyed by label name. Two authored blocks merge into this one map: the literal key-value pairs a recipe writes in `outputLabels`, and one entry for each key a recipe names in `outputComponentLabels`, whose value is read from that key on the rendered component's own labels — so a promoted value follows the component it came from rather than being repeated in the recipe. Both blocks are disjoint from the provenance keyspace by load-time validation (no aggrega.ai/ or app.kubernetes.io/ key), so stamping never collides with a provenance label. A promoted key the component does not declare stamps nothing and raises an advisory rather than an empty label. A guest whose output is not Kubernetes YAML translates them onto its own label surface (Compose service labels) or ignores them."
         },
         "provenance": {
           "$ref": "#/$defs/NodeProvenance",
@@ -265,7 +265,7 @@
         "content": {
           "type": "string",
           "x-aggrega-go-type": "[]byte",
-          "description": "The file's serialized bytes exactly as the guest produced them; the host writes these bytes verbatim and runs no serializer, so output is byte-identical to what the guest emitted (base64 on the JSON wire)."
+          "description": "The file's serialized bytes exactly as the guest produced them; the host writes these bytes verbatim and runs no serializer, so output is byte-identical to what the guest emitted. Each kit carries them in its own field type — raw where that type is a byte type, base64-encoded where it is a string the guest decodes to recover them — and the generated encoder converts between the field and the form the wire carries bytes in."
         },
         "format": {
           "type": "string",
@@ -437,13 +437,13 @@
     },
     "FetchExternalInputResponse": {
       "type": "object",
-      "description": "The fetch-external-input host function's reply: on success the fetched content, on failure an error message. Exactly one of content or error is populated. Failure is delivered in-band rather than by trapping, so a guest carries an unresolvable URL or a fetch failure into its own diagnostics as a deterministic render failure. The request is a bare URL string rather than a JSON payload, so only the reply has a wire shape.",
+      "description": "The fetch-external-input host function's reply: on success the fetched content, on failure an error message. Exactly one of content or error is populated. Failure is delivered in-band rather than by trapping, so a guest carries an unresolvable URL or a fetch failure into its own diagnostics as a deterministic render failure. The request is a bare URL string rather than a structured payload, so only the reply has a declared shape.",
       "additionalProperties": false,
       "properties": {
         "content": {
           "type": "string",
           "x-aggrega-go-type": "*string",
-          "description": "The fetched content on success (base64 on the JSON wire); absent on failure. A pointer so a zero-length payload still emits the content key and stays distinguishable from a failure."
+          "description": "The fetched content on success; absent on failure. Unlike the byte-carrying fields elsewhere in this socket, every kit holds this one as a string and the guest decodes it to recover the bytes. Held by reference so a zero-length payload still emits the content key and stays distinguishable from a failure."
         },
         "error": {
           "type": "string",
@@ -520,7 +520,7 @@
         "content": {
           "type": "string",
           "x-aggrega-go-type": "[]byte",
-          "description": "The already-template-evaluated content bytes the host produced from the entry's inline content or imported file, evaluated against the render context using the guest's declared artifact-template delimiter pair (base64 on the JSON wire)."
+          "description": "The already-template-evaluated content bytes the host produced from the entry's inline content or imported file, evaluated against the render context using the guest's declared artifact-template delimiter pair. Each kit carries them in its own field type — raw where that type is a byte type, base64-encoded where it is a string the guest decodes to recover them — and the generated encoder converts between the field and the form the wire carries bytes in."
         },
         "labels": {
           "type": "object",
@@ -609,7 +609,7 @@
         },
         "type": {
           "type": "string",
-          "description": "The node's component-type label."
+          "description": "The node's component-type label, carried on this shape — unlike the per-node render projection, which withholds it. Opaque metadata rather than a behavior switch: it is here so an assembler can group and label the nodes it merges, not so a guest can branch on it."
         },
         "rendered": {
           "$ref": "#/$defs/RenderNodeOutput"
@@ -630,7 +630,7 @@
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[any]",
           "additionalProperties": true,
-          "description": "The values the compiler resolved for this node, present only for a node rendered from a source \u2014 the render_node call that produced its files carried a source_listing. That is the one case where the files came from elsewhere and the values could not be written into them, so a position outside them has to supply them: a boundary assembler places a present dictionary as that contributor's inputs in the assembled artifact itself, rather than beside the contributor's own files, and where the assembled artifact is the only position the target evaluates, that is the difference between an input the target reads and one it never reaches. A node rendered from a workload_projection or an artifacts_projection resolved these values into the files it produced, so it carries none here and the field is absent: supplying them a second time would offer the assembled artifact inputs that node's own files never declare, which the target is free to reject. Keys arrive in sorted order, not author order, and that sorting is what makes the payload byte-identical across runs of identical input; a guest needing any other ordering imposes it itself. An assembler whose output shape carries no per-contributor inputs ignores the field."
+          "description": "The values the compiler resolved for this node, present only for a node rendered from a source — the render_node call that produced its files carried a source_listing. That is the one case where the files came from elsewhere and the values could not be written into them, so a position outside them has to supply them: a boundary assembler places a present dictionary as that contributor's inputs in the assembled artifact itself, rather than beside the contributor's own files, and where the assembled artifact is the only position the target evaluates, that is the difference between an input the target reads and one it never reaches. A node rendered from a workload_projection or an artifacts_projection resolved these values into the files it produced, so it carries none here and the field is absent: supplying them a second time would offer the assembled artifact inputs that node's own files never declare, which the target is free to reject. Keys arrive in sorted order, not author order, and that sorting is what makes the payload byte-identical across runs of identical input; a guest needing any other ordering imposes it itself. An assembler whose output shape carries no per-contributor inputs ignores the field."
         }
       }
     },
@@ -677,7 +677,7 @@
         "chart_yaml": {
           "type": "string",
           "x-aggrega-go-type": "[]byte",
-          "description": "The pristine bytes of the vendored chart's Chart.yaml, read from the local source at compile time, from which the umbrella draws the sub-chart dependency's name and version. Empty for a generative sub-chart that carries no vendored chart (base64 on the JSON wire)."
+          "description": "The pristine bytes of the vendored chart's Chart.yaml, read from the local source at compile time, from which the umbrella draws the sub-chart dependency's name and version. Empty for a generative sub-chart that carries no vendored chart. Each kit carries them in its own field type — raw where that type is a byte type, base64-encoded where it is a string the guest decodes to recover them — and the generated encoder converts between the field and the form the wire carries bytes in."
         }
       }
     },
@@ -742,7 +742,7 @@
         "body": {
           "type": "string",
           "x-aggrega-go-type": "[]byte",
-          "description": "The output file's bytes to carve into addressable units (base64 on the JSON wire)."
+          "description": "The output file's bytes to carve into addressable units. Each kit carries them in its own field type — raw where that type is a byte type, base64-encoded where it is a string the guest decodes to recover them — and the generated encoder converts between the field and the form the wire carries bytes in."
         },
         "yaml_indent": {
           "type": "integer",
@@ -785,7 +785,7 @@
         "body": {
           "type": "string",
           "x-aggrega-go-type": "[]byte",
-          "description": "The original file bytes the reassembly splices the patched units back into (base64 on the JSON wire)."
+          "description": "The original file bytes the reassembly splices the patched units back into. Each kit carries them in its own field type — raw where that type is a byte type, base64-encoded where it is a string the guest decodes to recover them — and the generated encoder converts between the field and the form the wire carries bytes in."
         },
         "segs": {
           "type": "array",
@@ -822,7 +822,7 @@
         "body": {
           "type": "string",
           "x-aggrega-go-type": "[]byte",
-          "description": "The reassembled file bytes the host writes verbatim (base64 on the JSON wire)."
+          "description": "The reassembled file bytes the host writes verbatim. Each kit carries them in its own field type — raw where that type is a byte type, base64-encoded where it is a string the guest decodes to recover them — and the generated encoder converts between the field and the form the wire carries bytes in."
         }
       }
     },

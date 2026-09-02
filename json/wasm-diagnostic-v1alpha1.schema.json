@@ -7,7 +7,7 @@
   "$defs": {
     "Diagnostic": {
       "type": "object",
-      "description": "One issue a Wasm plugin raised: a severity, a human-readable message, an optional location, and optional socket-specific fields. Every socket that emits diagnostics emits this shape; each populates the subset it uses (a parser sets a location span, an import sets code and source_ref, a publishing linter sets rule_id and classification, a policy sets only severity and message, a renderer sets a structured location and suggest) and omits the rest.",
+      "description": "One issue a diagnostic emitter raised: a severity, a human-readable message, an optional location, and optional emitter-specific fields. An emitter is a Wasm plugin socket or the compiler itself — both report on this one shape, so a reader interprets an entry the same way whichever raised it. Each populates the subset it uses and omits the rest: a parser sets a location span, an import sets code and source_ref, a publishing linter sets rule_id and classification, a governance verdict sets the build-outcome severity and message and may add any of code, rule_id, classification, source_ref, location and suggest, and a render advisory sets code, source_ref and a structured location.",
       "required": [
         "severity",
         "message"
@@ -21,7 +21,7 @@
             "warn",
             "info"
           ],
-          "description": "The diagnostic's severity, drawn from one closed set every socket shares. halt stops the build and names what to fix. warn surfaces alongside a build that still completes. info records the observation and leaves the build outcome unchanged. A parser, an import, a publishing linter and a governance verdict all report from this one set, so a reader interprets a severity the same way whichever socket raised it."
+          "description": "The diagnostic's severity, drawn from one closed set every socket shares. halt stops the build and names what to fix. warn surfaces alongside a build that still completes. info records the observation and leaves the build outcome unchanged. Every emitter reports from this one set, so a reader interprets a severity the same way whichever raised it."
         },
         "message": {
           "type": "string",
@@ -29,11 +29,11 @@
         },
         "code": {
           "type": "string",
-          "description": "An optional stable, machine-matchable code for the diagnostic, independent of the human-readable message. Absent when the emitting socket assigns no code."
+          "description": "An optional stable, machine-matchable code for the diagnostic, independent of the human-readable message. Absent when the emitter assigns no code. A code may come from a plugin socket or from the compiler's own advisories, which set one on every entry they raise."
         },
         "rule_id": {
           "type": "string",
-          "description": "The identifier of the rule that produced the diagnostic, when the emitting socket is rule-based (a publishing linter). Absent otherwise."
+          "description": "The identifier of the rule that produced the diagnostic, when the emitter is rule-based (a publishing linter). Absent otherwise."
         },
         "classification": {
           "type": "string",
@@ -51,11 +51,11 @@
         "location": {
           "$ref": "#/$defs/Location",
           "x-aggrega-go-type": "*Location",
-          "description": "Where the diagnostic points, when the emitting socket can locate the issue. A parser fills the byte span; a renderer fills the structured position within a source document. Absent when the diagnostic has no location."
+          "description": "Where the diagnostic points, when the emitter can locate the issue. A parser fills the byte span; a renderer fills the structured position within a source document. Absent when the diagnostic has no location."
         },
         "suggest": {
           "type": "string",
-          "description": "An optional remediation hint the emitting socket offers alongside the diagnostic. Absent when no hint is offered."
+          "description": "An optional remediation hint the emitter offers alongside the diagnostic. Absent when no hint is offered."
         }
       }
     },
@@ -67,23 +67,23 @@
         "span": {
           "$ref": "#/$defs/Span",
           "x-aggrega-go-type": "*Span",
-          "description": "The span of raw source bytes the diagnostic locates, when the emitting socket parses source and can pin the issue to a byte range (a parser). Absent otherwise."
+          "description": "The span of raw source bytes the diagnostic locates, when the emitter parses source and can pin the issue to a byte range (a parser). Absent otherwise."
         },
         "key_path": {
           "type": "string",
-          "description": "A dotted path to the offending element within a structured source document, when the emitting socket locates the issue structurally (a renderer). Absent otherwise."
+          "description": "A dotted path to the offending element within a structured source document, when the emitter locates the issue structurally (a renderer). Absent otherwise."
         },
         "uri": {
           "type": "string",
-          "description": "An identifier for the source artifact the diagnostic concerns, when the emitting socket knows it (a renderer). Absent otherwise."
+          "description": "An identifier for the source artifact the diagnostic concerns, when the emitter knows it (a renderer). Absent otherwise."
         },
         "line": {
           "type": "integer",
-          "description": "A line number within the structured source document, distinct from the raw-byte line and column carried by span. Present when the emitting socket knows a document line (a renderer). Absent otherwise."
+          "description": "A line number within the structured source document, distinct from the raw-byte line and column carried by span. Present when the emitter knows a document line (a renderer). Absent otherwise."
         },
         "kind": {
           "type": "string",
-          "description": "An open string naming the source surface the location refers to, when the emitting socket distinguishes surfaces (a renderer). Absent otherwise."
+          "description": "An open string naming the source surface the location refers to, when the emitter distinguishes surfaces (a renderer). Absent otherwise."
         }
       }
     },

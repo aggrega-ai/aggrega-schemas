@@ -42,7 +42,7 @@
       "properties": {
         "tree": {
           "x-aggrega-go-type": "json.RawMessage",
-          "description": "The canonical structured view of the parsed source, as a JSON document. The top level may be an object, an array, or a scalar, matching the parsed document's own shape (a JSON file, for example, may parse to any of these). The host pipes the tree through opaquely, carrying it verbatim without interpreting its content."
+          "description": "The canonical structured view of the parsed source, as a JSON document. Here \"JSON document\" names the form of the value a parser produces — which is the substance of what parsing is for — and not the encoding the value travels in: the tree is a JSON document whatever wire this socket carries it on. The top level may be an object, an array, or a scalar, matching the parsed document's own shape (a JSON file, for example, may parse to any of these). The host pipes the tree through opaquely, carrying it verbatim without interpreting its content."
         },
         "diagnostics": {
           "type": "array",
@@ -130,7 +130,7 @@
       "properties": {
         "tree": {
           "x-aggrega-go-type": "json.RawMessage",
-          "description": "The canonical structured tree the resolved parser produced on success, as a JSON document carried verbatim; absent on failure."
+          "description": "The canonical structured tree the resolved parser produced on success, as a JSON document carried verbatim; absent on failure. As on the parse output's own tree, \"JSON document\" names the form of the value rather than the encoding it travels in."
         },
         "error": {
           "type": "string",

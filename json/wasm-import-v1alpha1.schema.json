@@ -24,7 +24,7 @@
         "bytes": {
           "type": "string",
           "x-aggrega-go-type": "[]byte",
-          "description": "The primary source bytes to import, base64-encoded on the wire. The importer decodes the base64 to recover the original bytes and reads them as the named format."
+          "description": "The primary source bytes to import, which the importer reads as the named format. Each kit carries them in its own field type — raw where that type is a byte type, base64-encoded where it is a string the importer decodes to recover them — and the generated encoder converts between the field and the form the wire carries bytes in."
         },
         "sources": {
           "type": "array",
@@ -55,7 +55,7 @@
         "bytes": {
           "type": "string",
           "x-aggrega-go-type": "[]byte",
-          "description": "This source's bytes, base64-encoded on the wire. The importer decodes the base64 to recover the original bytes."
+          "description": "This source's bytes. Each kit carries them in its own field type — raw where that type is a byte type, base64-encoded where it is a string the importer decodes to recover them — and the generated encoder converts between the field and the form the wire carries bytes in."
         }
       }
     },

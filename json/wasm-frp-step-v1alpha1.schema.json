@@ -127,7 +127,7 @@
         "bytes": {
           "type": "string",
           "x-aggrega-go-type": "[]byte",
-          "description": "The unit's original bytes, the reassembly source, base64-encoded on the wire. Reassembly is byte-faithful by construction: untouched bytes are re-joined from this verbatim."
+          "description": "The unit's original bytes, the reassembly source. Reassembly is byte-faithful by construction: untouched bytes are re-joined from this verbatim. Each kit carries them in its own field type — raw where that type is a byte type, base64-encoded where it is a string the step decodes to recover them — and the generated encoder converts between the field and the form the wire carries bytes in."
         },
         "media_type": {
           "type": "string",
