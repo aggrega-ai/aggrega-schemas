@@ -234,7 +234,6 @@
         },
         "provider": {
           "type": "object",
-          "x-aggrega-go-type": "*PluginProvider",
           "additionalProperties": false,
           "description": "The provider-socket block for a `pluginType: provider` plugin: the capabilities it serves, how it translates the aggrega.ai/v1alpha1 Workload kind, which platform-native annotations it reads, and its render-behavior contract. Present only on provider-rendering plugins; absent on every other plugin type.",
           "properties": {
@@ -284,13 +283,11 @@
             },
             "contract": {
               "type": "object",
-              "x-aggrega-go-type": "*ProviderContract",
               "additionalProperties": false,
               "description": "The provider's self-declared render-behavior contract: the input kinds it renders, how it assembles a dispatch group's per-node output, the template-delimiter pair it applies to imported artifact files, any restriction on which source files it consumes, whether one loaded instance may serve every crossing, and whether it wires cross-boundary edges. It is the publish-time record of the provider guest's `describe()` self-report, which the host cross-checks against `describe()` at publish and at load. Absent declares no render-behavior contract, and the cross-check compares only the per-export claims.",
               "properties": {
                 "inputKinds": {
                   "type": "object",
-                  "x-aggrega-go-type": "PluginInputKinds",
                   "additionalProperties": false,
                   "description": "Which of the three Recipe input kinds this plugin renders: a sourced file set, a synthesized workload, and a standalone artifacts-only node. Each field is an independent claim.",
                   "properties": {
