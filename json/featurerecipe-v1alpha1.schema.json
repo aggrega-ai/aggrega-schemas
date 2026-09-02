@@ -97,7 +97,7 @@
             "description": "The eval provider executes formatting in-memory. Fetching a 'source', a 'workload', or 'artifacts' is mathematically banned. injectMapping (a delivery transform, not a rendering surface) remains allowed."
           },
           "else": {
-            "description": "Non-eval capabilities use the three-input-kinds model (sourced, synthesised, artifacts) plus the FeatureRecipe-only injectMapping. Unlike a Recipe, a FeatureRecipe is not required to declare any input kind: a pure-wiring FeatureRecipe (capability + implements only) is valid and renders nothing — its effect is the uses-edge the Feature it implements carries. Pairing rules apply: valuesMapping requires source; and a workload: block requires a provider that supports workload synthesis — a synthesized-mode FeatureRecipe bound to a non-synthesizing provider halts loudly at render time."
+            "description": "Non-eval capabilities use the three-input-kinds model (sourced, synthesized, artifacts) plus the FeatureRecipe-only injectMapping. Unlike a Recipe, a FeatureRecipe is not required to declare any input kind: a pure-wiring FeatureRecipe (capability + implements only) is valid and renders nothing — its effect is the uses-edge the Feature it implements carries. Pairing rules apply: valuesMapping requires source; and a workload: block requires a provider that supports workload synthesis — a synthesized-mode FeatureRecipe bound to a non-synthesizing provider halts loudly at render time."
           }
         }
       ],
