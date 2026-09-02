@@ -104,7 +104,7 @@
       "properties": {
         "extends": {
           "type": "string",
-          "description": "URI of a base Feature to inherit YAML metadata from and auto-merge JSON Schema 2020-12 declarations with."
+          "description": "Reference to a base Feature this Feature inherits from. It names the base by its `metadata.name` rather than by the registry coordinate the Feature publishes under, and takes the same three version forms every catalog reference takes: bare (`core/queue`) for the highest available release, exact (`core/queue:1.0.0`), or a caret range (`core/queue:^1.0.0`). What inherits is more than metadata: the base's `metadata.labels` and `metadata.annotations`, its `appliesTo` and `appliesToAnyOf` selectors, its `interoperability` block, its `usesSchema` and its `featuresSchema` all merge downward, and its JSON Schema 2020-12 declarations on `schema` are auto-merged. The child's own value wins on a shared key, and identity fields never inherit."
         },
         "featuresSchema": {
           "type": "object",

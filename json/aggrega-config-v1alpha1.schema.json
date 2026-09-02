@@ -2,14 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/aggrega-config-v1alpha1.schema.json",
   "title": "Aggrega Workspace Config",
-  "description": "Per-workspace configuration file consumed by the aggrega CLI. Lives at `.aggrega-config.yaml`. The `workspace` block is the root marker (its presence marks the workspace root; it holds only `catalog_dirs`). Pure settings live at the top level: `default_registry`, `offline`, `auto_pull`, `artifact_cache_dir`, plus the `build` (authoring-release hint + deprecation strictness dials), `plugins` (workspace-level Wasm plugin attachments: governance, linter, importer, and per-target provider-rendering bindings), `lint` (per-rule strictness dials), `parse_cache` (daemon parse-cache eviction caps), and `compiled_module_cache` (size cap for the on-disk compiled-module store) blocks. Flat top-level shape, no apiVersion/kind envelope, distinct from catalog content. Schema evolution discipline: adding a new top-level key is a SemVer-MINOR bump (additive); removing or relocating a key, or tightening a constraint, is a SemVer-MAJOR break.",
+  "description": "Per-workspace configuration file consumed by the aggrega CLI. Lives at `.aggrega-config.yaml`. The `workspace` block is the root marker: its presence marks the workspace root, and it holds only `catalog_dirs`. Every other key is a setting and lives at the top level, in these classes — where content is fetched from and cached (registry selection, offline and auto-pull behaviour, artifact and compiled-module cache locations and size caps), how content is trusted (signing, and signature-verification behaviour), how strictly authoring is judged (per-rule lint dials, deprecation strictness, and the authoring-release hint), which Wasm plugins are attached workspace-wide (governance, linter, importer, and per-target provider-rendering bindings), and how the CLI runs (concurrency, serving, and daemon parse-cache eviction caps). The properties below are the complete and authoritative list; this summary names the classes rather than the keys, so adding a key cannot falsify it. Flat top-level shape, no apiVersion/kind envelope, distinct from catalog content. Schema evolution discipline: adding a new top-level key is a SemVer-MINOR bump (additive); removing or relocating a key, or tightening a constraint, is a SemVer-MAJOR break.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "workspace": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Workspace root marker. Its PRESENCE marks the directory as the workspace root; it carries only the root-defining catalog directories. Settings that are not root-defining (`default_registry`, `offline`, `auto_pull`, `artifact_cache_dir`) live at the top level. Write `workspace: {}` to mark a root with no vendored catalog directories.",
+      "description": "Workspace root marker. Its PRESENCE marks the directory as the workspace root; it carries only the root-defining catalog directories. Every setting that is not root-defining lives at the top level rather than here. Write `workspace: {}` to mark a root with no vendored catalog directories.",
       "properties": {
         "catalog_dirs": {
           "type": "array",
@@ -94,7 +94,7 @@
           "type": "array",
           "default": [],
           "items": { "$ref": "#/$defs/PluginRef" },
-          "description": "Linter-socket plugins. Default entry function: `lint`."
+          "description": "Linter-socket plugins. Default entry function: `lint_rules`. A linter plugin's exports are required to begin with `lint_`, so `function:` on one of these entries names an export with that prefix."
         },
         "linter_append": {
           "type": "array",
@@ -376,7 +376,7 @@
         },
         "function": {
           "type": "string",
-          "description": "Optional override for the socket's default entry function. When omitted, the socket's documented default applies (governance `annotation-transform` → `transform_annotations`, governance `label-transform` → `mutate`, governance `ir-verdict` → `verdict_ir`, governance `render-verdict` → `verdict_render`, linter → `lint`). The override may name any export the plugin declares, and the export it names must return the output shape that socket reads: the build halts when that output carries a top-level field the shape does not declare, naming the export called and the unexpected field. The check reads which top-level field names are present, not which are absent or what nests beneath them, so it is not a full validation of the output."
+          "description": "Optional override for the socket's default entry function. When omitted, the socket's documented default applies (governance `annotation-transform` → `transform_annotations`, governance `label-transform` → `mutate`, governance `ir-verdict` → `verdict_ir`, governance `render-verdict` → `verdict_render`, linter → `lint_rules`). The override may name any export the plugin declares, and the export it names must return the output shape that socket reads: the build halts when that output carries a top-level field the shape does not declare, naming the export called and the unexpected field. The check reads which top-level field names are present, not which are absent or what nests beneath them, so it is not a full validation of the output."
         },
         "with": {
           "$ref": "#/$defs/PluginRefWith",
