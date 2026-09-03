@@ -615,6 +615,10 @@
           "type": "string",
           "description": "The identity this contributor derives its own names from inside the assembled artifact — a logical id an assembler mints for one of the contributor's published entries, a per-contributor scope in a merged document. Empty means the id is used directly, which is the value for an ordinary component. It is the same carry the render_node call for this contributor received, and carrying it on both is what keeps the two answers equal: a name the contributor declared while rendering and the name the assembled artifact ends up addressing that content by are derived from one identity rather than from two that happen to agree. A contributor whose id is a dispatch identity a target's name alphabet refuses carries this explicitly, so the assembled artifact addresses its content by a name the target accepts, and two contributors an author can tell apart cannot arrive under one."
         },
+        "output_directory": {
+          "type": "string",
+          "description": "The directory this contributor's rendered files sit in, relative to the assembled artifact's own position, carrying no trailing separator. A guest that has to name a contributor's files from inside the assembled artifact — the source path of a module block, an include directive — reads the position from here rather than composing one from the contributor's identity, so the path the assembled artifact points at is the path the files were written to. The two are not always one directory apart: a contributor the host placed inside another contributor's position sits deeper than the contributors placed directly beneath the assembly. Present only where the assembling provider places each contributor under a position of its own; a provider that folds its contributors into one document places no per-contributor directory and receives none."
+        },
         "rendered": {
           "$ref": "#/$defs/RenderNodeOutput"
         },
