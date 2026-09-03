@@ -605,11 +605,15 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "The node's absolute id within the topology graph."
+          "description": "The node's absolute id within the topology graph. A contributor that is not one of the graph's nodes — a Feature attached at a boundary rather than at a component — carries the compiler's own dispatch identity for it here instead, which is the same identity the render_node call for that contributor carried; it distinguishes one contributor from another and is not a name any target accepts. What such a contributor derives names from inside the assembled artifact is a separate carry, derived_name_basis."
         },
         "type": {
           "type": "string",
           "description": "The node's component-type label, carried on this shape — unlike the per-node render projection, which withholds it. Opaque metadata rather than a behavior switch: it is here so an assembler can group and label the nodes it merges, not so a guest can branch on it."
+        },
+        "derived_name_basis": {
+          "type": "string",
+          "description": "The identity this contributor derives its own names from inside the assembled artifact — a logical id an assembler mints for one of the contributor's published entries, a per-contributor scope in a merged document. Empty means the id is used directly, which is the value for an ordinary component. It is the same carry the render_node call for this contributor received, and carrying it on both is what keeps the two answers equal: a name the contributor declared while rendering and the name the assembled artifact ends up addressing that content by are derived from one identity rather than from two that happen to agree. A contributor whose id is a dispatch identity a target's name alphabet refuses carries this explicitly, so the assembled artifact addresses its content by a name the target accepts, and two contributors an author can tell apart cannot arrive under one."
         },
         "rendered": {
           "$ref": "#/$defs/RenderNodeOutput"
