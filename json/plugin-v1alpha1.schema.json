@@ -284,7 +284,7 @@
             "contract": {
               "type": "object",
               "additionalProperties": false,
-              "description": "The provider's self-declared render-behavior contract: the input kinds it renders, how it assembles a dispatch group's per-node output, the template-delimiter pair it applies to imported artifact files, any restriction on which source files it consumes, whether one loaded instance may serve every crossing, and whether it wires cross-boundary edges. It is the publish-time record of the provider guest's `describe()` self-report, which the host cross-checks against `describe()` at publish and at load. Absent declares no render-behavior contract, and the cross-check compares only the per-export claims.",
+              "description": "The provider's self-declared render-behavior contract: the input kinds it renders, how it assembles a dispatch group's per-node output and which directories that output sits under, the template-delimiter pair it applies to imported artifact files, any restriction on which source files it consumes, whether one loaded instance may serve every crossing, and whether it wires cross-boundary edges. It is the publish-time record of the provider guest's `describe()` self-report, which the host cross-checks against `describe()` at publish and at load. Absent declares no render-behavior contract, and the cross-check compares only the per-export claims.",
               "properties": {
                 "inputKinds": {
                   "type": "object",
@@ -356,6 +356,14 @@
                 "crossBoundaryLinking": {
                   "type": "boolean",
                   "description": "Whether the plugin wires a cross-boundary uses edge — a uses edge whose consuming and consumed ends assemble into different dispatch groups — by emitting provider-native cross-reference wiring through a paired link_publish/link_resolve export contract. Declared true only when the plugin exports both; a claim that does not match the export pair halts at load. Absent (false) declares no cross-boundary linking, so the host routes no link crossing to the plugin."
+                },
+                "nestSegment": {
+                  "type": "string",
+                  "description": "The directory this provider's target places each contributor's own sub-directory under, for a provider whose `boundaryAssembly` is `nest` — `charts` for a chart umbrella, `modules` for a root module. The compiler joins this directory, the contributor's name, and each file's own path. Read only for a nesting provider. Absent places each contributor's sub-directory directly at the boundary's own directory. The value names one directory and never a path."
+                },
+                "attachmentSegment": {
+                  "type": "string",
+                  "description": "The directory this provider's target places an attached Feature's rendered files under, within the directory of the component or boundary that Feature is attached to. Two providers that assemble their output the same way can still need opposite answers here — one whose target reads only the files sitting directly in a directory needs an attachment's files beside the ones already there, while one whose target discovers units in a named child directory needs them inside it — so the provider declares it rather than the compiler deriving it from `boundaryAssembly`. Absent uses the compiler's own default directory. The value names one directory and never a path."
                 }
               }
             }
