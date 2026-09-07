@@ -237,6 +237,11 @@
           "type": "boolean",
           "default": false,
           "description": "Whether the daemon runs the build's analysis while inspecting an IR graph, so the findings `aggrega build` reports also appear as editor problems. Nothing is written to disk either way — no rendered artifacts, no output directory, no lockfile — and the graph the daemon returns is identical whether the analysis runs or not; only the additional findings differ. Default false, matching `aggrega inspect`: the terminal command does not run the build's analysis while inspecting a graph, so it raises no such advisory either, and an editor inspection that raises none shows you the same thing the terminal does. Set true to ask the editor for that additional layer."
+        },
+        "lint_on_validate": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the daemon runs the publishing-conventions check while validating a catalog entity, so the findings `aggrega lint` reports on that entity also appear as editor problems. The findings are advisory: a document that draws them still validates, and its Release still resolves and renders. Only the check that reads local content runs — no registry is consulted, nothing is fetched and nothing is written — and it is evaluated against the buffer the editor holds rather than the file on disk, so a name you correct stops being reported before you save. Default false: an editor session reports whether a document is correct, and says nothing about whether an entity is publishable, until you ask for that second layer. Set true to ask for it. Independent of this key, an editor can always ask for the check outright, which is also how the pre-publication comparison against the previously published version is reached."
         }
       }
     },
