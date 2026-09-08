@@ -211,7 +211,7 @@
           "type": "integer",
           "minimum": 0,
           "default": 53687091200,
-          "description": "Cap on the bytes the compiled-module cache holds on disk. Default 53687091200 (50 GiB), a ceiling that stops unbounded growth rather than a budget meant to be felt — a single compiled plugin reaches hundreds of megabytes, so a machine that builds many plugin versions accumulates gigabytes. Set it above what one build compiles: the cap is applied before a build compiles anything, so a cap below a single build's own working set makes every build discard and recompile the same modules, and the store stops saving anything. Because the cap is applied first and the build then writes what it compiles, the store can sit above the cap between builds; it is trimmed again at the start of the next one. `0` disables the cap (the store grows without bound and nothing is ever removed automatically)."
+          "description": "Cap on the bytes the compiled-module cache holds on disk. Default 53687091200 (50 GiB), a ceiling that stops unbounded growth rather than a budget meant to be felt — a single compiled plugin reaches hundreds of megabytes, so a machine that builds many plugin versions accumulates gigabytes. Set it above what one build compiles: the cap is applied before a build compiles anything, so a cap below a single build's own working set makes every build discard and recompile the same modules, and the store stops saving anything. Because the cap is applied first and the build then writes what it compiles, the store can sit above the cap between builds; it is trimmed again at the start of the next one. `0` disables the cap (the store grows without bound and nothing is ever removed automatically). Because the store is one directory every workspace shares, this cap is not per-project even when a project's own file carries it: the value resolves the same way every other key does, with the nearer file winning, but the store still has only one size. The cap in force is the one from the most recent build, so two projects capping it differently both take effect in turn, and a low cap in one discards machine code the other compiled. Setting it once in the global config file is what gives the whole machine one answer. `aggrega config show --origin` names the file each setting's effective value came from."
         }
       }
     },
@@ -223,8 +223,8 @@
         "pool_size": {
           "type": "integer",
           "minimum": 1,
-          "default": 1,
-          "description": "Number of worker goroutines servicing the request queue. Default 1, which runs requests serially in arrival order."
+          "default": 4,
+          "description": "Number of workers servicing the request queue. Default 4, which dispatches up to four requests concurrently; set it to 1 to run requests serially in arrival order. A value below 1 is raised to 1 when the daemon starts."
         }
       }
     },
