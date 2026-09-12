@@ -114,6 +114,7 @@ var allSchemas = []struct {
 	{"RecipeV1alpha1", RecipeV1alpha1, "https://aggrega.ai/schemas/recipe-v1alpha1.schema.json"},
 	{"ReleaseV1alpha1", ReleaseV1alpha1, "https://aggrega.ai/schemas/release-v1alpha1.schema.json"},
 	{"SchemaLibraryV1alpha1", SchemaLibraryV1alpha1, "https://aggrega.ai/schemas/schemalibrary-v1alpha1.schema.json"},
+	{"ServeWireV1alpha1", ServeWireV1alpha1, "https://aggrega.ai/schemas/serve-wire-v1alpha1.schema.json"},
 	{"TemplateContextV1alpha1", TemplateContextV1alpha1, "https://aggrega.ai/schemas/template-context-v1alpha1.schema.json"},
 	{"WasmCliV1alpha1", WasmCliV1alpha1, "https://aggrega.ai/schemas/wasm-cli-v1alpha1.schema.json"},
 	{"WasmDescribeV1alpha1", WasmDescribeV1alpha1, "https://aggrega.ai/schemas/wasm-describe-v1alpha1.schema.json"},

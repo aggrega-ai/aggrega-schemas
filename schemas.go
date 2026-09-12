@@ -94,6 +94,9 @@ var ReleaseV1alpha1 string
 //go:embed json/schemalibrary-v1alpha1.schema.json
 var SchemaLibraryV1alpha1 string
 
+//go:embed json/serve-wire-v1alpha1.schema.json
+var ServeWireV1alpha1 string
+
 //go:embed json/template-context-v1alpha1.schema.json
 var TemplateContextV1alpha1 string
 
