@@ -236,7 +236,7 @@
         "build_on_inspect": {
           "type": "boolean",
           "default": false,
-          "description": "Whether the daemon runs the build's analysis while inspecting an IR graph, so the findings `aggrega build` reports also appear as editor problems. Nothing is written to disk either way — no rendered artifacts, no output directory, no lockfile — and the graph the daemon returns is identical whether the analysis runs or not; only the additional findings differ. Default false, matching `aggrega inspect`: the terminal command does not run the build's analysis while inspecting a graph, so it raises no such advisory either, and an editor inspection that raises none shows you the same thing the terminal does. Set true to ask the editor for that additional layer."
+          "description": "Whether the daemon runs the artifact-rendering stage while inspecting an IR graph, so the advisories `aggrega build` raises while rendering also appear as editor problems. It adds none of the checks a build halts on, so the editor still draws a graph where a build would refuse. Nothing is written to disk either way — no rendered artifacts, no output directory, no lockfile — and the graph the daemon returns is identical whether the rendering stage runs or not; only the additional advisories differ. Default false, matching `aggrega inspect`: the terminal command does not reach the rendering stage while inspecting a graph, so it raises no such advisory either, and an editor inspection that raises none shows you the same thing the terminal does. Set true to ask the editor for that additional layer."
         },
         "lint_on_validate": {
           "type": "boolean",
