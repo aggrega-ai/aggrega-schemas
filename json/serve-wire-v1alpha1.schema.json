@@ -576,12 +576,12 @@
     },
     "Position": {
       "type": "object",
-      "description": "A place in a document: a line and a character offset within it, both counted from zero, with the offset measured in UTF-16 code units.",
+      "description": "A place in a document: a line and a character offset within it, both counted from zero. The offset is measured in the units of the encoding the session settled on when it was opened, which is UTF-16 unless the client asked for another.",
       "required": ["line", "character"],
       "additionalProperties": false,
       "properties": {
         "line": { "type": "integer", "description": "The line, counted from zero." },
-        "character": { "type": "integer", "description": "The offset within the line, counted from zero in UTF-16 code units." }
+        "character": { "type": "integer", "description": "The offset within the line, counted from zero, in the units of the encoding the session settled on." }
       }
     },
     "Range": {
@@ -2101,13 +2101,28 @@
     },
     "InsertionPointResult": {
       "type": "object",
-      "description": "Where in the document a new entry under the named container belongs.",
-      "required": ["file", "container", "positionEncoding"],
+      "description": "Where in the document a new entry under the named container belongs, and what a client needs in order to write it there: the point itself, whether a line break has to open the text, the container keys that are still missing, and the indentation each line takes.",
+      "required": ["file", "container", "positionEncoding", "position", "precededByLineBreak", "missingContainerKeys", "entryIndent", "indentStep", "indentStepMeasured", "entryShape"],
       "additionalProperties": false,
       "properties": {
         "file": { "type": "string", "description": "The document." },
         "container": { "type": ["array", "null"], "description": "The path through the document to the container.", "items": { "type": "string" } },
-        "positionEncoding": { "type": "string", "description": "The encoding the positions in this answer are expressed in." }
+        "positionEncoding": { "type": "string", "description": "The encoding the positions in this answer are expressed in." },
+        "position": { "$ref": "#/$defs/Position" },
+        "precededByLineBreak": { "type": "boolean", "description": "Whether the text written at the position has to begin with a line break, because the position sits at the end of a line the document already carries. It is false only where the document carries nothing for the entry to follow." },
+        "missingContainerKeys": { "type": ["array", "null"], "description": "The container path's segments the document does not carry yet, outermost first. Each has to be written as a key of its own, indented one step further than the one before it, before the entry can go inside the innermost one. It is null where the whole path is already there.", "items": { "type": "string" } },
+        "entryIndent": { "type": "integer", "description": "The column the entry's own first line starts at, counted in spaces from the start of the line." },
+        "indentStep": { "type": "integer", "description": "How much further each nesting level is indented." },
+        "indentStepMeasured": { "type": "boolean", "description": "Whether the step was measured from this document's own nesting. Where it is false the document exhibits no nesting to measure and the step is a fallback, so a client that would rather impose its own knows it is free to." },
+        "entryShape": {
+          "type": "string",
+          "description": "The shape the container carries its entries in, which is what decides how the entry's own text is composed. It is read off the container the document already carries and is never inferred from what the container is called. The set is closed.",
+          "oneOf": [
+            { "const": "mapping", "description": "The container is a block mapping, so an entry appended to it is a key and its value." },
+            { "const": "sequence", "description": "The container is a block sequence, so an entry appended to it is a dash and its value." },
+            { "const": "unknown", "description": "The document does not carry the container, or carries it with nothing in it, so which shape an entry takes is the client's to decide." }
+          ]
+        }
       }
     },
     "AttachmentContainerResult": {
