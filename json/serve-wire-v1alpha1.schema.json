@@ -107,7 +107,7 @@
         "jsonrpc": { "$ref": "#/$defs/ProtocolVersion" },
         "id": { "$ref": "#/$defs/RequestId" },
         "method": { "$ref": "#/$defs/RequestMethod" },
-        "params": { "type": "object" }
+        "params": { "type": "object", "x-aggrega-go-type": "json.RawMessage" }
       },
       "allOf": [
         {
@@ -316,7 +316,7 @@
       "properties": {
         "jsonrpc": { "$ref": "#/$defs/ProtocolVersion" },
         "method": { "$ref": "#/$defs/ClientNotificationMethod" },
-        "params": { "type": "object" }
+        "params": { "type": "object", "x-aggrega-go-type": "json.RawMessage" }
       },
       "allOf": [
         {
@@ -340,7 +340,7 @@
       "properties": {
         "jsonrpc": { "$ref": "#/$defs/ProtocolVersion" },
         "method": { "$ref": "#/$defs/SessionNotificationMethod" },
-        "params": { "type": "object" }
+        "params": { "type": "object", "x-aggrega-go-type": "json.RawMessage" }
       },
       "allOf": [
         {
@@ -968,7 +968,7 @@
         "node": { "type": "string", "description": "The entity to judge candidates against, by name, read from what the workspace documents declare." },
         "graphNode": { "type": "string", "description": "The graph node to judge candidates against, whose labels are the finalised set the build itself evaluates applicability with. An answer computed over this says what the build will do." },
         "release": { "type": "string", "description": "The Release whose graph the node belongs to, as a path relative to the workspace root." },
-        "labels": { "type": "object", "description": "Labels to judge against directly, in place of reading them from an entity or a graph node.", "additionalProperties": { "type": "string" } }
+        "labels": { "type": "object", "x-aggrega-go-type": "map[string]string", "description": "Labels to judge against directly, in place of reading them from an entity or a graph node.", "additionalProperties": { "type": "string" } }
       }
     },
     "ConnectionCandidatesParams": {
@@ -1396,7 +1396,7 @@
         "name": { "type": "string", "description": "The entity name." },
         "apiVersion": { "type": "string", "description": "The schema version the document declares." },
         "description": { "type": "string", "description": "What the document says the entity is for." },
-        "labels": { "type": ["object", "null"], "description": "The labels the document declares.", "additionalProperties": { "type": "string" } },
+        "labels": { "type": ["object", "null"], "x-aggrega-go-type": "map[string]string", "description": "The labels the document declares.", "additionalProperties": { "type": "string" } },
         "file": { "type": "string", "description": "The document declaring it, as a path relative to the workspace root." },
         "origin": { "type": "string", "description": "Where the entity was read from." }
       }
@@ -1524,12 +1524,12 @@
         "kind": { "type": "string", "description": "The entity kind." },
         "description": { "type": "string", "description": "What the entity is for." },
         "category": { "type": "string", "description": "The category the entity is published under." },
-        "labels": { "type": "object", "description": "The labels the entity declares.", "additionalProperties": { "type": "string" } },
+        "labels": { "type": "object", "x-aggrega-go-type": "map[string]string", "description": "The labels the entity declares.", "additionalProperties": { "type": "string" } },
         "pluginType": { "type": "string", "description": "The socket a plugin record attaches to." },
         "capabilities": { "type": "array", "description": "The capabilities a plugin record declares.", "items": { "type": "string" } },
         "manifestDigest": { "type": "string", "description": "The digest of the published manifest." },
         "listingDigest": { "type": "string", "description": "The digest of the listing the record was read from." },
-        "deprecations": { "type": "array", "description": "The deprecation markers the index carries for this reference, each with the version it covers and the verified marker itself.", "items": { "type": "object" } },
+        "deprecations": { "type": "array", "description": "The deprecation markers the index carries for this reference, each with the version it covers and the verified marker itself.", "items": { "type": "object", "x-aggrega-go-type": "json.RawMessage" } },
         "retracted": { "type": "array", "description": "The versions a published marker has deprecated.", "items": { "type": "string" } }
       }
     },
@@ -2083,7 +2083,7 @@
       "additionalProperties": false,
       "properties": {
         "node": { "type": "string", "description": "The entity the candidates were judged for." },
-        "nodeLabels": { "type": ["object", "null"], "description": "The labels the judgement was made against.", "additionalProperties": { "type": "string" } },
+        "nodeLabels": { "type": ["object", "null"], "x-aggrega-go-type": "map[string]string", "description": "The labels the judgement was made against.", "additionalProperties": { "type": "string" } },
         "labelSource": { "type": "string", "description": "Which label set was used, which is not cosmetic: a document's declared labels are what a reading of the source can see, while a graph node's are the finalised set the build itself judges against. An answer computed over the second is a statement about what the build will do." },
         "candidates": { "type": ["array", "null"], "description": "Each Feature that may be attached.", "items": { "$ref": "#/$defs/SourcedEntityRef" } }
       }
