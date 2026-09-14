@@ -276,9 +276,9 @@ var ruledBenign = map[string]string{
 	// opposite of the rule. The detector reads the dotted path as the spaced
 	// spelling of the fused one, which is correct in general and is exactly why
 	// this deliberate near-miss needs a ruling rather than a rewrite.
-	"IRSchemaV1alpha1|/$defs/IRNode/properties/sensitive_authored_leaves/description|dbPassword":            "a dotted path contrasted with a differently-named sibling leaf",
-	"IRSchemaV1alpha1|/$defs/IRFeatureEntry/properties/sensitive_authored_leaves/description|dbPassword":    "a dotted path contrasted with a differently-named sibling leaf",
-	"IRSchemaV1alpha1|/$defs/IRBoundaryFeature/properties/sensitive_authored_leaves/description|dbPassword": "a dotted path contrasted with a differently-named sibling leaf",
+	"IRSchemaV1alpha1|/$defs/IRNode/properties/sensitive_payload_leaves/description|dbPassword":            "a dotted path contrasted with a differently-named sibling leaf",
+	"IRSchemaV1alpha1|/$defs/IRFeatureEntry/properties/sensitive_payload_leaves/description|dbPassword":    "a dotted path contrasted with a differently-named sibling leaf",
+	"IRSchemaV1alpha1|/$defs/IRBoundaryFeature/properties/sensitive_payload_leaves/description|dbPassword": "a dotted path contrasted with a differently-named sibling leaf",
 }
 
 // TestNoIdentifierSpelledTwoWaysInOneDescription fails when a schema
