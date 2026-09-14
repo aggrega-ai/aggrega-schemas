@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/serve-wire-v1alpha1.schema.json",
-  "title": "Aggrega Background Session Wire Protocol",
-  "description": "The message shapes exchanged with a background compiler session started by `aggrega serve`. The protocol is JSON-RPC 2.0 over standard input and output, each message framed by a Content-Length header; this document describes the message bodies and neither the framing nor the transport. A body is one of four things: a request the client sends, a notification the client sends, a notification the session sends, or the response the session returns for a request. Three properties of the surface decide how the shapes below are written. First, every request admits two fields beyond the ones its own method declares — `workspaceRoot`, naming the workspace the request acts on, and `workDoneToken`, the caller-minted value progress is reported under — so both appear on every request params object here, including the three methods whose subject is not a workspace and which accept `workspaceRoot` and ignore it. Second, the session refuses a request params object carrying a field the method does not accept, naming what it does accept, so every params object here is closed at its top level; a nested object inside a request is not closed, because the check reads only the outermost field names. Third, a result is composed by the session rather than supplied by a caller, so result objects are closed at every level whose shape is fixed, and open only where the value is opaque JSON the session carries through without reading. One consequence of the session's encoding is visible on the wire and is described rather than tidied away: a collection the session does not mark optional is emitted as `null` when it has no value to report and as an empty collection when the value it reports is empty, so both forms are admitted wherever that applies.",
+  "title": "Aggrega Background Daemon Wire Protocol",
+  "description": "The message shapes exchanged with a background compiler daemon started by `aggrega serve`. A client opens a session over that daemon with the handshake, and the session is what scopes the settings and the workspace the conversation was opened over; the daemon is the process that answers a request, sends a notification and holds what it has read. The protocol is JSON-RPC 2.0 over standard input and output, each message framed by a Content-Length header; this document describes the message bodies and neither the framing nor the transport. A body is one of four things: a request the client sends, a notification the client sends, a notification the daemon sends, or the response the daemon returns for a request. Three properties of the surface decide how the shapes below are written. First, every request admits two fields beyond the ones its own method declares — `workspaceRoot`, naming the workspace the request acts on, and `workDoneToken`, the caller-minted value progress is reported under — so both appear on every request params object here, including the three methods whose subject is not a workspace and which accept `workspaceRoot` and ignore it. Second, the daemon refuses a request params object carrying a field the method does not accept, naming what it does accept, so every params object here is closed at its top level; a nested object inside a request is not closed, because the check reads only the outermost field names. Third, a result is composed by the daemon rather than supplied by a caller, so result objects are closed at every level whose shape is fixed, and open only where the value is opaque JSON the daemon carries through without reading. One consequence of the daemon's encoding is visible on the wire and is described rather than tidied away: a collection the daemon does not mark optional is emitted as `null` when it has no value to report and as an empty collection when the value it reports is empty, so both forms are admitted wherever that applies.",
   "oneOf": [
     { "$ref": "#/$defs/Request" },
     { "$ref": "#/$defs/ClientNotification" },
-    { "$ref": "#/$defs/SessionNotification" },
+    { "$ref": "#/$defs/DaemonNotification" },
     { "$ref": "#/$defs/SuccessResponse" },
     { "$ref": "#/$defs/ErrorResponse" }
   ],
@@ -27,7 +27,7 @@
     },
     "WorkspaceRootSubject": {
       "type": "string",
-      "description": "The absolute path of the workspace this request acts on. It is the request's subject: the session resolves it before the method runs, and a request that omits it or spells it as anything other than a string is refused."
+      "description": "The absolute path of the workspace this request acts on. It is the request's subject: the daemon resolves it before the method runs, and a request that omits it or spells it as anything other than a string is refused."
     },
     "WorkspaceRootAccepted": {
       "type": "string",
@@ -93,14 +93,14 @@
       "description": "Every method a client notification may name. The set is closed, and neither notification is answered.",
       "enum": ["$/cancelRequest", "aggrega/shutdown"]
     },
-    "SessionNotificationMethod": {
+    "DaemonNotificationMethod": {
       "type": "string",
-      "description": "Every method a notification the session sends may name. The set is closed.",
+      "description": "Every method a notification the daemon sends may name. The set is closed.",
       "enum": ["$/progress", "aggrega/publishDiagnostics"]
     },
     "Request": {
       "type": "object",
-      "description": "A request the client sends and the session answers. The method names what is being asked; the params object carries that method's own fields plus the two every method admits. A request that omits params entirely is read as one whose fields are all absent.",
+      "description": "A request the client sends and the daemon answers. The method names what is being asked; the params object carries that method's own fields plus the two every method admits. A request that omits params entirely is read as one whose fields are all absent.",
       "required": ["jsonrpc", "id", "method"],
       "additionalProperties": false,
       "properties": {
@@ -332,14 +332,14 @@
         }
       ]
     },
-    "SessionNotification": {
+    "DaemonNotification": {
       "type": "object",
-      "description": "A notification the session sends. It carries no identifier and is never answered.",
+      "description": "A notification the daemon sends. It carries no identifier and is never answered.",
       "required": ["jsonrpc", "method", "params"],
       "additionalProperties": false,
       "properties": {
         "jsonrpc": { "$ref": "#/$defs/ProtocolVersion" },
-        "method": { "$ref": "#/$defs/SessionNotificationMethod" },
+        "method": { "$ref": "#/$defs/DaemonNotificationMethod" },
         "params": { "type": "object", "x-aggrega-go-type": "json.RawMessage" }
       },
       "allOf": [
@@ -355,7 +355,7 @@
     },
     "CancelRequestParams": {
       "type": "object",
-      "description": "Asks the session to abandon a request already in flight, naming it by the identifier the request carried. A request already finished, or never sent, is silently nothing to cancel.",
+      "description": "Asks the daemon to abandon a request already in flight, naming it by the identifier the request carried. A request already finished, or never sent, is silently nothing to cancel.",
       "required": ["id"],
       "additionalProperties": false,
       "properties": {
@@ -364,7 +364,7 @@
     },
     "ShutdownParams": {
       "type": "object",
-      "description": "Asks the session to stop accepting work and finish what it has already taken. The notification carries no fields, and the notification itself is usually sent with no params object at all. A second one abandons the work still in flight instead of waiting for it.",
+      "description": "Asks the daemon to stop accepting work and finish what it has already taken. The notification carries no fields, and the notification itself is usually sent with no params object at all. A second one abandons the work still in flight instead of waiting for it.",
       "additionalProperties": false,
       "properties": {}
     },
@@ -416,7 +416,7 @@
     },
     "PublishDiagnosticsParams": {
       "type": "object",
-      "description": "The findings for one file, pushed by the session when a validation produced them for a document other than the one the request named.",
+      "description": "The findings for one file, pushed by the daemon when a validation produced them for a document other than the one the request named.",
       "required": ["file", "diagnostics"],
       "additionalProperties": false,
       "properties": {
@@ -516,17 +516,17 @@
     },
     "ErrorCode": {
       "type": "integer",
-      "description": "The condition the answer reports. The negative codes are the protocol's own reserved set; the four-digit codes are conditions this session raises, each naming a state a client can act on. The set is closed.",
+      "description": "The condition the answer reports. The negative codes are the protocol's own reserved set; the four-digit codes are conditions this daemon raises, each naming a state a client can act on. The set is closed.",
       "oneOf": [
         { "const": -32700, "description": "The message could not be parsed as JSON." },
         { "const": -32600, "description": "The message parsed but is not a well-formed request." },
         { "const": -32601, "description": "No method of that name exists." },
         { "const": -32602, "description": "The params the request carried are not admissible: a field the method does not accept, a field of the wrong type, or a value the method refuses." },
-        { "const": -32603, "description": "The session failed while doing the work." },
-        { "const": 1001, "description": "The session holds no reading of the file and is producing none. The client seeds one by asking for a validation, then retries." },
+        { "const": -32603, "description": "The daemon failed while doing the work." },
+        { "const": 1001, "description": "The daemon holds no reading of the file and is producing none. The client seeds one by asking for a validation, then retries." },
         { "const": 1003, "description": "The lockfile for the Release the request named is absent, and the operation needs one." },
         { "const": 1004, "description": "The entity the request named could not be resolved from the catalog or from the Release the request named." },
-        { "const": 1005, "description": "The session is shutting down and is refusing new work. The client does not retry against the same session." },
+        { "const": 1005, "description": "The daemon is shutting down and is refusing new work. The client does not retry against the same daemon." },
         { "const": 1006, "description": "A validation of the file is running now and did not finish within the budget the waiting request allowed. The client waits and asks again, sending nothing in the meantime." }
       ]
     },
@@ -625,7 +625,7 @@
     },
     "ClientCapabilities": {
       "type": "object",
-      "description": "What the client can handle. Unstated is taken as unsupported. Unknown members are ignored rather than refused, so a client may state a capability this session does not yet read.",
+      "description": "What the client can handle. Unstated is taken as unsupported. Unknown members are ignored rather than refused, so a client may state a capability this daemon does not yet read.",
       "additionalProperties": true,
       "properties": {
         "general": {
@@ -664,23 +664,23 @@
     },
     "InvalidateParams": {
       "type": "object",
-      "description": "Tells the session that a document it holds a reading of has changed, so the next answer about it is computed from the new bytes.",
+      "description": "Tells the daemon that a document it holds a reading of has changed, so the next answer about it is computed from the new bytes.",
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
         "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
         "file": { "type": "string", "description": "The document that changed." },
-        "granularity": { "type": "string", "description": "How much of what the session holds to drop." }
+        "granularity": { "type": "string", "description": "How much of what the daemon holds to drop." }
       }
     },
     "DiagnosticsParams": {
       "type": "object",
-      "description": "Answers with the findings the session already holds for a document, without checking it again.",
+      "description": "Answers with the findings the daemon already holds for a document, without checking it again.",
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
         "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
-        "file": { "type": "string", "description": "The document to report on. The session must already hold a reading of it." }
+        "file": { "type": "string", "description": "The document to report on. The daemon must already hold a reading of it." }
       }
     },
     "IrGraphParams": {
@@ -1157,12 +1157,12 @@
     },
     "ServerCapabilities": {
       "type": "object",
-      "description": "What the session will do, settled against what the client said it can handle.",
+      "description": "What the daemon will do in this session, settled against what the client said it can handle.",
       "required": ["positionEncoding"],
       "additionalProperties": false,
       "properties": {
         "positionEncoding": { "type": "string", "description": "The encoding every position in this session is expressed in." },
-        "workDoneProgress": { "type": "boolean", "description": "Whether the session will send progress notifications. Present only where the client declared it can receive them." }
+        "workDoneProgress": { "type": "boolean", "description": "Whether the daemon will send progress notifications in this session. Present only where the client declared it can receive them." }
       }
     },
     "ClosureEntity": {
@@ -1249,13 +1249,13 @@
     },
     "CacheClass": {
       "type": "object",
-      "description": "One cache the session reports on.",
+      "description": "One cache the daemon reports on.",
       "required": ["name", "reach", "prunable", "elements"],
       "additionalProperties": false,
       "properties": {
         "name": { "type": "string", "description": "Which cache this is." },
         "reach": { "type": "string", "description": "Whether the cache belongs to this workspace or is shared across the machine." },
-        "prunable": { "type": "boolean", "description": "Whether reclaiming this cache is something the session will do." },
+        "prunable": { "type": "boolean", "description": "Whether reclaiming this cache is something the daemon will do." },
         "elements": { "type": ["array", "null"], "description": "What the cache holds.", "items": { "$ref": "#/$defs/CacheElement" } }
       }
     },
@@ -1730,7 +1730,7 @@
     },
     "InvalidateResult": {
       "type": "object",
-      "description": "Whether the session was holding anything about the document to drop.",
+      "description": "Whether the daemon was holding anything about the document to drop.",
       "required": ["invalidated"],
       "additionalProperties": false,
       "properties": {
@@ -1739,7 +1739,7 @@
     },
     "DiagnosticsResult": {
       "type": "object",
-      "description": "The findings the session already holds for the document.",
+      "description": "The findings the daemon already holds for the document.",
       "required": ["diagnostics"],
       "additionalProperties": false,
       "properties": {
@@ -2158,7 +2158,7 @@
     },
     "EditDocumentResult": {
       "type": "object",
-      "description": "What the edit wrote, and where. After a write the session's reading of the document is dropped, so the next answer about it is computed from the bytes the edit produced.",
+      "description": "What the edit wrote, and where. After a write the daemon's reading of the document is dropped, so the next answer about it is computed from the bytes the edit produced.",
       "required": ["file", "edit", "container", "createdContainers", "written", "content"],
       "additionalProperties": false,
       "properties": {
