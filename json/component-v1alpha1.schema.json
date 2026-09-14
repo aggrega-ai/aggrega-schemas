@@ -39,7 +39,7 @@
         },
         "description": {
           "type": "string",
-          "description": "A concise, one-sentence summary of what the entity does."
+          "description": "What this entity is and what it is for, written for someone deciding whether to use it. Open with a sentence naming the thing, then add what a reader needs in order to choose it and use it correctly — what it expects from a deployment, and anything surprising about how it behaves. A short paragraph is the usual length."
         },
         "maintainers": {
           "type": "array",
