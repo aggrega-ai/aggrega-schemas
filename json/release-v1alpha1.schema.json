@@ -244,7 +244,7 @@
       "properties": {
         "components": {
           "type": "object",
-          "description": "Component instances within the nested aggregate to route into this boundary.",
+          "description": "Component instances within the nested aggregate to route into this boundary. Keys are the local name each component carries inside that sub-module — 'main-db' for the component a boundary's own `components` map addresses as 'data.main-db' — because that is the only name it has there.",
           "patternProperties": {
             "^[a-zA-Z0-9_-]+$": {
               "$ref": "#/$defs/boundary_component"
