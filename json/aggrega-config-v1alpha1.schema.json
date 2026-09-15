@@ -245,6 +245,60 @@
         }
       }
     },
+    "mcp": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Settings for the Model Context Protocol server (`aggrega mcp`) when it serves over HTTP rather than over the process's standard input and output. `listen` is what selects the HTTP transport; the remaining keys configure the listener it starts, and none of them is read while the server speaks over standard input and output. Distinct from `serve`, which configures the editor-backend daemon.",
+      "properties": {
+        "listen": {
+          "type": "string",
+          "default": "",
+          "description": "Address the server listens on, which is what selects the HTTP transport. Two forms are accepted: `host:port` for a TCP address, and `unix:` followed by a filesystem path for a Unix-domain socket. `aggrega mcp --listen <address>` overrides this key for one invocation. Default empty, so no listener is started and the server speaks the protocol over standard input and output, which is what a client that launches the command as a subprocess expects. A plaintext address — one reached with no certificate and key under `tls` — is accepted only on loopback (`127.0.0.1`, `::1`, or `localhost` resolving to one of those) or on a Unix socket, which is the shape a deployment uses when a proxy in front terminates TLS; any other address is refused before anything binds, naming `mcp.tls.cert_file` and `mcp.tls.key_file`."
+        },
+        "tls": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Certificate and key for terminating TLS inside the serving process. Set both to serve HTTPS directly from the listener `listen` names. Leave both unset to serve plaintext, which confines `listen` to loopback or a Unix socket — the shape a deployment uses when a proxy in front holds the certificate. Both keys are paths to files on disk; neither holds key material inline.",
+          "properties": {
+            "cert_file": {
+              "type": "string",
+              "default": "",
+              "description": "Path to the PEM certificate chain the listener presents, read when the process starts. Set together with `key_file`. Default empty, so the listener serves plaintext and `listen` is confined to loopback or a Unix socket."
+            },
+            "key_file": {
+              "type": "string",
+              "default": "",
+              "description": "Path to the PEM private key for the certificate in `cert_file`, read when the process starts. Set together with it. A POINTER to a file, never inline key material. Default empty, so the listener serves plaintext and `listen` is confined to loopback or a Unix socket."
+            }
+          }
+        },
+        "allowed_origins": {
+          "type": "array",
+          "default": [],
+          "items": { "type": "string" },
+          "description": "Origins accepted on a request's `Origin` header. A request whose `Origin` header names an origin this list does not carry is refused with `403`; a request naming a listed origin, or carrying no `Origin` header at all, is served. Each entry is a full origin as a browser sends one — scheme, host, and the port where it is not the scheme's default — for example `https://app.example.com`. Default empty, so no origin is accepted and only a caller that sends no `Origin` header is served. A browser-based client therefore needs its origin listed here; a client that is not a browser sends no such header and needs no entry."
+        },
+        "limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Caps the HTTP listener applies to the traffic it accepts, so one caller cannot exhaust the serving process. They bound how large a single request may be and how many requests run at once. Neither cap can be turned off.",
+          "properties": {
+            "max_body_bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 4194304,
+              "description": "Largest request body the listener accepts, in bytes. A request whose body exceeds it is refused with `413`, and the body is not read past the cap. Default 4194304 (4 MiB), which sits well above a tool call carrying a whole authoring document and well below what would let one caller hold a significant share of the process's memory. The minimum is 1, so there is no value that turns the cap off; raise it where a deployment legitimately sends larger documents."
+            },
+            "max_concurrent_requests": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 16,
+              "description": "How many requests the listener runs at once. A request arriving while that many are already in flight is refused with `503` rather than queued, so a caller is told to retry instead of waiting behind work it cannot see. Default 16, which leaves room for several concurrent tool calls while keeping a small host responsive; raise it on a larger host. The minimum is 1, so there is no value that turns the cap off."
+            }
+          }
+        }
+      }
+    },
     "registries": {
       "type": "array",
       "default": [],
