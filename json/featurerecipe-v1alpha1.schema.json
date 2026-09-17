@@ -85,7 +85,12 @@
       "allOf": [
         {
           "if": {
-            "properties": { "capability": { "const": "eval" } }
+            "properties": {
+              "capability": {
+                "pattern": "^eval(:[^:]*)?$",
+                "description": "Selects the in-memory evaluation branch. It matches the capability by its bare name, so a declaration carrying a version pin ('eval:1.0.0', 'eval:^1.0.0') selects the same branch as the unpinned 'eval': the pin selects which plugin version serves the capability and is not part of the capability name. A longer name that merely begins with those letters, such as 'evaluate', is a different capability and does not select it."
+              }
+            }
           },
           "then": {
             "properties": {
