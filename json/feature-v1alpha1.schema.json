@@ -109,7 +109,7 @@
         "featuresSchema": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[AttachmentSlot]",
-          "description": "Declarative attachment slot definitions: the named binding points at which this Feature expects a further Feature to be attached. A slot constrains which fill may bind it (selector) and how the fill's material may be delivered (inject); the fill's own Feature owns its values and infra contract. Declaring a slot never closes the attachment block — a deployment may attach a Feature under a name no slot declares. A slot is a binding point, not a dependency socket: usesSchema declares the separate topology surface.",
+          "description": "Declarative attachment slot definitions: the named binding points at which this Feature expects a further Feature to be attached. A slot constrains which fill may bind it (selector) and how the fill's material may be delivered (inject); the fill's own Feature owns its values and infra contract. Declaring a slot never closes the attachment block — an author may attach a Feature under a name no slot declares. A slot is a binding point, not a dependency socket: usesSchema declares the separate topology surface.",
           "additionalProperties": {
             "type": "object",
             "properties": {
