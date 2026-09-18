@@ -253,7 +253,7 @@
         "listen": {
           "type": "string",
           "default": "",
-          "description": "Address the server listens on, which is what selects the HTTP transport. Two forms are accepted: `host:port` for a TCP address, and `unix:` followed by a filesystem path for a Unix-domain socket. `aggrega mcp --listen <address>` overrides this key for one invocation. Default empty, so no listener is started and the server speaks the protocol over standard input and output, which is what a client that launches the command as a subprocess expects. A plaintext address — one reached with no certificate and key under `tls` — is accepted only on loopback (`127.0.0.1`, `::1`, or `localhost` resolving to one of those) or on a Unix socket, which is the shape a deployment uses when a proxy in front terminates TLS; any other address is refused before anything binds, naming `mcp.tls.cert_file` and `mcp.tls.key_file`."
+          "description": "Address the server listens on, which is what selects the HTTP transport. Two forms are accepted: `host:port` for a TCP address, and `unix:` followed by a filesystem path for a Unix-domain socket. `aggrega mcp --listen <address>` overrides this key for one invocation. Default empty, so no listener is started and the server speaks the protocol over standard input and output, which is what a client that launches the command as a subprocess expects. A plaintext address — one reached with no certificate and key under `tls` — is accepted only on loopback (`127.0.0.1`, `::1`, or `localhost` resolving to one of those) or on a Unix socket, which is the shape a deployment uses when a proxy in front terminates TLS; any other address is refused before anything binds, naming `mcp.tls.cert_file` and `mcp.tls.key_file`. The same two forms are the only ones accepted, certificate or not, where `authorization.trusted_proxy` is set, because a header can be trusted as a credential only where nothing but the proxy can set it."
         },
         "tls": {
           "type": "object",
@@ -281,7 +281,7 @@
         "limits": {
           "type": "object",
           "additionalProperties": false,
-          "description": "Caps the HTTP listener applies to the traffic it accepts, so one caller cannot exhaust the serving process. They bound how large a single request may be and how many requests run at once. Neither cap can be turned off.",
+          "description": "Caps the HTTP listener applies to the traffic it accepts, so one caller cannot exhaust the serving process. They bound how large a single request may be, how many requests run at once, and how fast one caller may send. None of them can be turned off.",
           "properties": {
             "max_body_bytes": {
               "type": "integer",
@@ -294,13 +294,19 @@
               "minimum": 1,
               "default": 16,
               "description": "How many requests the listener runs at once. A request arriving while that many are already in flight is refused with `503` rather than queued, so a caller is told to retry instead of waiting behind work it cannot see. Default 16, which leaves room for several concurrent tool calls while keeping a small host responsive; raise it on a larger host. The minimum is 1, so there is no value that turns the cap off."
+            },
+            "requests_per_minute": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 120,
+              "description": "How many requests one caller may send in a minute. It is counted per caller rather than per deployment — against the subject the caller's token names, or against the identity a trusted proxy asserted — so one busy caller cannot spend another's allowance. A caller may send this many in a burst; the allowance then refills steadily, at one more request every `60 / requests_per_minute` seconds, and a request arriving with none left is refused with `429`. Default 120, which is two a second sustained: far above what an assistant driving a workspace sends, and still a bound on a client that has gone into a loop. The minimum is 1, so there is no value that turns the cap off."
             }
           }
         },
         "authorization": {
           "type": "object",
           "additionalProperties": false,
-          "description": "What this deployment declares about the bearer tokens its callers present: which authorization server issues them, the address this deployment publishes for itself as the resource they are issued for, and optionally a file to read that server's verification keys from. `issuer` and `resource` are required whenever `listen` is set, and a listener is refused before anything binds without them; a server speaking over standard input and output reads none of these. Both are published in the OAuth protected-resource metadata document the listener serves, which is the one answer an HTTP caller receives with no credential asked for, because a client reads it in order to find out where to obtain a token. This block holds no secret material: a token is presented by a caller on the request it makes and is never a configuration field, and `jwks_file` names public verification keys rather than anything that signs.",
+          "description": "What this deployment declares about the bearer tokens its callers present: which authorization server issues them, the address this deployment publishes for itself as the resource they are issued for, optionally a file to read that server's verification keys from, and optionally the headers a proxy in front sets when that proxy validates the tokens instead. `issuer` and `resource` are required whenever `listen` is set, and a listener is refused before anything binds without them; a server speaking over standard input and output reads none of these. Both are published in the OAuth protected-resource metadata document the listener serves, which is the one answer an HTTP caller receives with no credential asked for, because a client reads it in order to find out where to obtain a token. This block holds no secret material: a token is presented by a caller on the request it makes and is never a configuration field, and `jwks_file` names public verification keys rather than anything that signs.",
           "properties": {
             "issuer": {
               "type": "string",
@@ -316,6 +322,23 @@
               "type": "string",
               "default": "",
               "description": "Path to a file holding the JSON Web Key Set the tokens this deployment accepts are verified against, read when the process starts. Default empty, which is the usual case: the keys are read from the authorization server itself, by asking `issuer` where it publishes them and fetching them from the address it names, and they are re-read once when a token arrives signed by a key identifier the held set does not carry. Set this where the workspace is offline, in which case a listener is refused before anything binds without it, because an offline workspace makes no network request and there is no other way to obtain the keys; the file then holds the only keys accepted, and the authorization server is never contacted. The file holds PUBLIC verification keys and never anything that signs. A relative path resolves against the directory of the config file that declared it."
+            },
+            "trusted_proxy": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["principal_header"],
+              "description": "Read who a caller is from headers a proxy in front sets, instead of validating a bearer token here. Set this only where a proxy in front validates tokens itself AND nothing but that proxy can reach the listener: with it set, `listen` must be loopback or a Unix socket, and any other address is refused before anything binds, naming both settings. A header is trustworthy exactly as far as the set of callers that can set it, and on an address the network reaches every caller can set any header it likes, so a listener in this mode on such an address would let every caller claim to be anyone. With this set no token is read at all — not from the `Authorization` header, not from anywhere else, and no key set is fetched — the caller's identity is the value of `principal_header`, a request that does not carry that header is answered `401`, and the two headers named here are the only ones read. Leave it out, which is the default, and this server validates bearer tokens itself.",
+              "properties": {
+                "principal_header": {
+                  "type": "string",
+                  "description": "Header the proxy in front puts the caller's identity in — for example `X-Forwarded-User`. Its value is taken exactly as written and compared to nothing, in the same way the subject of a token this server validates itself is recorded and compared to nothing. It is the whole credential in this mode, so it is required whenever `trusted_proxy` is set, and a request arriving without it is answered `401`."
+                },
+                "scopes_header": {
+                  "type": "string",
+                  "default": "",
+                  "description": "Header the proxy in front puts the caller's granted scopes in, separated by spaces — for example `X-Forwarded-Scopes`. Default empty, which asserts no scopes for any caller. Whatever it is called, no header other than this one and `principal_header` is read."
+                }
+              }
             }
           }
         },
