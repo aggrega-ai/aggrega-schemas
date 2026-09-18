@@ -296,6 +296,23 @@
               "description": "How many requests the listener runs at once. A request arriving while that many are already in flight is refused with `503` rather than queued, so a caller is told to retry instead of waiting behind work it cannot see. Default 16, which leaves room for several concurrent tool calls while keeping a small host responsive; raise it on a larger host. The minimum is 1, so there is no value that turns the cap off."
             }
           }
+        },
+        "authorization": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "What this deployment declares about the bearer tokens its callers present: which authorization server issues them, and the address this deployment publishes for itself as the resource they are issued for. Both keys are required whenever `listen` is set, and a listener is refused before anything binds without them; a server speaking over standard input and output reads neither. Both are published in the OAuth protected-resource metadata document the listener serves, which is the one answer an HTTP caller receives with no credential asked for, because a client reads it in order to find out where to obtain a token. This block holds no secret material: a token is presented by a caller on the request it makes and is never a configuration field.",
+          "properties": {
+            "issuer": {
+              "type": "string",
+              "default": "",
+              "description": "Address of the authorization server that issues the tokens this deployment accepts, written as that server states its own issuer identifier — for example `https://login.example.com`. It is published in the `authorization_servers` list of the protected-resource metadata document, which is how a client learns where to obtain a token for this deployment. Default empty, which is not a usable value: a listener is refused before anything binds unless this carries a whole address, scheme and host included."
+            },
+            "resource": {
+              "type": "string",
+              "default": "",
+              "description": "Address this deployment publishes for itself, as a caller reaches it — for example `https://mcp.example.com/mcp`. Write the address callers actually use, including the host a proxy in front presents, because this is the identifier a client hands the authorization server when it asks for a token for this deployment, and it is published unchanged as the `resource` field of the protected-resource metadata document. Where that document is served is derived from it, by inserting `/.well-known/oauth-protected-resource` between the host and the path: a deployment published as `https://mcp.example.com/mcp` serves it at `https://mcp.example.com/.well-known/oauth-protected-resource/mcp`, and also at that well-known path with nothing after it, which is where a client looks second. Default empty, which is not a usable value: a listener is refused before anything binds unless this carries a whole address, scheme and host included."
+            }
+          }
         }
       }
     },
