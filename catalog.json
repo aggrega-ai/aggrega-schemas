@@ -52,7 +52,7 @@
     },
     {
       "name": "Aggrega Release",
-      "description": "Aggrega Release entity (deployment).",
+      "description": "Aggrega Release entity (operator environment binding).",
       "fileMatch": ["**/release.yaml", "**/*.release.yaml"],
       "url": "https://hub.aggrega.ai/schemas/release-v1alpha1.schema.json"
     },
