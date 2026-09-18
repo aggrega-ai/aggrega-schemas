@@ -1002,9 +1002,9 @@
           "type": "string",
           "description": "The provider that rendered the endpoint (the bare provider name). Both endpoints of a wired link name the same provider; the host does not route a link whose endpoints name different providers."
         },
-        "deployment": {
+        "release": {
           "type": "string",
-          "description": "The deployment identity the endpoint's rendered output belongs to — the scope its assembled artifacts are named within. The host assembles it from the build's deployment identity and passes it verbatim; it infers no meaning from the value. A provider reads it to scope a cross-reference name to the deployment. An absent value is the empty string, which a provider treats as an unscoped name."
+          "description": "The Release the endpoint's rendered output belongs to — the scope its assembled artifacts are named within. The host assembles it from the Release the build resolved and passes it verbatim; it infers no meaning from the value. A provider reads it to scope a cross-reference name to the Release. An absent value is the empty string, which a provider treats as an unscoped name."
         }
       }
     },
