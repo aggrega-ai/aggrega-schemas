@@ -135,7 +135,7 @@
         "components": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[BoundaryComponent]",
-          "description": "Top-level component instances carrying per-component operator infra, for a single-scope deployment with no named boundaries. Mutually exclusive with `boundaries`: declare `components` for a flat deployment or `boundaries` for multi-target routing, never both. When `components` is used, the compiler synthesizes a `default` boundary holding them and emits their artifacts to `dist/` flat.",
+          "description": "Top-level component instances carrying per-component operator infra, for a single-scope Release with no named boundaries. Mutually exclusive with `boundaries`: declare `components` for a flat Release or `boundaries` for multi-target routing, never both. When `components` is used, the compiler synthesizes a `default` boundary holding them and emits their artifacts to `dist/` flat.",
           "patternProperties": {
             "^[a-zA-Z0-9_-]+$": {
               "$ref": "#/$defs/boundary_component"
