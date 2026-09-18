@@ -342,6 +342,15 @@
             }
           }
         },
+        "deny_reach": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string",
+            "enum": ["none", "workspace", "registry", "machine"]
+          },
+          "description": "Kinds of reach this deployment does not carry, whatever a caller's token says. Every operation declares how far its own effects travel — `none` for one that reads or renders and leaves nothing behind, `workspace` for one that writes inside the workspace this process serves, `registry` for one that publishes, signs or withdraws, and `machine` for one that changes what every workspace on the host shares — and naming a kind here withdraws every tool of that kind from this deployment. A withdrawn tool is absent from the tool list and from what `describe-capabilities` answers, for every caller, and calling it anyway is refused naming this setting, because no scope could admit it. Default empty, so a deployment carries whatever its callers' scopes admit. This is a bound the deployment sets on itself, on top of the per-caller bound scopes set: a deployment that serves reads and nothing else names the three writing kinds here and then cannot publish even to a caller whose token carries every scope. Naming `machine` is accepted and changes nothing — no tool of that kind is offered over HTTP at all, which is a property of the transport rather than a setting. Read while the listener starts: a value outside the four is refused when the configuration loads, and changing it takes a restart. Not read at all while the server speaks over standard input and output, where the caller is the person who launched the process."
+        },
         "health": {
           "type": "object",
           "additionalProperties": false,
