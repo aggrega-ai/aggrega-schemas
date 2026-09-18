@@ -318,6 +318,18 @@
               "description": "Path to a file holding the JSON Web Key Set the tokens this deployment accepts are verified against, read when the process starts. Default empty, which is the usual case: the keys are read from the authorization server itself, by asking `issuer` where it publishes them and fetching them from the address it names, and they are re-read once when a token arrives signed by a key identifier the held set does not carry. Set this where the workspace is offline, in which case a listener is refused before anything binds without it, because an offline workspace makes no network request and there is no other way to obtain the keys; the file then holds the only keys accepted, and the authorization server is never contacted. The file holds PUBLIC verification keys and never anything that signs. A relative path resolves against the directory of the config file that declared it."
             }
           }
+        },
+        "health": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Where a supervisor asks whether this process is alive and whether it is ready to answer a call. The two checks are answered on an address of their own and never on the address `listen` names: every request to the endpoint carries a bearer token, so a probe answered there would hand anything that can reach the endpoint an unauthenticated reading of the process together with a free way to make it work. The endpoint answers `/healthz` and `/readyz` with the same `404` it gives every path it does not serve, with a token and without one alike.",
+          "properties": {
+            "listen": {
+              "type": "string",
+              "default": "",
+              "description": "Address the liveness and readiness checks are answered on, in the same two forms `listen` takes: `host:port`, or `unix:` followed by a filesystem path. Default empty, so no second listener is started and neither check is answered anywhere. With an address set, `GET /healthz` is answered `200` from the moment the process is running, and `GET /readyz` is answered `503` until the workspace has resolved and the endpoint has bound and `200` from then on — which is the distinction a supervisor needs, since a process that is up is not yet a process that can answer a call. Every answer is a status code with an empty body, no token is asked for and no header is read; any other path on this address is `404`, and any other method on these two is `405`. Unlike `listen` this address is not confined to loopback or a Unix socket and no address is refused for it: point it at one of those, which is what it is for, and note that whatever can reach the address you choose can read those two answers."
+            }
+          }
         }
       }
     },
