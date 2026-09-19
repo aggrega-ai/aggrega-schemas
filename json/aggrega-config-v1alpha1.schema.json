@@ -15,7 +15,7 @@
           "type": "array",
           "default": [],
           "items": { "type": "string" },
-          "description": "Optional vendored catalog directories the resolver consults before falling back to the registry. Each entry is a filesystem path. Root-scoped: local vendored catalogs belong to this workspace root, so they live on the root marker rather than at the top level."
+          "description": "Optional catalog directories this workspace reads local entities from, consulted before falling back to the registry. Each entry is a filesystem path, resolved relative to the file that declares it. The list is an ordered first-win search stack: the earliest-listed directory to declare an identity owns it, and the same identity in a later directory is shadowed. The `catalog` directory at the workspace root is read as well, after every listed entry and only when it exists — unless a listed entry already contains it, in which case it is read as part of that entry — so listing a directory adds to what the workspace already read rather than replacing it. Omitting this key and writing it as an empty list are different statements: omitted, the workspace still reads `catalog`; written as `[]`, it reads no local catalog at all, which is how a workspace says it has none. Root-scoped: local catalog directories belong to this workspace root, so they live on the root marker rather than at the top level."
         },
         "catalog_dirs_append": {
           "type": "array",
