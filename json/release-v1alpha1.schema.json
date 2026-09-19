@@ -98,7 +98,7 @@
         },
         "extends": { 
           "type": "string",
-          "description": "Enables base-layer inheritance for frictionless local Dev Loops vs Prod deployments."
+          "description": "Reference to a base Release whose authoring surface this Release inherits — its boundary tree with the per-component infra and Feature attachments under it, its parameters, its annotations and its Manifest pointer. The value is a path to a file beside this Release, beginning './' or '../'; a bare name and a registry coordinate are both refused, because a Release is deployment-side and is not catalog-indexed. What is inherited may be replaced key by key, down to the first indivisible value — a scalar, a list, a template — which replaces whole; a key written as null removes what was inherited. No metadata field travels, so a child carries its own name, version and environment. Declaring 'aggregate' alongside 'extends' is rejected by this schema, so a child deploys the same Developer Intent as its base; 'manifest' stays optional and may be overridden to swap the dependency lockfile."
         },
         "parameters": {
           "x-aggrega-go-type": "ParametersBlock",
