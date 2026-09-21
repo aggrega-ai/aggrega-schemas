@@ -410,7 +410,7 @@
         },
         "pinned_version": {
           "type": "string",
-          "description": "The concrete version the resolver pinned at pull time. For helm-* kinds, the chart version. For terraform-module-git, the resolved commit SHA (NOT the original tag/branch ref — that is recorded under `requested_ref:` on each `referenced_by:` entry when it differs from the SHA)."
+          "description": "The concrete version pinned at pull time. For helm-* kinds, the chart version. For terraform-module-git, the resolved commit SHA (NOT the original tag/branch ref — that is recorded under `requested_ref:` on each `referenced_by:` entry, and only when the Recipe authored a `spec.source.ref:` AND this pinned value differs from the Recipe's own `spec.source.version:`)."
         },
         "resolved_url": {
           "type": "string",
@@ -440,7 +440,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["entity", "uri", "field"],
-      "description": "A single catalog-entity → source-artifact back-pointer. `entity` + `uri` together identify the catalog entity; `field` names the source-side path inside the entity's spec where the artifact was declared. The optional `requested_ref:` preserves the user-authored ref string when the resolved `pinned_version:` is a transformed value (terraform-module-git tags/branches → commit SHA).",
+      "description": "A single catalog-entity → source-artifact back-pointer. `entity` + `uri` together identify the catalog entity; `field` names the source-side path inside the entity's spec where the artifact was declared. The optional `requested_ref:` preserves the Recipe's authored `spec.source.ref:`, and it is written only when two conditions hold together: the Recipe authored a `ref:` at all, and `pinned_version:` differs from the Recipe's own `spec.source.version:` (terraform-module-git tags/branches → commit SHA).",
       "properties": {
         "entity": {
           "enum": ["recipe", "feature_recipe"],
@@ -456,7 +456,7 @@
         },
         "requested_ref": {
           "type": "string",
-          "description": "Optional — the user-authored ref string when `pinned_version:` is a transformed value. For terraform-module-git Recipes authoring `ref: v1.0.0`, this preserves `\"v1.0.0\"` while `pinned_version:` holds the resolved commit SHA. Absent for kinds where `pinned_version:` IS the authored version (helm-*, compose-*)."
+          "description": "Optional — the Recipe's authored `spec.source.ref:`, written only when two conditions hold together: the Recipe authored a `ref:` at all, and `pinned_version:` differs from the Recipe's own `spec.source.version:`. For a terraform-module-git Recipe authoring `ref: v1.0.0`, this preserves `\"v1.0.0\"` while `pinned_version:` holds the resolved commit SHA. Absent when the Recipe authors no `ref:`, when its authored `version:` already equals the pinned value, and for kinds where `pinned_version:` IS the authored version (helm-*, compose-*). A `pull` that is not an upgrade holds each recorded reference to its pinned version: a reference that has moved at its remote halts the run instead of being adopted."
         }
       }
     },
