@@ -83,15 +83,14 @@
           "properties": {
             "component.aggrega.ai/type": {
               "type": "string",
-              "description": "The foundational 7-Type Cloud-Native Ontology mapping.",
+              "description": "The reserved axis naming what kind of thing this component is. Aggrega defines this key and the values it accepts, so the set is closed; to classify components on an axis of your own, add your own label key alongside this one.",
               "enum": [
                 "server",
                 "worker",
                 "task",
                 "function",
                 "stateful-server",
-                "resource",
-                "messaging"
+                "resource"
               ]
             }
           },
