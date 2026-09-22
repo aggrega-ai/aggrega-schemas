@@ -410,7 +410,7 @@
         },
         "pinned_version": {
           "type": "string",
-          "description": "The concrete version pinned at pull time. For helm-* kinds, the chart version. For git-repository, the commit the authored reference resolved to (NOT the original tag/branch ref — that is recorded under `requested_ref:` on each `referenced_by:` entry, and only when the Recipe authored a `spec.source.ref:` AND this pinned value differs from the Recipe's own `spec.source.version:`)."
+          "description": "The concrete version pinned at pull time. For helm-* kinds, the chart version. For git-repository, the commit the authored reference resolved to (NOT the original tag/branch ref — that is recorded under `requested_ref:` on each `referenced_by:` entry, whenever the Recipe authored a `spec.source.ref:`). A build finds this entry by what the Recipe wrote: the authored `ref:` where there is one, matched against the recorded `requested_ref:`, and this pinned value otherwise — so a Recipe that names a tag resolves to the commit that tag was pinned at, without the commit ever appearing in the Recipe."
         },
         "resolved_url": {
           "type": "string",
@@ -440,7 +440,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["entity", "uri", "field"],
-      "description": "A single catalog-entity → source-artifact back-pointer. `entity` + `uri` together identify the catalog entity; `field` names the source-side path inside the entity's spec where the artifact was declared. The optional `requested_ref:` preserves the Recipe's authored `spec.source.ref:`, and it is written only when two conditions hold together: the Recipe authored a `ref:` at all, and `pinned_version:` differs from the Recipe's own `spec.source.version:` (git-repository tags/branches → commit SHA).",
+      "description": "A single catalog-entity → source-artifact back-pointer. `entity` + `uri` together identify the catalog entity; `field` names the source-side path inside the entity's spec where the artifact was declared. The optional `requested_ref:` preserves the Recipe's authored `spec.source.ref:`, and it is written whenever the Recipe authored one (git-repository tags/branches → commit SHA).",
       "properties": {
         "entity": {
           "enum": ["recipe", "feature_recipe"],
@@ -456,7 +456,7 @@
         },
         "requested_ref": {
           "type": "string",
-          "description": "Optional — the Recipe's authored `spec.source.ref:`, written only when two conditions hold together: the Recipe authored a `ref:` at all, and `pinned_version:` differs from the Recipe's own `spec.source.version:`. For a git-repository Recipe authoring `ref: v1.0.0`, this preserves `\"v1.0.0\"` while `pinned_version:` holds the commit that reference resolved to. Absent when the Recipe authors no `ref:`, when its authored `version:` already equals the pinned value, and for kinds where `pinned_version:` IS the authored version (helm-*, compose-*). A `pull` that is not an upgrade holds each recorded reference to its pinned version: a reference that has moved at its remote halts the run instead of being adopted."
+          "description": "Optional — the Recipe's authored `spec.source.ref:`, written whenever the Recipe authored one. For a git-repository Recipe authoring `ref: v1.0.0`, this preserves `\"v1.0.0\"` while `pinned_version:` holds the commit that reference resolved to. Absent when the Recipe authors no `ref:`, which is every kind whose resolver pins the authored version verbatim (helm-*, compose-*). It carries two jobs at once, and recording it unconditionally is what keeps them from excluding each other. A build joins on it to find this entry from a Recipe that names the reference rather than the commit. And a `pull` that is not an upgrade holds each recorded reference to its pinned version: a reference that has moved at its remote halts the run instead of being adopted."
         }
       }
     },
