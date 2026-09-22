@@ -130,7 +130,7 @@
             },
             {
               "type": "object",
-              "description": "Open Structured Object (additionalProperties: true). Its keys are provider-defined and are exposed to the Recipe's templates as '.source.*' (for example '.source.chart'). By design the core is schema-agnostic: each provider's WebAssembly socket is intended to define and validate its own source shape (such as 'registry'/'chart' for Helm, or 'workspace' for Terraform). CURRENT SHIPPED BEHAVIOR: per-provider Wasm source validation is not yet implemented. The core resolves a FETCHED source by the { kind, url, version } form, where 'kind' selects a built-in resolver (today: helm-oci-chart, helm-https-chart, compose-https-fragment, terraform-module-git). A fetch-intended source must therefore use { kind, url, version }; a structured source without 'kind'/'url' is not fetched, and if a fetch was intended it fails loudly at lock-time source descent rather than silently resolving to nothing. When the per-provider Wasm socket ships it will validate provider-specific shapes and translate them ahead-of-time into a deterministic { kind, url, version } fetch identity.",
+              "description": "Open Structured Object (additionalProperties: true). Its keys are provider-defined and are exposed to the Recipe's templates as '.source.*' (for example '.source.chart'). By design the core is schema-agnostic: each provider's WebAssembly socket is intended to define and validate its own source shape (such as 'registry'/'chart' for Helm, or 'workspace' for Terraform). CURRENT SHIPPED BEHAVIOR: per-provider Wasm source validation is not yet implemented. The core resolves a FETCHED source by the { kind, url, version } form, where 'kind' selects a built-in resolver (today: helm-oci-chart, helm-https-chart, compose-https-fragment, git-repository). A fetch-intended source must therefore use { kind, url, version }; a structured source without 'kind'/'url' is not fetched, and if a fetch was intended it fails loudly at lock-time source descent rather than silently resolving to nothing. When the per-provider Wasm socket ships it will validate provider-specific shapes and translate them ahead-of-time into a deterministic { kind, url, version } fetch identity.",
               "additionalProperties": true
             }
           ]
@@ -302,7 +302,7 @@
             "properties": {
               "kind": {
                 "type": "string",
-                "description": "The resolved source kind (e.g. helm-oci-chart, helm-https-chart, compose-https-fragment, terraform-module-git)."
+                "description": "The resolved source kind (e.g. helm-oci-chart, helm-https-chart, compose-https-fragment, git-repository)."
               },
               "url": {
                 "type": "string",

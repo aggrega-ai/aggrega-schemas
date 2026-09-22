@@ -8,12 +8,12 @@
   "required": ["kind", "url", "version", "digest", "mediatype", "pulled_at"],
   "properties": {
     "kind": {
-      "enum": ["helm-oci-chart", "helm-https-chart", "compose-https-fragment", "terraform-module-git", "terraform-module-oci"],
+      "enum": ["helm-oci-chart", "helm-https-chart", "compose-https-fragment", "git-repository", "terraform-module-oci"],
       "description": "The source kind that produced this cache slot. Mirrors the lockfile's source_artifacts[].kind enum; the matching kind is what every build-time consumer reads to choose the right loader."
     },
     "url": {
       "type": "string",
-      "description": "The authored URL — the identity URL as written in the Recipe's spec.source.url. For helm-https this is the repo root (repo-root form) or the direct .tgz (direct form) exactly as authored. For terraform-git, the cloneable repository URL. For helm-oci, the registry reference. The resolved artifact location for a repo-root helm source is recorded separately under `resolved_url:` as provenance."
+      "description": "The authored URL — the identity URL as written in the Recipe's spec.source.url. For helm-https this is the repo root (repo-root form) or the direct .tgz (direct form) exactly as authored. For git-repository, the cloneable repository URL. For helm-oci, the registry reference. The resolved artifact location for a repo-root helm source is recorded separately under `resolved_url:` as provenance."
     },
     "resolved_url": {
       "type": "string",
@@ -21,7 +21,7 @@
     },
     "version": {
       "type": "string",
-      "description": "The concrete version the resolver pinned at pull time. For helm-* kinds, the chart version. For terraform-module-git, the resolved commit SHA."
+      "description": "The concrete version the resolver pinned at pull time. For helm-* kinds, the chart version. For git-repository, the commit the authored reference resolved to."
     },
     "digest": {
       "type": "string",

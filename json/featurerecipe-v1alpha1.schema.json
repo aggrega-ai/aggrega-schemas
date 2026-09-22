@@ -291,7 +291,7 @@
             "properties": {
               "kind": {
                 "type": "string",
-                "description": "The resolved source kind (e.g. helm-oci-chart, helm-https-chart, compose-https-fragment, terraform-module-git)."
+                "description": "The resolved source kind (e.g. helm-oci-chart, helm-https-chart, compose-https-fragment, git-repository)."
               },
               "url": {
                 "type": "string",
