@@ -701,6 +701,7 @@
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
         "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
         "release": { "type": "string", "description": "The Release to build, as a path relative to the workspace root. An absolute path is refused." },
+        "outputDir": { "type": "string", "description": "Where in the workspace this build writes, as a path relative to the workspace root: the output directory resolves under it, the same way it resolves under the directory a build is run in. Absent, or empty, writes where a build run at the workspace root writes. An absolute path, or one that climbs out of the workspace, is refused." },
         "autoPull": { "type": "boolean", "description": "Whether to resolve the Release's dependencies first. Asking for it reaches the configured registries and writes the lockfile; unasked, the build reaches no registry." }
       }
     },
