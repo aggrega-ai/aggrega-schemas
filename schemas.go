@@ -58,6 +58,9 @@ var CacheMetadataV1alpha1 string
 //go:embed json/component-v1alpha1.schema.json
 var ComponentV1alpha1 string
 
+//go:embed json/entity-lock-v1alpha1.schema.json
+var EntityLockV1alpha1 string
+
 //go:embed json/feature-v1alpha1.schema.json
 var FeatureV1alpha1 string
 
