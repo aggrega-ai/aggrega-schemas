@@ -68,6 +68,7 @@
         "aggrega/irGraph",
         "aggrega/lint",
         "aggrega/logout",
+        "aggrega/pin",
         "aggrega/pluginAdd",
         "aggrega/pluginGenCatalog",
         "aggrega/pluginRemove",
@@ -149,6 +150,10 @@
         {
           "if": { "properties": { "method": { "const": "aggrega/resolveDependencies" } }, "required": ["method"] },
           "then": { "properties": { "params": { "$ref": "#/$defs/ResolveDependenciesParams" } } }
+        },
+        {
+          "if": { "properties": { "method": { "const": "aggrega/pin" } }, "required": ["method"] },
+          "then": { "properties": { "params": { "$ref": "#/$defs/PinParams" } } }
         },
         {
           "if": { "properties": { "method": { "const": "aggrega/cacheStatus" } }, "required": ["method"] },
@@ -449,6 +454,7 @@
             { "$ref": "#/$defs/EntityDefinitionResult" },
             { "$ref": "#/$defs/ReleaseClosureResult" },
             { "$ref": "#/$defs/ResolveDependenciesResult" },
+            { "$ref": "#/$defs/PinResult" },
             { "$ref": "#/$defs/CacheStatusResult" },
             { "$ref": "#/$defs/CachePruneResult" },
             { "$ref": "#/$defs/CacheEvictResult" },
@@ -746,7 +752,19 @@
         "release": { "type": "string", "description": "The Release to resolve, as a path relative to the workspace root." },
         "upgrade": { "type": "boolean", "description": "Whether to re-resolve within the declared ranges rather than honouring what the lockfile already pins." },
         "targets": { "type": "array", "description": "The references to re-resolve, leaving the rest pinned as they are. Empty resolves everything.", "items": { "type": "string" } },
-        "verify": { "type": "boolean", "description": "Whether to check each acquired artifact against the digest the lockfile pins." }
+        "verify": { "type": "boolean", "description": "Whether to check each acquired artifact against the digest the lockfile pins." },
+        "pinSources": { "type": "boolean", "x-aggrega-go-type": "*bool", "description": "Whether to run the pin step `aggrega/pin` runs over the Recipes and FeatureRecipes the Release builds from the workspace's catalog directories, writing the `entity.lock` beside each, rather than refusing the request over one whose lock does not record a pin an input needs. Absent follows the workspace's `pin_sources_at_pull`; either value overrides that setting for this request." }
+      }
+    },
+    "PinParams": {
+      "type": "object",
+      "description": "Records, in the `entity.lock` beside a Recipe or FeatureRecipe, the content pin for every input the entity reads from outside its own document. No Release is named: an input whose identity the entity writes out in full names one artifact for every Release that uses the entity, so nothing a Release supplies is needed to pin it. It reaches the hosts the entity's sources name and it writes beside the entity; the entity document itself is never written.",
+      "additionalProperties": false,
+      "properties": {
+        "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
+        "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
+        "entity": { "type": "string", "description": "The entity document to pin, as a path relative to the workspace root." },
+        "dryRun": { "type": "boolean", "description": "Whether to answer with the lock the step would write rather than writing it. The inputs are still resolved, so the content cache still fills." }
       }
     },
     "CacheEvictParams": {
@@ -843,7 +861,8 @@
         "fulcioUrl": { "type": "string", "description": "The certificate authority to obtain a signing certificate from." },
         "rekorUrl": { "type": "string", "description": "The transparency log to record the signature in." },
         "timestampUrl": { "type": "string", "description": "The timestamp authority to countersign with." },
-        "identityToken": { "type": "string", "description": "The identity token to sign with, supplied by the caller rather than obtained at a terminal." }
+        "identityToken": { "type": "string", "description": "The identity token to sign with, supplied by the caller rather than obtained at a terminal." },
+        "pinSources": { "type": "boolean", "x-aggrega-go-type": "*bool", "description": "Whether to run the pin step `aggrega/pin` runs on the entity before it is bundled, so the `entity.lock` the step writes beside it is part of what is published. The step runs ahead of every refusal that judges the entity, and under `dryRun` it reports the lock it would write and writes nothing. Absent follows the workspace's `pin_sources_at_push`; either value overrides that setting for this request." }
       }
     },
     "PublishArtifactParams": {
@@ -1830,6 +1849,34 @@
         "notices": { "type": "array", "description": "Anything the resolution wants the caller to know.", "items": { "type": "string" } }
       }
     },
+    "PinResult": {
+      "type": "object",
+      "description": "What the pin step did to the lock beside an entity, or would do on a dry run. It is the answer to `aggrega/pin`, and a publication that ran the step carries it as its `pin`.",
+      "required": ["entity", "kind", "name", "pinnable", "changed"],
+      "additionalProperties": false,
+      "properties": {
+        "entity": { "type": "string", "description": "The entity document the step read, as a path relative to the workspace root." },
+        "kind": { "type": "string", "description": "The entity's kind, as its document declares it." },
+        "name": { "type": "string", "description": "The entity's name, as its document declares it." },
+        "pinnable": { "type": "boolean", "description": "Whether an entity of this kind reads anything a lock records a pin for, which a Recipe and a FeatureRecipe do. Where it is false nothing beside the entity was touched, `changed` is false, and `lock`, `removed`, `pins` and `content` are absent." },
+        "lock": { "type": "string", "description": "The lock the step wrote, or would write, as a path relative to the workspace root." },
+        "changed": { "type": "boolean", "description": "Whether the lock moved, or would move on a dry run. False where the lock already recorded every pin the entity needs and was left byte-identical." },
+        "removed": { "type": "boolean", "description": "Whether the move is a removal: the entity reads nothing a lock records a pin for, so no lock is left beside it." },
+        "dryRun": { "type": "boolean", "description": "Whether this reports what the step would do rather than what it did." },
+        "pins": { "type": "array", "description": "How many pins of each class the lock holds after the step, or would hold after a dry run. Every class the lock can hold is listed, a class with no pin included.", "items": { "$ref": "#/$defs/PinClassCount" } },
+        "content": { "type": "string", "description": "The lock a dry run would write. Absent where the lock would be left as it is or removed, and on every answer that is not a dry run." }
+      }
+    },
+    "PinClassCount": {
+      "type": "object",
+      "description": "How many pins of one class a lock holds.",
+      "required": ["class", "pins"],
+      "additionalProperties": false,
+      "properties": {
+        "class": { "type": "string", "description": "The class of pin, in the words a refusal naming a missing one uses — `remote source` or `imported file`, for instance." },
+        "pins": { "type": "integer", "description": "How many pins of that class the lock holds." }
+      }
+    },
     "CacheStatusResult": {
       "type": "object",
       "description": "What the caches serving this workspace hold.",
@@ -1961,7 +2008,7 @@
     },
     "PublishEntityResult": {
       "type": "object",
-      "description": "What publishing an entity landed, and where.",
+      "description": "What publishing an entity landed, and where. A publication that ran the pin step first also carries what that step did, as `pin`, which is absent where the step did not run.",
       "required": ["reference", "tag", "kind", "mediaType", "size", "sizeText", "digest", "signed", "alreadyPublished", "dryRun", "reach"],
       "additionalProperties": false,
       "properties": {
@@ -1977,7 +2024,8 @@
         "signed": { "type": "boolean", "description": "Whether what was published carries a signature." },
         "alreadyPublished": { "type": "boolean", "description": "Whether the same bytes were already there, so nothing new was landed." },
         "dryRun": { "type": "boolean", "description": "Whether this reports what publishing would have landed rather than what it did." },
-        "reach": { "$ref": "#/$defs/PublicationReach" }
+        "reach": { "$ref": "#/$defs/PublicationReach" },
+        "pin": { "$ref": "#/$defs/PinResult" }
       }
     },
     "PublishArtifactResult": {
