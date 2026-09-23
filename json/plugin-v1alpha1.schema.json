@@ -284,7 +284,7 @@
             "contract": {
               "type": "object",
               "additionalProperties": false,
-              "description": "The provider's self-declared render-behavior contract: the input kinds it renders, how it assembles a dispatch group's per-node output and which directories that output sits under, the template-delimiter pair it applies to imported artifact files, any restriction on which source files it consumes, whether one loaded instance may serve every crossing, and whether it wires cross-boundary edges. It is the publish-time record of the provider guest's `describe()` self-report, which the host cross-checks against `describe()` at publish and at load. Absent declares no render-behavior contract, and the cross-check compares only the per-export claims.",
+              "description": "The provider's self-declared render-behavior contract: the input kinds it renders, how it assembles a dispatch group's per-node output and which directories that output sits under, the template-delimiter pair it applies to imported artifact files, whether one loaded instance may serve every crossing, and whether it wires cross-boundary edges. It is the publish-time record of the provider guest's `describe()` self-report, which the host cross-checks against `describe()` at publish and at load. Absent declares no render-behavior contract, and the cross-check compares only the per-export claims.",
               "properties": {
                 "inputKinds": {
                   "type": "object",
@@ -326,11 +326,6 @@
                       "description": "The closing delimiter."
                     }
                   }
-                },
-                "sourceFilter": {
-                  "type": "array",
-                  "items": { "type": "string" },
-                  "description": "The source-file paths the plugin consumes when a node supplies a file set. Absent means the plugin consumes every file in the set."
                 },
                 "assemblyNameAnnotation": {
                   "type": "object",

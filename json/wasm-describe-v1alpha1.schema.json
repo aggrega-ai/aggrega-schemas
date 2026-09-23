@@ -44,7 +44,7 @@
         "contract": {
           "$ref": "#/$defs/ProviderContract",
           "x-aggrega-go-type": "*ProviderContract",
-          "description": "The provider's render-behavior self-report — the input kinds it renders, how it assembles a dispatch group's per-node output, the artifact-template delimiter pair it applies, and any source-file restriction. It describes the provider as a whole rather than any one export. Absent for a plugin that declares no render-behavior contract."
+          "description": "The provider's render-behavior self-report — the input kinds it renders, how it assembles a dispatch group's per-node output, and the artifact-template delimiter pair it applies. It describes the provider as a whole rather than any one export. Absent for a plugin that declares no render-behavior contract."
         },
         "description": {
           "type": "string",
@@ -213,7 +213,7 @@
     },
     "ProviderContract": {
       "type": "object",
-      "description": "A provider's self-declaration of the compile-time render behaviors it performs across the nodes it renders — the input kinds it accepts, whether and how it assembles a dispatch group's per-node output into a single artifact, the Go-template delimiter pair it applies to imported artifact files, and any restriction on which source files it consumes. It describes the provider as a whole, not any one export. The load gate cross-checks it against the entity's authored claim.",
+      "description": "A provider's self-declaration of the compile-time render behaviors it performs across the nodes it renders — the input kinds it accepts, whether and how it assembles a dispatch group's per-node output into a single artifact, and the Go-template delimiter pair it applies to imported artifact files. It describes the provider as a whole, not any one export. The load gate cross-checks it against the entity's authored claim.",
       "required": [
         "input_kinds",
         "boundary_assembly"
@@ -233,13 +233,6 @@
           "$ref": "#/$defs/ArtifactDelimiters",
           "x-aggrega-go-type": "*ArtifactDelimiters",
           "description": "The Go-template delimiter pair the plugin applies to imported artifact files. Absent means the default open/close pair; a plugin whose target syntax collides with that pair reports an alternate pair here."
-        },
-        "source_filter": {
-          "type": "array",
-          "description": "The source-file paths the plugin consumes when a node supplies a file set. Absent means the plugin consumes every file in the set.",
-          "items": {
-            "type": "string"
-          }
         },
         "assembly_name_annotation": {
           "$ref": "#/$defs/AssemblyNameAnnotation",
