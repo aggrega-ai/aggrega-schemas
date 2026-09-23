@@ -290,66 +290,6 @@
           "additionalProperties": {
             "type": "string"
           }
-        },
-        "sourceDigests": {
-          "type": "array",
-          "description": "Content pins for the remote sources this recipe references, frozen at resolution from the fetched bytes and read back at build to verify the cached source has not drifted. Each entry mirrors the resolved-source identity {kind, url, chart, moduleSubdir, version} plus the content digest (and, for an OCI-distributed source, the manifest digest). One entry per distinct resolved-source identity the recipe fetches; a recipe whose source resolves to different identities per consuming instance carries one entry per identity. Local (filesystem-relative) sources are never pinned. Written by the resolution phase into a writable recipe file; a recipe fetched from a registry arrives pre-pinned.",
-          "items": {
-            "type": "object",
-            "x-aggrega-go-type": "SourceDigest",
-            "required": ["kind", "url", "version", "digest"],
-            "additionalProperties": false,
-            "properties": {
-              "kind": {
-                "type": "string",
-                "description": "The resolved source kind (e.g. helm-oci-chart, helm-https-chart, compose-https-fragment, git-repository)."
-              },
-              "url": {
-                "type": "string",
-                "description": "The authored source URL the digest pins — the identity URL as written in spec.source.url (a repo root or a direct .tgz for helm-https). Build reconstructs this same URL offline, so it is the stable identity the pin is keyed on, not a resolved artifact location."
-              },
-              "chart": {
-                "type": "string",
-                "description": "The chart name for a repo-root helm source (spec.source.chart), part of the resolved-source identity so two charts served from one repo root at the same version pin distinctly. Absent for a direct .tgz, OCI, compose, or git source, none of which selects a chart within the URL."
-              },
-              "moduleSubdir": {
-                "type": "string",
-                "description": "The directory within a git-sourced repository that is the artifact (spec.source.module_subdir), part of the resolved-source identity so two directories of one repository at the same commit pin distinctly. Absent when the whole repository is the artifact, and for every kind that reaches its artifact by URL rather than by descending into a clone."
-              },
-              "version": {
-                "type": "string",
-                "description": "The concrete pinned version the source resolved to."
-              },
-              "digest": {
-                "type": "string",
-                "description": "The SHA-256 content digest (sha256:<hex>) of the fetched source archive, verified against the cached bytes at build."
-              },
-              "manifestDigest": {
-                "type": "string",
-                "description": "The OCI manifest digest for an OCI-distributed source — the independent root of trust. Present only for an OCI source (a helm-oci-chart); absent for an https or git source, which carries no manifest by construction."
-              }
-            }
-          }
-        },
-        "artifactDigests": {
-          "type": "array",
-          "description": "Content pins for the external files this recipe's artifacts import via $import, frozen at resolution and read back at build to verify the imported file has not drifted. One entry per artifact whose value is a file import; an inline (literal) artifact is already part of the entity and carries no separate pin. Written by the resolution phase into a writable recipe file.",
-          "items": {
-            "type": "object",
-            "x-aggrega-go-type": "ArtifactDigest",
-            "required": ["name", "digest"],
-            "additionalProperties": false,
-            "properties": {
-              "name": {
-                "type": "string",
-                "description": "The artifact key (the artifacts: map key) whose $import file this entry pins."
-              },
-              "digest": {
-                "type": "string",
-                "description": "The SHA-256 content digest (sha256:<hex>) of the imported file's bytes, verified at build."
-              }
-            }
-          }
         }
       },
       "additionalProperties": false
