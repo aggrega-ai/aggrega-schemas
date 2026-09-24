@@ -729,7 +729,7 @@
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
         "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
-        "name": { "type": "string", "description": "The entity to resolve, by name." }
+        "name": { "type": "string", "description": "The entity to resolve, by name — or a registry reference, `oci://<host>/<repository>:<tag>` or `@<digest>` in place of `:<tag>`, to read the entity published at that coordinate." }
       }
     },
     "ReleaseClosureParams": {
@@ -1799,7 +1799,7 @@
     },
     "EntityDefinitionResult": {
       "type": "object",
-      "description": "What an entity name resolves to, and the document defining it.",
+      "description": "What an entity name resolves to, and the document defining it. An answer read from a registry reference carries `published`, and an answer the catalog resolved by name never does.",
       "required": ["kind", "name", "version", "file", "authoredLength", "definition"],
       "additionalProperties": false,
       "properties": {
@@ -1810,7 +1810,20 @@
         "publishScope": { "type": "string", "description": "How widely the entity is published." },
         "file": { "type": "string", "description": "The document defining it." },
         "authoredLength": { "type": "integer", "description": "How many bytes the authored document holds, so a client can tell an authored document from a resolved rendering of one." },
-        "definition": { "type": "string", "description": "The definition's text." }
+        "definition": { "type": "string", "description": "The definition's text." },
+        "published": { "$ref": "#/$defs/PublishedArtifact" }
+      }
+    },
+    "PublishedArtifact": {
+      "type": "object",
+      "description": "What a registry reference read: the coordinate, how it held the entity, and the manifest it was read through. Every field is present wherever this is.",
+      "required": ["reference", "archive", "mediaType", "manifestDigest"],
+      "additionalProperties": false,
+      "properties": {
+        "reference": { "type": "string", "description": "The registry reference that was read." },
+        "archive": { "type": "boolean", "description": "Whether the coordinate's bytes were an archive the entity document was unpacked from. False where the coordinate held the entity document itself." },
+        "mediaType": { "type": "string", "description": "The artifact type the manifest declares." },
+        "manifestDigest": { "type": "string", "description": "The digest of the manifest the entity was read through — the value to name after `@` to read the same bytes again exactly." }
       }
     },
     "ReleaseClosureResult": {
