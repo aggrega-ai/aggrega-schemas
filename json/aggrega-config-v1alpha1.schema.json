@@ -47,7 +47,7 @@
     "pin_sources_at_push": {
       "type": "boolean",
       "default": false,
-      "description": "When true, every `aggrega push` in this workspace runs the entity author's pin step on the entity it publishes before bundling it, so the `entity.lock` the step writes beside the entity is part of what is published; when false (default), push publishes the entity's directory as it stands. The step writes beside the entity, so it runs only where the entity has a writable home, which a push always has: it publishes an entity named by its document. `aggrega push --pin-sources` pins for one invocation and `--pin-sources=false` does not, whatever this setting says. The same step `aggrega pin` runs, writing the same bytes."
+      "description": "When true, every `aggrega push` in this workspace runs the entity author's pin step on the entity it publishes before bundling it, so the `entity.lock` the step writes beside the entity is part of what is published; when false (default), push runs no pin step and refuses a Recipe or FeatureRecipe whose `entity.lock` does not record every pin that step would record, naming `aggrega pin`. The step writes beside the entity, so it runs only where the entity has a writable home, which a push always has: it publishes an entity named by its document. `aggrega push --pin-sources` pins for one invocation and `--pin-sources=false` does not, whatever this setting says. The same step `aggrega pin` runs, writing the same bytes."
     },
     "artifact_cache_dir": {
       "type": "string",
