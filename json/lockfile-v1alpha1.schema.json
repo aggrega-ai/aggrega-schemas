@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/lockfile-v1alpha1.schema.json",
   "title": "Aggrega Per-Release Lockfile",
-  "description": "Machine-generated lockfile pinning every URI resolved from a Release for deterministic future builds. Lives at `<release-stem>.lock` next to `<release-stem>.yaml`; produced by `aggrega pull --release <release>`; consumed by `aggrega build --release <release>`. Two provenance shapes serve two distinct closure-graph relationships: `referenced_from` (list of strings — dotted authoring-site paths) appears on `entities` and `plugins` to record where in the Release / Aggregate / Manifest / `.aggrega-config.yaml` each URI was pulled in from; `consumers` (list of `{consumer_uri, fragments}` records) appears on `schema_libraries`, `mapping_libraries`, `workload_libraries`, and `artifact_libraries` to record which catalog entity references which `<entry-name>` fragments of a library — the structured shape makes consumer-affected-by-library-bump diffs traceable without re-running closure. Schema evolution discipline: adding a new top-level section is SemVer-MINOR (additive); adding a new field inside an existing section is SemVer-MINOR; removing a key or tightening a constraint is SemVer-MAJOR. A future additive `source_artifacts` section is reserved for the source-resolution amendment.",
+  "description": "Machine-generated lockfile pinning every URI resolved from a Release for deterministic future builds. Lives at `<release-stem>.lock` next to `<release-stem>.yaml`; produced by `aggrega pull --release <release>`; consumed by `aggrega build --release <release>`. Two provenance shapes serve two distinct closure-graph relationships: `referenced_from` (list of strings — dotted authoring-site paths) appears on `entities` and `plugins` to record where in the Release / Aggregate / Manifest / `.aggrega-config.yaml` each URI was pulled in from; `consumers` (list of `{consumer_uri, fragments}` records) appears on `schema_libraries`, `mapping_libraries`, `workload_libraries`, and `artifact_libraries` to record which catalog entity references which `<entry-name>` fragments of a library — the structured shape makes consumer-affected-by-library-bump diffs traceable without re-running closure. Schema evolution discipline: adding a new top-level section is SemVer-MINOR (additive); adding a new field inside an existing section is SemVer-MINOR; removing a key or tightening a constraint is SemVer-MAJOR.",
   "type": "object",
   "additionalProperties": false,
   "required": ["version", "release", "generated_at"],
@@ -177,7 +177,26 @@
     },
     "release": {
       "type": "string",
-      "description": "Path to the Release this lockfile corresponds to, resolved relative to the lockfile's own directory (e.g. `./release-prod.yaml`). The per-Release naming convention places `<release-stem>.lock` next to `<release-stem>.yaml`; the relative path makes the lockfile self-describing without machine-specific absolute paths."
+      "description": "Path to the Release this lockfile corresponds to, resolved relative to the lockfile's own directory (e.g. `./release-prod.yaml`). The per-Release naming convention places `<release-stem>.lock` next to `<release-stem>.yaml`; the relative path makes the lockfile self-describing without machine-specific absolute paths. This names the Release; what the Release held when it was resolved is recorded under `release_documents`."
+    },
+    "release_documents": {
+      "type": "array",
+      "description": "The Release files the resolution read, each recorded by the content digest of its bytes: the Release this lockfile belongs to first, then each Release it extends, in the order the `extends` chain is walked. Everything a Release asks for is resolved from what it holds, so a Release edited after the pull no longer matches its recorded digest, and a build — or `aggrega pull --verify` — halts naming the file, with `aggrega pull --release <release>` as the remediation, before anything renders. The digest covers the bytes as they are, with nothing normalised away, the same rule the Aggregate and Manifest pins follow: a comment or whitespace edit counts as a change. A lockfile without this section records no Release file, and a build holding one reports the Release as not recorded. A file the Release imports through `parameters` is not recorded here.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["digest", "path"],
+        "properties": {
+          "digest": {
+            "type": "string",
+            "description": "The `sha256:...` content digest of the Release file's bytes when the resolution read them."
+          },
+          "path": {
+            "type": "string",
+            "description": "The Release file's path relative to the directory holding the Release this lockfile belongs to, with forward slashes (e.g. `release-prod.yaml`, `../shared/base-release.yaml`) — never an absolute host path, so the record is portable and deterministic."
+          }
+        }
+      }
     },
     "schema_libraries": {
       "type": "array",
