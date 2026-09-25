@@ -2038,7 +2038,8 @@
         "alreadyPublished": { "type": "boolean", "description": "Whether the same bytes were already there, so nothing new was landed." },
         "dryRun": { "type": "boolean", "description": "Whether this reports what publishing would have landed rather than what it did." },
         "reach": { "$ref": "#/$defs/PublicationReach" },
-        "pin": { "$ref": "#/$defs/PinResult" }
+        "pin": { "$ref": "#/$defs/PinResult" },
+        "wholeDirectorySource": { "type": "string", "description": "The entity's local source as authored, present when it is written as a template. Such a source names its directory only once a Release fills the template in, so the publication carries every file in the entity's directory rather than only the files the entity names. Absent where it carries only those files." }
       }
     },
     "PublishArtifactResult": {
