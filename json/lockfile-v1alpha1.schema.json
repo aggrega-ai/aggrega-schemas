@@ -22,15 +22,18 @@
           },
           "resolved_version": {
             "type": "string",
-            "description": "Concrete version the resolver selected at pull time (e.g. `1.2.3`)."
+            "pattern": "^([^/\\\\.]|\\.[^/\\\\.])*\\.?$",
+            "description": "Concrete version the resolver selected at pull time — a catalog entity's own version (e.g. `1.2.3`), or empty for a top-level entity resolved by path rather than by version. Recorded as a single path segment, because it names one, so it carries no `/`, no `\\` and no `..`: the value builds the cache slot the build reads this entity back from, and a value that stepped out of the cache directory would name a location outside it."
           },
           "digest": {
             "type": "string",
-            "description": "Content digest of the resolved artifact (e.g. `sha256:...`)."
+            "pattern": "^sha256:[a-f0-9]{64}$",
+            "description": "Content digest of the resolved artifact, in `sha256:` followed by 64 lowercase hex characters — the form the content-address is written in everywhere it is compared."
           },
           "manifest_digest": {
             "type": "string",
-            "description": "OCI manifest digest of the resolved artifact (e.g. `sha256:...`). The signature commits to this digest; the content `digest` above is the portable identity used for the cache pin and integrity check. Present only for a registry-resolved entity."
+            "pattern": "^sha256:[a-f0-9]{64}$",
+            "description": "OCI manifest digest of the resolved artifact, in `sha256:` followed by 64 lowercase hex characters. The signature commits to this digest; the content `digest` above is the portable identity used for the cache pin and integrity check. Present only for a registry-resolved entity."
           },
           "referenced_from": {
             "type": "array",
@@ -104,7 +107,8 @@
                 },
                 "digest": {
                   "type": "string",
-                  "description": "The `sha256:...` content-address of the recorded content. A re-pull compares the underlying file against this digest to detect drift."
+                  "pattern": "^sha256:[a-f0-9]{64}$",
+                  "description": "The content-address of the recorded content, in `sha256:` followed by 64 lowercase hex characters. A re-pull compares the underlying file against this digest to detect drift."
                 },
                 "path": {
                   "type": "string",
@@ -131,15 +135,18 @@
           },
           "resolved_version": {
             "type": "string",
-            "description": "Concrete version resolved at pull time."
+            "pattern": "^sha256:[a-f0-9]{64}$",
+            "description": "The content digest the Wasm artifact resolved to, in `sha256:` followed by 64 lowercase hex characters. A plugin artifact is content-addressed rather than version-named — a .wasm rides inline in its plugin manifest and is pinned by the digest of its bytes — so this field records that digest, which is also the `digest` below. It builds the cache slot the build reads the artifact back from, so it carries no `/`, no `\\` and no `..`, which the `sha256:` form already excludes."
           },
           "digest": {
             "type": "string",
-            "description": "Content digest of the resolved Wasm artifact (e.g. `sha256:...`)."
+            "pattern": "^sha256:[a-f0-9]{64}$",
+            "description": "Content digest of the resolved Wasm artifact, in `sha256:` followed by 64 lowercase hex characters — the form the content-address is written in everywhere it is compared."
           },
           "manifest_digest": {
             "type": "string",
-            "description": "OCI manifest digest of the resolved Wasm artifact (e.g. `sha256:...`). The signature commits to this digest; the content `digest` above is the portable identity used for the cache pin and integrity check. Present only for a registry-resolved artifact."
+            "pattern": "^sha256:[a-f0-9]{64}$",
+            "description": "OCI manifest digest of the resolved Wasm artifact, in `sha256:` followed by 64 lowercase hex characters. The signature commits to this digest; the content `digest` above is the portable identity used for the cache pin and integrity check. Present only for a registry-resolved artifact."
           },
           "referenced_from": {
             "type": "array",
@@ -189,7 +196,8 @@
         "properties": {
           "digest": {
             "type": "string",
-            "description": "The `sha256:...` content digest of the Release file's bytes when the resolution read them."
+            "pattern": "^sha256:[a-f0-9]{64}$",
+            "description": "The content digest of the Release file's bytes when the resolution read them, in `sha256:` followed by 64 lowercase hex characters."
           },
           "path": {
             "type": "string",
@@ -218,7 +226,8 @@
       "properties": {
         "compiler_version": {
           "type": "string",
-          "description": "Version of the compiler that wrote this lockfile, in the v-less form every Aggrega surface reports (`1.2.0`, not `v1.2.0`). A tagged release build records its tag; a build from source records the `(devel)` marker, so a lockfile produced by an unreleased compiler is not mistaken for release output."
+          "pattern": "^([^/\\\\.]|\\.[^/\\\\.])*\\.?$",
+          "description": "Version of the compiler that wrote this lockfile, in the v-less form every Aggrega surface reports (`1.2.0`, not `v1.2.0`). A tagged release build records its tag; a build from source records the `(devel)` marker, so a lockfile produced by an unreleased compiler is not mistaken for release output. Recorded as a single path segment, so it carries no `/`, no `\\` and no `..`."
         },
         "core_plugins": {
           "type": "array",
@@ -235,7 +244,8 @@
               },
               "version": {
                 "type": "string",
-                "description": "Version of this core plugin, in the v-less form every Aggrega surface reports."
+                "pattern": "^([^/\\\\.]|\\.[^/\\\\.])*\\.?$",
+                "description": "Version of this core plugin, in the v-less form every Aggrega surface reports. Recorded as a single path segment, so it carries no `/`, no `\\` and no `..`."
               }
             }
           }
@@ -270,7 +280,8 @@
               "properties": {
                 "digest": {
                   "type": "string",
-                  "description": "The `sha256:...` content-address of the rule-input file's bytes at pull time. A re-pull recomputes it, so a changed rule file surfaces as a lockfile diff."
+                  "pattern": "^sha256:[a-f0-9]{64}$",
+                  "description": "The content-address of the rule-input file's bytes at pull time, in `sha256:` followed by 64 lowercase hex characters. A re-pull recomputes it, so a changed rule file surfaces as a lockfile diff."
                 },
                 "path": {
                   "type": "string",
@@ -344,7 +355,8 @@
         },
         "size": {
           "type": "integer",
-          "description": "Size in bytes of the pinned payload."
+          "minimum": 0,
+          "description": "Size in bytes of the pinned payload. A byte count is never negative."
         },
         "url": {
           "type": "string",
@@ -364,15 +376,18 @@
         },
         "resolved_version": {
           "type": "string",
-          "description": "Concrete version resolved at pull time (MVS selection over the library-dependency graph)."
+          "pattern": "^([^/\\\\.]|\\.[^/\\\\.])*\\.?$",
+          "description": "Concrete version resolved at pull time (minimum-version selection over the library-dependency graph) — the library's own version. Recorded as a single path segment, because it builds the cache slot the build reads the library back from, so it carries no `/`, no `\\` and no `..`: a value that stepped out of the cache directory would name a location outside it."
         },
         "digest": {
           "type": "string",
-          "description": "Content digest of the resolved library artifact (e.g. `sha256:...`)."
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "Content digest of the resolved library artifact, in `sha256:` followed by 64 lowercase hex characters — the form the content-address is written in everywhere it is compared."
         },
         "manifest_digest": {
           "type": "string",
-          "description": "OCI manifest digest of the resolved library artifact (e.g. `sha256:...`). The signature commits to this digest; the content `digest` above is the portable identity used for the cache pin and integrity check. Present only for a registry-resolved library."
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "OCI manifest digest of the resolved library artifact, in `sha256:` followed by 64 lowercase hex characters. The signature commits to this digest; the content `digest` above is the portable identity used for the cache pin and integrity check. Present only for a registry-resolved library."
         },
         "signature": {
           "$ref": "#/$defs/VerifiedSignature",
@@ -429,7 +444,8 @@
         },
         "pinned_version": {
           "type": "string",
-          "description": "The concrete version pinned at pull time. For helm-* kinds, the chart version. For git-repository, the commit the authored reference resolved to (NOT the original tag/branch ref — that is recorded under `requested_ref:` on each `referenced_by:` entry, whenever the Recipe authored a `spec.source.ref:`). A build finds this entry by what the Recipe wrote: the authored `ref:` where there is one, matched against the recorded `requested_ref:`, and this pinned value otherwise — so a Recipe that names a tag resolves to the commit that tag was pinned at, without the commit ever appearing in the Recipe."
+          "pattern": "^([^/\\\\.]|\\.[^/\\\\.])*\\.?$",
+          "description": "The concrete version pinned at pull time. For helm-* kinds, the chart version. For git-repository, the commit the authored reference resolved to (NOT the original tag/branch ref — that is recorded under `requested_ref:` on each `referenced_by:` entry, whenever the Recipe authored a `spec.source.ref:`). A build finds this entry by what the Recipe wrote: the authored `ref:` where there is one, matched against the recorded `requested_ref:`, and this pinned value otherwise — so a Recipe that names a tag resolves to the commit that tag was pinned at, without the commit ever appearing in the Recipe. Recorded as a single path segment, because it builds the cache slot the build reads the artifact back from, so it carries no `/`, no `\\` and no `..`."
         },
         "resolved_url": {
           "type": "string",
@@ -437,11 +453,13 @@
         },
         "digest": {
           "type": "string",
-          "description": "Content digest of the resolved .tar.gz archive (e.g. `sha256:...`). Build-time verification reads the cache slot's bytes, recomputes the digest, and compares against this field; mismatch halts with ErrFetchIntegrity."
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "Content digest of the resolved .tar.gz archive, in `sha256:` followed by 64 lowercase hex characters. Build-time verification reads the cache slot's bytes, recomputes the digest, and compares against this field; mismatch halts with ErrFetchIntegrity."
         },
         "manifest_digest": {
           "type": "string",
-          "description": "OCI manifest digest of the resolved artifact (e.g. `sha256:...`). The manifest is the independent root of trust the cached archive is verified against; the content `digest` above is the portable identity used for the cache pin and integrity check. Present only for an OCI-distributed source (a helm-oci-chart)."
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "OCI manifest digest of the resolved artifact, in `sha256:` followed by 64 lowercase hex characters. The manifest is the independent root of trust the cached archive is verified against; the content `digest` above is the portable identity used for the cache pin and integrity check. Present only for an OCI-distributed source (a helm-oci-chart)."
         },
         "mediatype": {
           "type": "string",
@@ -487,7 +505,8 @@
       "properties": {
         "bundle_digest": {
           "type": "string",
-          "description": "SHA-256 digest (`sha256:...`) of the cached signature bundle blob. Names the cache blob and is the integrity gate for an air-gapped re-verify."
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "SHA-256 digest of the cached signature bundle blob, in `sha256:` followed by 64 lowercase hex characters. It names the cache blob and is the integrity gate for an air-gapped re-verify, so it builds a path and carries no `/`, no `\\` and no `..` — which the `sha256:` form already excludes."
         },
         "identity": {
           "type": "string",

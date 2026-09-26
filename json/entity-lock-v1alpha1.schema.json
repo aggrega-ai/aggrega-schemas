@@ -22,8 +22,8 @@
         "additionalProperties": false,
         "properties": {
           "kind": {
-            "type": "string",
-            "description": "The resolved source kind (e.g. helm-oci-chart, helm-https-chart, compose-https-fragment, git-repository)."
+            "enum": ["helm-oci-chart", "helm-https-chart", "compose-https-fragment", "git-repository", "terraform-module-oci"],
+            "description": "The resolved source kind. One of a closed set — the same set the lockfile's source-artifact `kind` and the cache metadata's `kind` carry — because all three record the same resolved-source identities and a build reads the kind to choose the loader. `terraform-module-oci` is reserved for the future terraform provider; no adapter ships at the moment."
           },
           "url": {
             "type": "string",
@@ -39,15 +39,18 @@
           },
           "version": {
             "type": "string",
-            "description": "The concrete pinned version the source resolved to."
+            "pattern": "^([^/\\\\.]|\\.[^/\\\\.])*\\.?$",
+            "description": "The concrete pinned version the source resolved to — a chart version for a helm-* kind, the commit a git-repository reference resolved to. Recorded as a single path segment, because it builds the cache slot the build reads the source back from, so it carries no `/`, no `\\` and no `..`."
           },
           "digest": {
             "type": "string",
-            "description": "The SHA-256 content digest (sha256:<hex>) of the fetched source archive, verified against the cached bytes at build."
+            "pattern": "^sha256:[a-f0-9]{64}$",
+            "description": "The content digest of the fetched source archive, in `sha256:` followed by 64 lowercase hex characters, verified against the cached bytes at build."
           },
           "manifestDigest": {
             "type": "string",
-            "description": "The OCI manifest digest for an OCI-distributed source — the independent root of trust. Present only for an OCI source (a helm-oci-chart); absent for an https or git source, which carries no manifest by construction."
+            "pattern": "^sha256:[a-f0-9]{64}$",
+            "description": "The OCI manifest digest for an OCI-distributed source — the independent root of trust — in `sha256:` followed by 64 lowercase hex characters. Present only for an OCI source (a helm-oci-chart); absent for an https or git source, which carries no manifest by construction."
           }
         }
       }
@@ -67,7 +70,8 @@
           },
           "digest": {
             "type": "string",
-            "description": "The SHA-256 content digest (sha256:<hex>) of the imported file's bytes, verified at build."
+            "pattern": "^sha256:[a-f0-9]{64}$",
+            "description": "The content digest of the imported file's bytes, in `sha256:` followed by 64 lowercase hex characters, verified at build."
           }
         }
       }
@@ -87,7 +91,8 @@
           },
           "digest": {
             "type": "string",
-            "description": "The SHA-256 content digest (sha256:<hex>) of the file's bytes, verified at build."
+            "pattern": "^sha256:[a-f0-9]{64}$",
+            "description": "The content digest of the file's bytes, in `sha256:` followed by 64 lowercase hex characters, verified at build."
           }
         }
       }

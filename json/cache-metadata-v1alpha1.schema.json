@@ -21,7 +21,8 @@
     },
     "version": {
       "type": "string",
-      "description": "The concrete version the resolver pinned at pull time. For helm-* kinds, the chart version. For git-repository, the commit the authored reference resolved to."
+      "pattern": "^([^/\\\\.]|\\.[^/\\\\.])*\\.?$",
+      "description": "The concrete version the resolver pinned at pull time. For helm-* kinds, the chart version. For git-repository, the commit the authored reference resolved to. Recorded as a single path segment, because it builds the cache slot this metadata sits in, so it carries no `/`, no `\\` and no `..`."
     },
     "digest": {
       "type": "string",
