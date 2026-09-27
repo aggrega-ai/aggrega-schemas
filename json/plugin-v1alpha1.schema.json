@@ -286,7 +286,7 @@
             "contract": {
               "type": "object",
               "additionalProperties": false,
-              "description": "The provider's self-declared render-behavior contract: the input kinds it renders, how it assembles a dispatch group's per-node output and which directories that output sits under, the template-delimiter pair it applies to imported artifact files, whether one loaded instance may serve every crossing, and whether it wires cross-boundary edges. It is the publish-time record of the provider guest's `describe()` self-report, which the host cross-checks against `describe()` at publish and at load. Absent declares no render-behavior contract, and the cross-check compares only the per-export claims.",
+              "description": "The provider's self-declared render-behavior contract: the input kinds it renders, how it assembles a dispatch group's per-node output and which directories that output sits under, the template-delimiter pair it applies to imported artifact files, whether one loaded instance may serve every crossing, whether it wires cross-boundary edges, and which files its ecosystem never ships beside a source. It is the publish-time record of the provider guest's `describe()` self-report, which the host cross-checks against `describe()` at publish and at load. Absent declares no render-behavior contract, and the cross-check compares only the per-export claims.",
               "properties": {
                 "inputKinds": {
                   "type": "object",
@@ -357,6 +357,24 @@
                 "nestSegment": {
                   "type": "string",
                   "description": "The directory this provider's target places each contributor's own sub-directory under, for a provider whose `boundaryAssembly` is `nest` — `charts` for a chart umbrella, `modules` for a root module. The compiler joins this directory, the contributor's name, and each file's own path. Read only for a nesting provider. Absent places each contributor's sub-directory directly at the boundary's own directory. The value names one directory and never a path."
+                },
+                "sourceIgnore": {
+                  "type": "object",
+                  "x-aggrega-go-type": "*PluginSourceIgnore",
+                  "additionalProperties": false,
+                  "description": "The files this provider's ecosystem never ships beside a source it renders, as ignore rules in gitignore syntax — the publish-time record of the `source_ignore` rules its `describe()` reports. When an author pins a Recipe or FeatureRecipe whose capability this provider serves for them, these rules are composed with the author's own `.aggregaignore` and recorded in the `entity.lock` beside the entity, together with this plugin's reference and digest, and every later publication, comparison and render of the entity's local source applies the recorded rules. Where present it must equal what `describe()` reports, and the load refuses a plugin whose report differs; absent makes no claim and is not compared.",
+                  "properties": {
+                    "patterns": {
+                      "type": "array",
+                      "description": "The ecosystem's own ignore patterns, each scoped to the root of the local source directory, in the order they apply.",
+                      "items": { "type": "string" }
+                    },
+                    "files": {
+                      "type": "array",
+                      "description": "The names of the ignore files the ecosystem honours inside a source — `.helmignore` for a chart. Each such file's lines are further patterns, scoped to the directory holding it.",
+                      "items": { "type": "string" }
+                    }
+                  }
                 }
               }
             }
