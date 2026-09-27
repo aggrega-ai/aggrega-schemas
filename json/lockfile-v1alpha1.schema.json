@@ -510,7 +510,7 @@
         },
         "identity": {
           "type": "string",
-          "description": "Verified certificate subject for a keyless signature (which trusted identity matched). Empty for a keyed signature."
+          "description": "Verified signer of the signature: the signing certificate's subject for a keyless signature, or `keyed:sha256:` followed by the SHA-256 of the pinned public key's PEM text for a keyed signature."
         },
         "issuer": {
           "type": "string",

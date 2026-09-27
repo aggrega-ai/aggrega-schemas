@@ -1531,6 +1531,36 @@
         "error": { "type": "string", "description": "What failed for this host, so a walk over several reports which of them failed without the caller correlating anything." }
       }
     },
+    "PublishedVersion": {
+      "type": "object",
+      "description": "One version the index holds for a reference: the manifest digest its tag resolved to when the index was built and, where the trust policy the index was built under verified the version's own signature, the signer it verified as. The signer is absent for a version with no signature, for one none of whose signatures verified, and where that policy pins neither a public key nor a trusted identity or switches signature verification off. None of those is a basis for naming a signer, and its absence says nothing more.",
+      "required": ["version", "manifestDigest"],
+      "additionalProperties": false,
+      "properties": {
+        "version": { "type": "string", "description": "The version, as its tag names it." },
+        "manifestDigest": { "type": "string", "description": "The digest of the manifest the version's tag resolved to when the index was built, which addresses the version by the bytes it names rather than by its tag." },
+        "signer": { "$ref": "#/$defs/VerifiedSignature" }
+      }
+    },
+    "VerifiedSignature": {
+      "type": "object",
+      "description": "A signature that verified against a registry's trust policy: how it verified, the signer it verified as, and the digest of the signature bundle that verified.",
+      "required": ["bundleDigest", "mode"],
+      "additionalProperties": false,
+      "properties": {
+        "bundleDigest": { "type": "string", "description": "The digest of the signature bundle that verified, as `sha256:` followed by 64 lowercase hex characters." },
+        "identity": { "type": "string", "description": "The signer the signature verified as: for a keyless signature, the identity the signing certificate was issued for, which is its subject alternative name; for a keyed signature, `keyed:sha256:` followed by the lowercase hex SHA-256 of the pinned public key's PEM text." },
+        "issuer": { "type": "string", "description": "The OIDC issuer recorded in the signing certificate, for a keyless signature. It is absent for a keyed signature." },
+        "mode": {
+          "type": "string",
+          "description": "How the signature verified. The set is closed.",
+          "oneOf": [
+            { "const": "keyless", "description": "Against a signing certificate whose identity and issuer match one the policy trusts, which chains to the trust root the policy pins or, where it pins none, to the public-good Sigstore root, and whose signature a transparency log records." },
+            { "const": "keyed", "description": "Against the public key the policy pins." }
+          ]
+        }
+      }
+    },
     "RegistrySearchRecord": {
       "type": "object",
       "description": "One record a search matched, as the local index holds it, plus which of its versions a published marker has deprecated.",
@@ -1550,6 +1580,7 @@
         "manifestDigest": { "type": "string", "description": "The digest of the published manifest." },
         "listingDigest": { "type": "string", "description": "The digest of the listing the record was read from." },
         "deprecations": { "type": "array", "description": "The deprecation markers the index carries for this reference, each with the version it covers and the verified marker itself.", "items": { "type": "object", "x-aggrega-go-type": "json.RawMessage" } },
+        "published": { "type": "array", "description": "Every version the index holds for this reference, in the same order as `versions`, each with the manifest digest its tag resolved to when the index was built and, where the trust policy the index was built under verified that version's own signature, its verified signer. A version recorded with no signer carries no signature that policy verified, and nothing more is said about it. Only manifests and signature attachments are read from the registry to record this; no entity's content is fetched.", "items": { "$ref": "#/$defs/PublishedVersion" } },
         "retracted": { "type": "array", "description": "The versions a published marker has deprecated.", "items": { "type": "string" } }
       }
     },

@@ -465,7 +465,7 @@
         },
         "timestamp_url": {
           "type": "string",
-          "description": "RFC3161 timestamp-authority URL for keyless signing. When unset, the public-good timestamp authority is used."
+          "description": "RFC3161 timestamp-authority URL for keyless signing. It has no default: when unset, no timestamp authority is contacted, and a keyless signature's trusted time comes from its transparency-log entry."
         },
         "key_path": {
           "type": "string",
