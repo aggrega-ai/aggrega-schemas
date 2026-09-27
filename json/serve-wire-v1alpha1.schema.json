@@ -2242,10 +2242,11 @@
     "ReleaseCandidatesResult": {
       "type": "object",
       "description": "The Releases the workspace holds.",
-      "required": ["releases"],
+      "required": ["releases", "lockfiles"],
       "additionalProperties": false,
       "properties": {
-        "releases": { "type": ["array", "null"], "description": "Each Release document.", "items": { "type": "string" } }
+        "releases": { "type": ["array", "null"], "description": "Each Release document.", "items": { "type": "string" } },
+        "lockfiles": { "type": "object", "x-aggrega-go-type": "map[string]string", "description": "The lockfile of each Release listed, keyed by the Release exactly as it is listed. Each is the file a pull writes for that Release and a build reads, so a client reads where it lives rather than working it out. Empty when the workspace holds no Release.", "additionalProperties": { "type": "string" } }
       }
     },
     "ActiveReleaseResult": {
@@ -2255,6 +2256,7 @@
       "additionalProperties": false,
       "properties": {
         "release": { "type": "string", "description": "The Release that was settled on, or empty where none was." },
+        "lockfile": { "type": "string", "description": "The lockfile of the Release that was settled on: the file a pull writes for it and a build reads. Absent where no Release was settled on." },
         "reason": { "type": "string", "description": "Why no Release was settled on." },
         "trace": { "type": "string", "description": "Each step of the choice and what it found, so a caller can see which one would have settled it." }
       }
