@@ -1769,13 +1769,14 @@
     "InitializeResult": {
       "type": "object",
       "description": "What the session settled on for this client, and which configuration layer it resolved from.",
-      "required": ["capabilities", "workspaceRoot", "configSource"],
+      "required": ["capabilities", "workspaceRoot", "configSource", "version"],
       "additionalProperties": false,
       "properties": {
         "capabilities": { "$ref": "#/$defs/ServerCapabilities" },
         "workspaceRoot": { "type": "string", "description": "The workspace the session opened over." },
         "configSource": { "type": "string", "description": "Which configuration layer the session resolved its settings from." },
-        "workspaceMarker": { "type": "string", "description": "The file that identified the workspace root, where one did." }
+        "workspaceMarker": { "type": "string", "description": "The file that identified the workspace root, where one did." },
+        "version": { "type": "string", "description": "The version of the binary answering this session: the same value `aggrega version` reports for that binary. It describes the running process, so once the file the daemon was started from has been replaced, this still names the version that is running while asking the file names the version that replaced it." }
       }
     },
     "ValidateResult": {
