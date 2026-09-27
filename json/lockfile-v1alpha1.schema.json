@@ -10,7 +10,7 @@
     "entities": {
       "type": "array",
       "default": [],
-      "description": "Catalog entities reachable from this Release: Component, Feature, Recipe, FeatureRecipe, Aggregate. Each entry is keyed by canonical URI and records the resolved version, content digest, and the authoring-site origins (`referenced_from`) that pulled the URI into closure.",
+      "description": "Catalog entities reachable from this Release: Component, Feature, Recipe, FeatureRecipe, Plugin, Aggregate, and the Release's own Aggregate and Manifest. Each entry is keyed by canonical URI and records the resolved version, the digest of what the entity carries, and the authoring-site origins (`referenced_from`) that pulled the URI into closure.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -28,12 +28,12 @@
           "digest": {
             "type": "string",
             "pattern": "^sha256:[a-f0-9]{64}$",
-            "description": "Content digest of the resolved artifact, in `sha256:` followed by 64 lowercase hex characters — the form the content-address is written in everywhere it is compared."
+            "description": "Digest of what a publication of the entity carries, in `sha256:` followed by 64 lowercase hex characters: the SHA-256 over the entity's document and every file it declares beside it, sorted by path, each contributing its path, whether it is executable, and the SHA-256 of its bytes. An entity that declares no file counts as its one document. Nothing else enters it — not how an archive was compressed, not a timestamp, not any permission bit but execute — so the entity records the same digest read from a catalog directory or fetched from a registry, and on any checkout of the same files."
           },
           "manifest_digest": {
             "type": "string",
             "pattern": "^sha256:[a-f0-9]{64}$",
-            "description": "OCI manifest digest of the resolved artifact, in `sha256:` followed by 64 lowercase hex characters. The signature commits to this digest; the content `digest` above is the portable identity used for the cache pin and integrity check. Present only for a registry-resolved entity."
+            "description": "OCI manifest digest of the resolved artifact, in `sha256:` followed by 64 lowercase hex characters. The signature commits to this digest, and the manifest names the digest of the published bytes, which a fetch and a cached read are checked against before the entity is held to its `digest` above. Present only for a registry-resolved entity."
           },
           "referenced_from": {
             "type": "array",
