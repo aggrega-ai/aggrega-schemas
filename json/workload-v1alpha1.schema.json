@@ -356,7 +356,7 @@
       "additionalProperties": false,
       "properties": {
         "cpu": { "type": "string", "description": "CPU quantity (e.g., '100m', '0.5', '2'). helm emits it verbatim under resources.{requests,limits}.cpu. compose maps it to deploy.resources.{reservations,limits}.cpus as fractional cores — a millicpu quantity is converted (500m becomes 0.5); a plain core quantity passes through. A quantity compose cannot convert halts loudly rather than emitting a wrong value." },
-        "memory": { "type": "string", "description": "Memory quantity (e.g., '128Mi', '1Gi'). helm emits it verbatim under resources.{requests,limits}.memory. compose maps it to deploy.resources.{reservations,limits}.memory as an exact byte count. Integer quantities with a binary (Ki/Mi/Gi/Ti/Pi) or decimal (k/M/G/T/P) suffix, or a plain byte integer, are converted exactly; a fractional or otherwise unconvertible quantity halts loudly rather than rounding." }
+        "memory": { "type": "string", "description": "Memory quantity (e.g., '128Mi', '1Gi'). helm emits it verbatim under resources.{requests,limits}.memory. compose maps it to deploy.resources.{reservations,limits}.memory as an exact byte count. A quantity that comes to a whole number of bytes is converted exactly (1.5Gi becomes 1610612736); one that does not, or that is not a quantity, halts loudly rather than rounding." }
       },
       "patternProperties": {
         "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)+/[A-Za-z0-9]([-A-Za-z0-9_.]*[A-Za-z0-9])?$": {
