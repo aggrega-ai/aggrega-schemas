@@ -198,7 +198,7 @@
               },
               "flags": {
                 "type": "array",
-                "description": "The command's flags, in declared order. Each entry contributes one flag the host registers on the command so aggrega help <command> renders it like a core command's flag. A command with no flags leaves it empty.",
+                "description": "The command's flags, in declared order. Each entry contributes one flag the host registers on the command so aggrega help <command> renders it like a core command's flag. A command with no flags leaves it empty. Within a command each flag name and each shorthand appears once, and none reuses a flag every aggrega command already has — `--help`, `-h` and the global flags; the host checks this when it adds the plugin's commands, and a plugin whose declarations fail is not added, with a warning.",
                 "items": {
                   "type": "object",
                   "x-aggrega-go-type": "PluginCommandFlag",
@@ -212,7 +212,8 @@
                     },
                     "shorthand": {
                       "type": "string",
-                      "description": "The flag's optional single-character short alias — the -x form an operator may pass instead of the long name. Absent means the flag has no short alias."
+                      "pattern": "^[A-Za-z0-9]$",
+                      "description": "The flag's optional short alias — the -x form an operator may pass instead of the long name — as a single ASCII letter or digit. Absent means the flag has no short alias."
                     },
                     "description": {
                       "type": "string",
@@ -220,11 +221,12 @@
                     },
                     "type": {
                       "type": "string",
-                      "description": "The flag's value type — for example string, bool, or int. Absent carries no type claim."
+                      "enum": ["string", "bool", "int"],
+                      "description": "The flag's value type — `string`, `bool` or `int` — and the kind of flag help renders it as. Absent renders it as a string flag."
                     },
                     "default": {
                       "type": "string",
-                      "description": "The flag's default value when the operator does not pass it, expressed as a string. Absent means the flag declares no default."
+                      "description": "The flag's default value when the operator does not pass it, expressed as a string. For a `bool` or `int` flag it is a value of that type. Absent means the flag declares no default."
                     }
                   }
                 }
