@@ -1533,13 +1533,22 @@
     },
     "PublishedVersion": {
       "type": "object",
-      "description": "One version the index holds for a reference: the manifest digest its tag resolved to when the index was built and, where the trust policy the index was built under verified the version's own signature, the signer it verified as. The signer is absent for a version with no signature, for one none of whose signatures verified, and where that policy pins neither a public key nor a trusted identity or switches signature verification off. None of those is a basis for naming a signer, and its absence says nothing more.",
+      "description": "One version the index holds for a reference: the manifest digest its tag resolved to when the index was built; where the trust policy the index was built under verified the version's own signature, the signer it verified as; and, where anything records it, when the version was published, with the source that says so. The signer is absent for a version with no signature, for one none of whose signatures verified, and where that policy pins neither a public key nor a trusted identity or switches signature verification off. None of those is a basis for naming a signer, and its absence says nothing more. The publication date is absent where the publication stated none and no keyless signature that policy verified records one.",
       "required": ["version", "manifestDigest"],
       "additionalProperties": false,
       "properties": {
         "version": { "type": "string", "description": "The version, as its tag names it." },
         "manifestDigest": { "type": "string", "description": "The digest of the manifest the version's tag resolved to when the index was built, which addresses the version by the bytes it names rather than by its tag." },
-        "signer": { "$ref": "#/$defs/VerifiedSignature" }
+        "signer": { "$ref": "#/$defs/VerifiedSignature" },
+        "publishedAt": { "type": "string", "description": "When the version was published, as an RFC 3339 timestamp in UTC to the second. Where it came from is `publishedAtSource`, and the two are present together or not at all." },
+        "publishedAtSource": {
+          "type": "string",
+          "description": "Where `publishedAt` came from, so a time a transparency log attests is never mistaken for one the publisher states. The set is closed.",
+          "oneOf": [
+            { "const": "transparency-log", "description": "The time a transparency log recorded the version's keyless signature, which the trust policy the index was built under verified along with the log's signed promise of that time. For a version signed as it was published, it is the publication; for one signed afterwards, it is when that signature was made." },
+            { "const": "publisher", "description": "The time the publication stated beside what it published, from the publishing machine's own clock. Nothing attests it. A publication states one where its signature carries no attested time: a keyed signature, or none. Where several are attached, the earliest is taken." }
+          ]
+        }
       }
     },
     "VerifiedSignature": {
@@ -1580,7 +1589,7 @@
         "manifestDigest": { "type": "string", "description": "The digest of the published manifest." },
         "listingDigest": { "type": "string", "description": "The digest of the listing the record was read from." },
         "deprecations": { "type": "array", "description": "The deprecation markers the index carries for this reference, each with the version it covers and the verified marker itself.", "items": { "type": "object", "x-aggrega-go-type": "json.RawMessage" } },
-        "published": { "type": "array", "description": "Every version the index holds for this reference, in the same order as `versions`, each with the manifest digest its tag resolved to when the index was built and, where the trust policy the index was built under verified that version's own signature, its verified signer. A version recorded with no signer carries no signature that policy verified, and nothing more is said about it. Only manifests and signature attachments are read from the registry to record this; no entity's content is fetched.", "items": { "$ref": "#/$defs/PublishedVersion" } },
+        "published": { "type": "array", "description": "Every version the index holds for this reference, in the same order as `versions`, each with the manifest digest its tag resolved to when the index was built, where the trust policy the index was built under verified that version's own signature its verified signer, and where anything records it its publication date and that date's source. A version recorded with no signer carries no signature that policy verified, and nothing more is said about it. Only manifests, signature attachments and publication-date attachments are read from the registry to record this; no entity's content is fetched.", "items": { "$ref": "#/$defs/PublishedVersion" } },
         "retracted": { "type": "array", "description": "The versions a published marker has deprecated.", "items": { "type": "string" } }
       }
     },
