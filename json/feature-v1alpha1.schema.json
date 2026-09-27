@@ -134,7 +134,7 @@
               },
               "selector": {
                 "type": "string",
-                "description": "Optional Kubernetes-style label selector constraining which Feature may fill this slot — the slot analog of a usesSchema socket's selector, evaluated against the attached Feature's own labels. A fill whose labels do not satisfy it halts. Omit to place no constraint on the fill."
+                "description": "Optional Kubernetes-style label selector constraining which Feature may fill this slot — the slot analog of a usesSchema socket's selector, evaluated against the attached Feature's own labels, in the same grammar as a Feature's appliesTo. A fill whose labels do not satisfy it halts, and so does a selector outside that grammar, naming the requirement it could not read. Omit to place no constraint on the fill."
               }
             },
             "additionalProperties": false
@@ -142,7 +142,7 @@
         },
         "appliesTo": {
           "type": "string",
-          "description": "Kubernetes-style label-selector string matching Components. Comma-separated requirements all must hold (AND). Supported forms: key=value, key!=value, key in (v1, v2), key notin (v1, v2), bare key (label present), !key (label absent). Example: \"tier in (critical, production), !legacy\". An empty or absent selector declares no constraint. The pattern here is a loose shape gate; the compiler's selector parser performs the full grammar validation.",
+          "description": "Kubernetes-style label-selector string matching Components. Comma-separated requirements all must hold (AND). Supported forms: key=value, key!=value, key in (v1, v2), key notin (v1, v2), bare key (label present), !key (label absent). Example: \"tier in (critical, production), !legacy\". An empty or absent selector declares no constraint. The selector is read against these forms each time an attachment of this Feature is evaluated, and a requirement outside them stops the build, naming it: an empty requirement (a leading, trailing or doubled comma), or a key carrying whitespace or any of = ! ( ) and the comma — so \"!tier=frontend\" is refused, and tier!=frontend is how a value is excluded. A value is the text after its operator, whatever characters it carries. The pattern on this field refuses only a few malformed shapes, before any attachment is evaluated.",
           "pattern": "^(?:[^()]*[()][\\s\\S]*|[ \\t]*(?:![ \\t]*[^,]*[^ \\t,][^,]*|[^ \\t,!][^,]*)?(?:,[ \\t]*(?:![ \\t]*[^,]*[^ \\t,][^,]*|[^ \\t,!][^,]*)?)*)$"
         },
         "appliesToAnyOf": {
@@ -196,7 +196,7 @@
               "properties": {
                 "selector": { 
                   "type": "string",
-                  "description": "Kubernetes-style selector evaluated natively by the Go compiler during static analysis to guarantee Cross-Node Type Safety before Wasm execution."
+                  "description": "Kubernetes-style label selector, in the same grammar as a Feature's appliesTo, that the target of every edge wired through this socket must satisfy. It is evaluated against the target's labels before anything renders: a target that does not satisfy it halts the build, and so does a selector outside that grammar, naming the requirement it could not read."
                 },
                 "inject": {
                   "type": "array",

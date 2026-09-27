@@ -148,7 +148,7 @@
               },
               "selector": {
                 "type": "string",
-                "description": "Optional Kubernetes-style label selector constraining which Feature may fill this slot — the slot analog of a usesSchema socket's selector, evaluated against the attached Feature's own labels. A fill whose labels do not satisfy it halts. Omit to place no constraint on the fill."
+                "description": "Optional Kubernetes-style label selector constraining which Feature may fill this slot — the slot analog of a usesSchema socket's selector, evaluated against the attached Feature's own labels, in the same grammar as a Feature's appliesTo. A fill whose labels do not satisfy it halts, and so does a selector outside that grammar, naming the requirement it could not read. Omit to place no constraint on the fill."
               }
             },
             "additionalProperties": false
@@ -170,7 +170,7 @@
               "properties": {
                 "selector": { 
                   "type": "string",
-                  "description": "Kubernetes-style selector evaluated natively by the Go compiler during static analysis to guarantee Cross-Node Type Safety before Wasm execution."
+                  "description": "Kubernetes-style label selector, in the same grammar as a Feature's appliesTo, that the target of every edge wired through this socket must satisfy. It is evaluated against the target's labels before anything renders: a target that does not satisfy it halts the build, and so does a selector outside that grammar, naming the requirement it could not read."
                 },
                 "inject": {
                   "type": "array",
