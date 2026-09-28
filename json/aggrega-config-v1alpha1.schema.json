@@ -295,8 +295,11 @@
         "allowed_origins": {
           "type": "array",
           "default": [],
-          "items": { "type": "string" },
-          "description": "Origins accepted on a request's `Origin` header. A request whose `Origin` header names an origin this list does not carry is refused with `403`; a request naming a listed origin, or carrying no `Origin` header at all, is served. Each entry is a full origin as a browser sends one — scheme, host, and the port where it is not the scheme's default — for example `https://app.example.com`. Default empty, so no origin is accepted and only a caller that sends no `Origin` header is served. A browser-based client therefore needs its origin listed here; a client that is not a browser sends no such header and needs no entry."
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9+.-]*://(?:[a-z0-9._-]+|\\[[0-9a-f:.]+\\])(?::[0-9]{1,5})?$"
+          },
+          "description": "Origins accepted on a request's `Origin` header. A request whose `Origin` header names an origin this list does not carry is refused with `403`; a request naming a listed origin, or carrying no `Origin` header at all, is served. An entry is compared to the header exactly, so each one is written the way a browser sends an origin: a lowercase scheme, `://`, a lowercase host — a name, an IPv4 address, or an IPv6 address in brackets — and `:` with the port where it is not the scheme's default, with nothing after it. For example `https://app.example.com` or `http://localhost:3000`. An entry in any other shape could never equal what a browser sends, so it is refused when the configuration file loads, naming the file and the entry: one with a trailing `/` or a path (`https://app.example.com/`), one with no scheme (`app.example.com`), and one carrying a capital letter or a space. Default empty, so no origin is accepted and only a caller that sends no `Origin` header is served. A browser-based client therefore needs its origin listed here; a client that is not a browser sends no such header and needs no entry."
         },
         "limits": {
           "type": "object",
@@ -351,12 +354,14 @@
               "properties": {
                 "principal_header": {
                   "type": "string",
-                  "description": "Header the proxy in front puts the caller's identity in — for example `X-Forwarded-User`. Its value is taken exactly as written and compared to nothing, in the same way the subject of a token this server validates itself is recorded and compared to nothing. It is the whole credential in this mode, so it is required whenever `trusted_proxy` is set, and a request arriving without it is answered `401`."
+                  "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+                  "description": "Header the proxy in front puts the caller's identity in — for example `X-Forwarded-User`. It is written as an HTTP header name: letters, digits and hyphens, and the other characters a header name may carry (`!#$%&'*+.^_|~` and the backtick), with no space, colon or other separator. A name in any other shape is refused when the configuration file loads, naming the file and the key, because no request can carry such a header. An empty one is refused too: it would leave this server checking tokens itself while the block says a proxy in front does. To leave this mode off, leave `trusted_proxy` out. The header's value is taken exactly as written and compared to nothing, in the same way the subject of a token this server validates itself is recorded and compared to nothing. It is the whole credential in this mode, so it is required whenever `trusted_proxy` is set, and a request arriving without it is answered `401`."
                 },
                 "scopes_header": {
                   "type": "string",
                   "default": "",
-                  "description": "Header the proxy in front puts the caller's granted scopes in, separated by spaces — for example `X-Forwarded-Scopes`. Default empty, which asserts no scopes for any caller. Whatever it is called, no header other than this one and `principal_header` is read."
+                  "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]*$",
+                  "description": "Header the proxy in front puts the caller's granted scopes in, separated by spaces — for example `X-Forwarded-Scopes`. It is written as an HTTP header name, in the same shape as `principal_header`, or left empty. A name in any other shape is refused when the configuration file loads, naming the file and the key, because no request can carry such a header and no caller would ever be granted a scope. Default empty, which asserts no scopes for any caller. Whatever it is called, no header other than this one and `principal_header` is read."
                 }
               }
             }
@@ -451,7 +456,8 @@
         },
         "public_key": {
           "type": "string",
-          "description": "Pinned cosign-compatible public-key PEM (inline) for a keyed-mode registry. When set, signatures from this registry are verified offline against this key rather than against keyless identities."
+          "pattern": "-----BEGIN [A-Z ]*PUBLIC KEY-----",
+          "description": "Pinned cosign-compatible public key for a keyed-mode registry, written inline as a PEM block: the text from a `-----BEGIN PUBLIC KEY-----` line (or `-----BEGIN RSA PUBLIC KEY-----`) to its matching `-----END` line, as `aggrega registry add --key` copies it from a key file. When set, signatures from this registry are verified offline against this key rather than against keyless identities. A value carrying no `-----BEGIN … PUBLIC KEY-----` line is refused when the configuration file loads, naming the file and the entry, and so is a private key pasted here by mistake. The line may sit anywhere in the value, because the key is read from the PEM block the value carries and any text before that block is ignored. Only that line is checked here: whether the block holds a key that decodes is found when a signature from this registry is verified against it."
         },
         "trusted_root": {
           "type": "string",
@@ -480,15 +486,18 @@
       "properties": {
         "fulcio_url": {
           "type": "string",
-          "description": "Fulcio certificate-authority URL for keyless signing. When unset, the public-good Fulcio instance is used."
+          "pattern": "^https://[^\\s/?#]+(?:[/?#]\\S*)?$",
+          "description": "Fulcio certificate-authority URL for keyless signing. When unset, the public-good Fulcio instance is used. It is written as an absolute `https` URL: `https://`, a host, and optionally a port and a path, with no whitespace — for example `https://fulcio.sigstore.dev`. A value in any other shape, such as one with no scheme (`fulcio.example.com`) or one beginning `http://`, is refused when the configuration file loads, naming the file and the key. The file is checked before anything else is applied on top of it, so the same endpoint supplied by `AGGREGA_SIGNING_FULCIO_URL`, by the `--fulcio-url` flag, or in a publishing request from an editor or an assistant is not held to this shape."
         },
         "rekor_url": {
           "type": "string",
-          "description": "Rekor transparency-log URL for keyless signing. When unset, the public-good Rekor instance is used."
+          "pattern": "^https://[^\\s/?#]+(?:[/?#]\\S*)?$",
+          "description": "Rekor transparency-log URL for keyless signing. When unset, the public-good Rekor instance is used. It is written as an absolute `https` URL: `https://`, a host, and optionally a port and a path, with no whitespace — for example `https://rekor.sigstore.dev`. A value in any other shape, such as one with no scheme (`rekor.example.com`) or one beginning `http://`, is refused when the configuration file loads, naming the file and the key. The file is checked before anything else is applied on top of it, so the same endpoint supplied by `AGGREGA_SIGNING_REKOR_URL`, by the `--rekor-url` flag, or in a publishing request from an editor or an assistant is not held to this shape."
         },
         "timestamp_url": {
           "type": "string",
-          "description": "RFC3161 timestamp-authority URL for keyless signing. It has no default: when unset, no timestamp authority is contacted, and a keyless signature's trusted time comes from its transparency-log entry."
+          "pattern": "^https://[^\\s/?#]+(?:[/?#]\\S*)?$",
+          "description": "RFC3161 timestamp-authority URL for keyless signing. It has no default: when unset, no timestamp authority is contacted, and a keyless signature's trusted time comes from its transparency-log entry. It is written as an absolute `https` URL: `https://`, a host, and optionally a port and a path, with no whitespace — for example `https://tsa.example.com/api/v1/timestamp`. A value in any other shape, such as one with no scheme (`tsa.example.com`) or one beginning `http://`, is refused when the configuration file loads, naming the file and the key. The file is checked before anything else is applied on top of it, so the same endpoint supplied by `AGGREGA_SIGNING_TIMESTAMP_URL`, by the `--timestamp-url` flag, or in a publishing request from an editor or an assistant is not held to this shape."
         },
         "key_path": {
           "type": "string",
@@ -591,7 +600,8 @@
         },
         "digest": {
           "type": "string",
-          "description": "The hex SHA-256 content digest of the guest `.wasm` bytes the reference resolved to at install. It pins the exact bytes the command runs — a later resolution whose bytes hash differently halts the command — and is the key into the describe cache that renders the command's help without loading the guest."
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "The content digest of the guest `.wasm` bytes the reference resolved to at install, written as `sha256:` followed by the 64 lowercase hexadecimal digits of the bytes' SHA-256 — the spelling `aggrega plugin add cli` records, and the spelling the resolved bytes are compared in. A digest in any other spelling — bare hexadecimal without the `sha256:` prefix, capital letters, or a different length — could never equal it, so it is refused when the configuration file loads, naming the file and the entry. It pins the exact bytes the command runs — a later resolution whose bytes hash differently halts the command — and is the key into the describe cache that renders the command's help without loading the guest."
         }
       }
     },
