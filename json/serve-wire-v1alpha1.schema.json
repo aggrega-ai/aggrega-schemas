@@ -1042,7 +1042,7 @@
     },
     "ConfigInitParams": {
       "type": "object",
-      "description": "Seeds a configuration document. It writes the machine-wide file by default, since a registry and the identities trusted on it are machine-wide tooling. It reaches the named registry to read the trust policy it advertises; a registry advertising nothing is reported as such and the seeding proceeds on the built-in baseline.",
+      "description": "Seeds a configuration document. It writes the machine-wide file by default, since a registry and the identities trusted on it are machine-wide tooling. It reaches the named registry to read the trust policy it advertises; a registry advertising nothing is reported as such and the seeding proceeds, on the built-in baseline for the official hub and on no policy for any other registry.",
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -1482,15 +1482,16 @@
     },
     "TrustFetchOutcome": {
       "type": "object",
-      "description": "What reading a registry's advertised trust policy did. The three outcomes are kept apart because they mean different things: the policy was taken, the registry advertised nothing — which is not a failure — or no read was attempted.",
+      "description": "What reading a registry's advertised trust policy did. The outcomes are kept apart because they mean different things: the advertised policy was taken, the registry advertised nothing — which is not a failure — the built-in baseline was pinned in its place, or no read was attempted.",
       "required": ["pinned"],
       "additionalProperties": false,
       "properties": {
         "pinned": { "type": "boolean", "description": "Whether the advertised policy was taken." },
-        "notAdvertised": { "type": "boolean", "description": "Whether the registry advertised no policy, in which case the operation proceeds on what the request stated." },
+        "notAdvertised": { "type": "boolean", "description": "Whether the registry was asked and advertised no policy, in which case the operation proceeds on what the request stated. A registry the offline posture kept from being asked is never reported this way." },
+        "baseline": { "type": "boolean", "description": "Whether the built-in baseline was pinned because no advertised policy was taken, which only the official hub carries. It stands beside notAdvertised where the hub was asked and advertised nothing, and alone where the offline posture kept the hub from being asked." },
         "skipped": { "type": "boolean", "description": "Whether no read was attempted, because a stated policy overrode it or the request asked for none." },
         "identities": { "type": "integer", "description": "How many signing identities the advertised policy carried." },
-        "reason": { "type": "string", "description": "What the registry's endpoint did, where the policy was not taken." }
+        "reason": { "type": "string", "description": "Why the advertised policy was not taken: what the registry's endpoint did, or the offline refusal that kept it from being asked." }
       }
     },
     "SkippedRepo": {
