@@ -35,9 +35,8 @@
     },
     "pulled_at": {
       "type": "string",
-      "format": "date-time",
       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$",
-      "description": "RFC 3339 timestamp recording the pull-time wall clock. Diagnostic provenance only — not part of any integrity contract. The pattern enforces the RFC 3339 shape at the validator boundary; format: date-time is documentation-bearing."
+      "description": "RFC 3339 timestamp recording the pull-time wall clock. Diagnostic provenance only — not part of any integrity contract. The pattern holds the value to the RFC 3339 shape when the metadata is read."
     }
   }
 }
