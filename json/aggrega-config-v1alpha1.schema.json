@@ -2,25 +2,30 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/aggrega-config-v1alpha1.schema.json",
   "title": "Aggrega Workspace Config",
-  "description": "Per-workspace configuration file consumed by the aggrega CLI. Lives at `.aggrega-config.yaml`. The `workspace` block is the root marker: its presence marks the workspace root, and it holds only `catalog_dirs`. Every other key is a setting and lives at the top level, in these classes — where content is fetched from, pinned and cached (registry selection, offline, auto-pull and pinning behaviour, artifact and compiled-module cache locations and size caps), how content is trusted (signing, and signature-verification behaviour), how strictly authoring is judged (per-rule lint dials, deprecation strictness, and the authoring-release hint), which Wasm plugins are attached workspace-wide (governance, linter, importer, and per-target provider-rendering bindings), and how the CLI runs (concurrency, serving, and daemon parse-cache eviction caps). The properties below are the complete and authoritative list; this summary names the classes rather than the keys, so adding a key cannot falsify it. Flat top-level shape, no apiVersion/kind envelope, distinct from catalog content. Schema evolution discipline: adding a new top-level key is a SemVer-MINOR bump (additive); removing or relocating a key, or tightening a constraint, is a SemVer-MAJOR break.",
+  "description": "Per-workspace configuration file consumed by the aggrega CLI. Lives at `.aggrega-config.yaml`. The `workspace` block is the root marker: its presence marks the workspace root, and it holds only catalog directories. Every other key is a setting and lives at the top level, in these classes — where content is fetched from, pinned and cached (registry selection, offline, auto-pull and pinning behaviour, artifact and compiled-module cache locations and size caps), how content is trusted (signing, and signature-verification behaviour), how strictly authoring is judged (per-rule lint dials, deprecation strictness, and the authoring-release hint), which Wasm plugins are attached workspace-wide (governance, linter, importer, and per-target provider-rendering bindings), and how the CLI runs (concurrency, serving, and daemon parse-cache eviction caps). The properties below are the complete and authoritative list; this summary names the classes rather than the keys, so adding a key cannot falsify it. Flat top-level shape, no apiVersion/kind envelope, distinct from catalog content. Schema evolution discipline: adding a new top-level key is a SemVer-MINOR bump (additive); removing or relocating a key, or tightening a constraint, is a SemVer-MAJOR break.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "workspace": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Workspace root marker. Its PRESENCE marks the directory as the workspace root; it carries only the root-defining catalog directories. Every setting that is not root-defining lives at the top level rather than here. Write `workspace: {}` to mark a root with no vendored catalog directories.",
+      "description": "Workspace root marker. Its PRESENCE marks the directory as the workspace root; it carries only the root-defining catalog directories — the workspace's own, and any a Release is given of its own. Every setting that is not root-defining lives at the top level rather than here. Write `workspace: {}` to mark a root with no vendored catalog directories.",
       "properties": {
         "catalog_dirs": {
           "type": "array",
           "items": { "type": "string" },
-          "description": "Optional catalog directories this workspace reads local entities from, consulted before falling back to the registry. Each entry is a filesystem path, resolved relative to the file that declares it. The list is an ordered first-win search stack: the earliest-listed directory to declare an identity owns it, and the same identity in a later directory is shadowed. The `catalog` directory at the workspace root is read as well, after every listed entry and only when it exists — unless a listed entry already contains it, in which case it is read as part of that entry — so listing a directory adds to what the workspace already read rather than replacing it. Omitting this key and writing it as an empty list are different statements: omitted, the workspace still reads `catalog`; written as `[]`, it reads no local catalog at all, which is how a workspace says it has none. Root-scoped: local catalog directories belong to this workspace root, so they live on the root marker rather than at the top level."
+          "description": "Optional catalog directories this workspace reads local entities from, consulted before falling back to the registry. Each entry is a filesystem path, resolved relative to the file that declares it. The list is an ordered first-win search stack: the earliest-listed directory to declare an identity owns it, and the same identity in a later directory is shadowed. The `catalog` directory at the workspace root is read as well, after every listed entry and only when it exists — unless a listed entry already contains it, in which case it is read as part of that entry — so listing a directory adds to what the workspace already read rather than replacing it. Omitting this key and writing it as an empty list are different statements: omitted, the workspace still reads `catalog`; written as `[]`, it reads no local catalog at all, which is how a workspace says it has none. A Release given catalog directories of its own under `releases` reads those in place of this list. Root-scoped: local catalog directories belong to this workspace root, so they live on the root marker rather than at the top level."
         },
         "catalog_dirs_append": {
           "type": "array",
           "default": [],
           "items": { "type": "string" },
           "description": "Optional append-only addition to the effective `catalog_dirs` list. At each precedence layer the entries here are concatenated onto the resolved base list, letting workspace and global configs compose catalog directories rather than shadow them. Same-layer interaction: when both `catalog_dirs` and `catalog_dirs_append` are specified at one layer, the resolved value at that layer is the base list followed by the append list."
+        },
+        "releases": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/ReleaseCatalogConfig" },
+          "description": "Optional catalog directories of a Release's own, for a workspace that keeps several catalog variants side by side and builds each Release against one of them. Each key is a Release file, written as a path relative to the file that declares it; each value carries `catalog_dirs` and `catalog_dirs_append` with the meaning they have on this block, scoped to that one Release. A Release named here reads its own `catalog_dirs` in place of this block's list, followed by its own `catalog_dirs_append`; an entry that omits `catalog_dirs` keeps this block's list and adds its `catalog_dirs_append` after it. The search order, the `catalog` directory at the workspace root, and what an empty list means are the same as for this block's own list, and a Release this map does not name reads this block's list exactly as before. The Release reads these directories however it is built — at a terminal, from an editor through `aggrega serve`, or through `aggrega mcp` — and a `--catalog` directory is still searched ahead of them for one invocation. An entry naming a file that does not exist is refused when the configuration loads, naming the entry and the file, so renaming a Release cannot quietly change the catalog it builds against. Across configuration files each Release's entry composes the way this block's own keys do: a nearer file's `catalog_dirs` for that Release replaces a farther file's, and every file's `catalog_dirs_append` for it is added in cascade order. `AGGREGA_CATALOG_DIRS` sets this block's list and reaches no entry here. An operation that concerns no single Release — a lint or validation of the whole catalog, a lookup of an entity by name, or an editor's listing of the workspace's entities — reads this block's list and not these."
         }
       }
     },
@@ -399,6 +404,24 @@
     }
   },
   "$defs": {
+    "ReleaseCatalogConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "One Release's own catalog directories: the same two keys the `workspace` block carries, scoped to that Release.",
+      "properties": {
+        "catalog_dirs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Catalog directories this Release reads local entities from in place of the workspace's `catalog_dirs`, each resolved relative to the file that declares it. The same ordered first-win search stack as the workspace's list, with the `catalog` directory at the workspace root read after it when that directory exists and no listed entry already contains it. Omitted, the Release keeps the workspace's list; written as `[]`, it reads no local catalog at all."
+        },
+        "catalog_dirs_append": {
+          "type": "array",
+          "default": [],
+          "items": { "type": "string" },
+          "description": "Catalog directories added after this Release's list — its own `catalog_dirs` where the entry writes one, the workspace's otherwise — each resolved relative to the file that declares it."
+        }
+      }
+    },
     "RegistryConfig": {
       "type": "object",
       "additionalProperties": false,
