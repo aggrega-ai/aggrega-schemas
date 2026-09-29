@@ -130,7 +130,7 @@
             "timeoutMs": {
               "type": "integer",
               "minimum": 0,
-              "description": "Caps per-call execution wall time in milliseconds. Zero or absent applies the platform default cap, so a call is never uncancellable; an attachment that runs longer raises this value."
+              "description": "Caps how long the plugin's own code may run during one call, in milliseconds, not counting time spent inside the host functions it calls. On Linux the measure is processor time, so time spent waiting for a processor on a busy machine does not count; on other systems it is elapsed time. The first call to a freshly loaded plugin also counts the plugin's own start-up. Zero or absent applies the platform default cap, so a call is never uncancellable; an attachment that runs longer raises this value."
             },
             "hostFunctions": {
               "type": "array",
