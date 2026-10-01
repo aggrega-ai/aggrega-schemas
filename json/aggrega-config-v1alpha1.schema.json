@@ -334,7 +334,7 @@
             "issuer": {
               "type": "string",
               "default": "",
-              "description": "Address of the authorization server that issues the tokens this deployment accepts, written as that server states its own issuer identifier — for example `https://login.example.com`. It is published in the `authorization_servers` list of the protected-resource metadata document, which is how a client learns where to obtain a token for this deployment. Default empty, which is not a usable value: a listener is refused before anything binds unless this carries a whole address, scheme and host included."
+              "description": "Address of the authorization server that issues the tokens this listener accepts, written as that server states its own issuer identifier — for example `https://login.example.com`. It is published in the `authorization_servers` list of the protected-resource metadata document, which is how a client learns where to obtain a token for this listener. Default empty, which is not a usable value: a listener is refused before anything binds unless this carries a whole address, scheme and host included. It is an `https` address unless the authorization server runs on this machine: plain `http` is accepted only for a loopback host, such as `localhost`, `127.0.0.1` or `::1`, and a plain `http` issuer on any other host is refused before anything binds, naming this key and asking for an `https` address. That holds whether the keys are read from the issuer, from `jwks_file`, or a `trusted_proxy` in front checks the tokens, because every client is sent to the issuer to obtain its token."
             },
             "resource": {
               "type": "string",
@@ -483,7 +483,7 @@
     "SigningConfig": {
       "type": "object",
       "additionalProperties": false,
-      "description": "A signing block: the keyless service URLs, an optional pointer to a keyed-key file, and the trust stance (`required` and `kinds`). Placed at the top level it applies to all registries; placed under a `registries[]` entry it applies to that host — every field reads its scope from placement. `required` is one trust stance covering both directions (an unsigned in-scope push is refused and an unsigned in-scope pull is refused). SECURITY: holds no secret material — the OIDC identity token is never a config field (short-lived, supplied at runtime), and `key_path` is a path to a key file, never inline key bytes. This mirrors the verify side's asymmetry: an inline `public_key` is allowed there, but the sign side carries only a key PATH.",
+      "description": "A signing block: the keyless service URLs, an optional pointer to a keyed-key file, and the trust stance (`required` and `kinds`). Placed at the top level it applies to all registries; placed under a `registries[]` entry it applies to that host — every field reads its scope from placement. `required` is one trust stance covering both directions (an unsigned in-scope push is refused and an unsigned in-scope pull is refused). SECURITY: holds no secret material — the OIDC identity token is never a config field (short-lived, supplied at runtime), and `key_path` is a path to a key file, never inline key bytes. This mirrors the verify side's asymmetry: an inline `public_key` is allowed there, but the sign side carries only a key PATH. An `aggrega mcp` server reached over HTTP consults no `key_path` at either placement, so keyed signing is unreachable through such a listener: a call it answers signs only with an identity token that call carries.",
       "properties": {
         "fulcio_url": {
           "type": "string",
@@ -502,7 +502,7 @@
         },
         "key_path": {
           "type": "string",
-          "description": "Path to a held ECDSA P-256 private-key PEM file for offline keyed signing. A POINTER to a file, never inline key material. When unset, the keyless path is used."
+          "description": "Path to a held ECDSA P-256 private-key PEM file for offline keyed signing. A POINTER to a file, never inline key material. When unset, the keyless path is used. An `aggrega mcp` server reached over HTTP never consults this key, wherever it is set — in the top-level `signing` block, in a registry entry's, or by `AGGREGA_SIGNING_KEY_PATH`: a call such a listener answers signs only with an identity token the call itself carries, or is refused. A server reached over standard input and output signs with it as a terminal does."
         },
         "required": {
           "type": "boolean",
