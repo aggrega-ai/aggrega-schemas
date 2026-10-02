@@ -191,6 +191,39 @@
                   "type": "object",
                   "additionalProperties": true,
                   "description": "JSON Schema 2020-12 content defining the per-connection infra contract for this socket — the operator-supplied infra a Release edge may carry. Accepts the same three authoring modes as the Component schema field via content-shape dispatch: inline content, {$import: <path>}, or {$ref: <Library>#/schemas/<name>}. Per-edge infra is validated against this contract by the conformance gate at resolution."
+                },
+                "featuresSchema": {
+                  "type": "object",
+                  "description": "The attachment slots each connection wired through this socket may fill, keyed by slot name. A connection fills a slot by carrying an attachment under the slot's name in its features block, on the Aggregate's connection entry or on the Release's; a name no slot declares is refused when the build loads, and a socket declaring no slots admits no attachment on its connections. Each attachment becomes an attachment of the consuming component under the name <alias>.<slot>, so each connection carries its own fill — a gateway reaching several models can hold a different credential for each. A slot here takes the same keys as a slot the Component declares in its own featuresSchema.",
+                  "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                      "required": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Declares that every connection wired through this socket is meant to fill this slot. It is carried as a declaration for tooling to read; a connection leaving the slot unfilled is not refused because of it."
+                      },
+                      "inject": {
+                        "type": "array",
+                        "items": { "type": "string", "enum": ["env", "file", "arg"] },
+                        "description": "The delivery mechanisms the slot's material is meant to reach the consuming workload through. Empty array = blackbox (the material is consumed by a Recipe internally, not delivered to the workload)."
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "Human documentation for this attachment slot."
+                      },
+                      "sensitive": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Declares that whatever fills this slot handles secret material. A marker, not a constraint: no fill is accepted or rejected because of it, and no rendered output changes."
+                      },
+                      "selector": {
+                        "type": "string",
+                        "description": "Optional Kubernetes-style label selector, in the same grammar as a Feature's appliesTo, naming which Feature is meant to fill this slot, evaluated against the attached Feature's own labels. It is carried as a declaration for tooling to read; a fill is not refused because of it."
+                      }
+                    },
+                    "additionalProperties": false
+                  }
                 }
               },
               "additionalProperties": false

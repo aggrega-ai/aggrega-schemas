@@ -219,9 +219,52 @@
       },
       "additionalProperties": { "$ref": "#/$defs/inject_delivery" }
     },
-    "uses_block": {
+    "component_uses_block": {
       "type": "object",
-      "description": "The Structural Topology - Developer Owned. Declares logical network edges and dependencies.",
+      "description": "The connections a component draws to the components it depends on, keyed by socket. Each socket lists its targets, or names each connection under an alias. A connection named under an alias may carry the developer's per-connection values and the attachments filling the slots the socket declares.",
+      "patternProperties": {
+        "^[a-zA-Z0-9_-]+$": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            {
+              "type": "object",
+              "patternProperties": {
+                "^[a-zA-Z0-9_-]+$": {
+                  "type": "object",
+                  "required": ["target"],
+                  "properties": {
+                    "target": { "type": "string" },
+                    "inject": { "$ref": "#/$defs/inject_block" },
+                    "values": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Per-connection developer values for this edge, validated by the conformance gate at resolution (not structurally here) against the valueSchema declared by the source socket — the socket on this component, the one whose uses block carries this entry. Projected into the consuming node's render context at .uses.<alias>.values. Per-connection infra is the operator's surface and is authored on a Release edge entry, not here."
+                    },
+                    "features": {
+                      "type": "object",
+                      "description": "The attachments this connection carries, keyed by the slot each fills. A name must be a slot the socket declares in its featuresSchema on the consuming Component; any other name, and any attachment on a socket the Component declares no slots for, is refused when the build loads. Each attachment becomes an attachment of the consuming component under the name <alias>.<slot> — the alias this connection is written under, a dot, and the slot — and that is the name a Manifest's per-instance mapping keys it by. An attachment on a connection does not nest, so it carries no uses or inject block of its own.",
+                      "patternProperties": {
+                        "^[a-zA-Z0-9_-]+$": { "$ref": "#/$defs/connection_attachment" }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "feature_uses_block": {
+      "type": "object",
+      "description": "The connections an attached Feature draws, keyed by a socket the Feature declares in its usesSchema. Each socket lists its targets, or names each connection under an alias. A connection a Feature draws carries no attachments of its own: a credential it needs fills a slot the Feature declares in its own featuresSchema and is attached beside the Feature.",
       "patternProperties": {
         "^[a-zA-Z0-9_-]+$": {
           "anyOf": [
@@ -250,6 +293,27 @@
               "additionalProperties": false
             }
           ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "connection_attachment": {
+      "type": "object",
+      "description": "One attachment a connection carries: the Feature filling a slot the connection's socket declares, with the developer's configuration for it.",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The URI of the Feature interface this attachment requests (e.g. core/referenced-secret:1.0.0)."
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional documentation explaining why this connection carries the attachment."
+        },
+        "values": {
+          "type": "object",
+          "description": "Developer-provided configuration for the Feature, validated by its schema declaration.",
+          "additionalProperties": true
         }
       },
       "additionalProperties": false
@@ -286,7 +350,7 @@
                   "description": "Developer-provided configuration for the Feature.",
                   "additionalProperties": true
                 },
-                "uses": { "$ref": "#/$defs/uses_block" },
+                "uses": { "$ref": "#/$defs/feature_uses_block" },
                 "inject": { "$ref": "#/$defs/inject_block" }
               },
               "additionalProperties": false
@@ -345,7 +409,7 @@
           "additionalProperties": true
         },
         "uses": {
-          "$ref": "#/$defs/uses_block"
+          "$ref": "#/$defs/component_uses_block"
         },
         "inject": {
           "$ref": "#/$defs/inject_block",
@@ -373,7 +437,7 @@
                   "additionalProperties": true
                 },
                 "uses": {
-                  "$ref": "#/$defs/uses_block"
+                  "$ref": "#/$defs/feature_uses_block"
                 },
                 "inject": {
                   "$ref": "#/$defs/inject_block"

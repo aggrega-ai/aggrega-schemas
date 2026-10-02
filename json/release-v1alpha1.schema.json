@@ -212,7 +212,7 @@
     },
     "release_uses_block": {
       "type": "object",
-      "description": "Release-authored per-edge uses surface, socket-keyed then alias-keyed (mirroring the Aggregate uses topology shape). Each connection may set target (to create an edge into a declared-but-unbound socket, pointing at an existing component) and/or infra (per-edge operator config, validated against the socket infraSchema by the conformance gate at resolution). values is forbidden (the Release values: ban); retargeting a developer-declared edge is a loud guardrail at build.",
+      "description": "Release-authored per-edge uses surface, socket-keyed then alias-keyed (mirroring the Aggregate uses topology shape). Each connection may set target (to create an edge into a declared-but-unbound socket, pointing at an existing component), infra (per-edge operator config, validated against the socket infraSchema by the conformance gate at resolution) and features (attachments filling the slots the socket declares), in any combination. values is forbidden (the Release values: ban); retargeting a developer-declared edge is a loud guardrail at build.",
       "patternProperties": {
         "^[a-zA-Z0-9_-]+$": {
           "type": "object",
@@ -228,12 +228,40 @@
                   "type": "object",
                   "additionalProperties": true,
                   "description": "Per-edge operator infra, validated against the socket infraSchema by the conformance gate at resolution."
+                },
+                "features": {
+                  "type": "object",
+                  "description": "The attachments this connection carries, keyed by the slot each fills. A name must be a slot the socket declares in its featuresSchema on the consuming Component; any other name is refused when the build loads. For an attachment the Aggregate also declares on this connection, only infra is provided here (values come from the Aggregate); for an attachment only the Release makes, type is required. Each becomes an attachment of the consuming component under the name <alias>.<slot>. The Release MUST NOT provide values for an attachment — this is the Developer's domain.",
+                  "patternProperties": {
+                    "^[a-zA-Z0-9_-]+$": { "$ref": "#/$defs/release_connection_attachment" }
+                  },
+                  "additionalProperties": false
                 }
               },
               "additionalProperties": false
             }
           },
           "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "release_connection_attachment": {
+      "type": "object",
+      "description": "One attachment a Release connection entry carries: the Feature filling a slot the connection's socket declares, with the operator's sizing for it.",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The URI of the Feature. Required for an attachment only the Release makes. Must match the Aggregate's type if both declare it."
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional documentation explaining why the Operator attached this feature to the connection."
+        },
+        "infra": {
+          "type": "object",
+          "description": "Operational sizing for this attachment, validated by the Feature's schema declaration.",
+          "additionalProperties": true
         }
       },
       "additionalProperties": false
