@@ -932,7 +932,8 @@
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
         "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
         "uri": { "type": "string", "description": "The document the cursor is in." },
-        "position": { "$ref": "#/$defs/Position" }
+        "position": { "$ref": "#/$defs/Position" },
+        "release": { "type": "string", "description": "The Release to answer in the terms of, as a path relative to the workspace root. The definition is then the document the reference resolves to through the catalog directories the workspace configuration gives that Release, in that order, so a name several variants in one workspace declare, one per Release, goes to that Release's variant; where those directories declare no such entity, the workspace's documents are searched, leaving out any under one of the workspace's catalog directories the Release does not read. Absent, the workspace's documents are searched first and the workspace's own catalog directories only where no document declares the name. A value that names no Release file is refused." }
       }
     },
     "FindReferencesParams": {
@@ -943,7 +944,8 @@
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
         "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
         "uri": { "type": "string", "description": "The document the cursor is in." },
-        "position": { "$ref": "#/$defs/Position" }
+        "position": { "$ref": "#/$defs/Position" },
+        "release": { "type": "string", "description": "The Release to answer in the terms of, as a path relative to the workspace root. A reference made in a document under one of the workspace's catalog directories that the Release does not read is then not reported, so variants a workspace keeps side by side, one per Release, are never reported as one another's references. Absent, every workspace document is searched. A value that names no Release file is refused." }
       }
     },
     "FindImplementationsParams": {
@@ -954,7 +956,8 @@
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
         "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
         "uri": { "type": "string", "description": "The document the cursor is in." },
-        "position": { "$ref": "#/$defs/Position" }
+        "position": { "$ref": "#/$defs/Position" },
+        "release": { "type": "string", "description": "The Release to answer in the terms of, as a path relative to the workspace root. A document under one of the workspace's catalog directories that the Release does not read is then not reported, so a variant another Release builds with is never listed among this Release's. Absent, every workspace document is searched. A value that names no Release file is refused." }
       }
     },
     "HoverParams": {
@@ -965,7 +968,8 @@
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
         "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
         "uri": { "type": "string", "description": "The document the cursor is in." },
-        "position": { "$ref": "#/$defs/Position" }
+        "position": { "$ref": "#/$defs/Position" },
+        "release": { "type": "string", "description": "The Release to answer in the terms of, as a path relative to the workspace root. The entity shown is then the one the reference resolves to through the catalog directories the workspace configuration gives that Release, in that order; where those directories declare no such entity, the workspace's documents are searched, leaving out any under one of the workspace's catalog directories the Release does not read. Absent, the workspace's documents are searched first and the workspace's own catalog directories only where no document declares the name. A value that names no Release file is refused." }
       }
     },
     "CompletionParams": {
@@ -977,7 +981,8 @@
         "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
         "uri": { "type": "string", "description": "The document the cursor is in." },
         "position": { "$ref": "#/$defs/Position" },
-        "context": { "$ref": "#/$defs/CompletionContext" }
+        "context": { "$ref": "#/$defs/CompletionContext" },
+        "release": { "type": "string", "description": "The Release to answer in the terms of, as a path relative to the workspace root. The names offered are then those the workspace's documents declare, less the documents under one of the workspace's catalog directories that the Release does not read, together with the Components and Features the catalog directories the workspace configuration gives that Release declare. Absent, they are the workspace's documents and the Components and Features its own catalog directories declare. A value that names no Release file is refused." }
       }
     },
     "CompletionContext": {
