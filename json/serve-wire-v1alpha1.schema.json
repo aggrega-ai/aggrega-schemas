@@ -233,7 +233,7 @@
         },
         {
           "if": { "properties": { "method": { "const": "aggrega/catalogIndex" } }, "required": ["method"] },
-          "then": { "properties": { "params": { "$ref": "#/$defs/WorkspaceAndProgressParams" } } }
+          "then": { "properties": { "params": { "$ref": "#/$defs/CatalogIndexParams" } } }
         },
         {
           "if": { "properties": { "method": { "const": "aggrega/attachCandidates" } }, "required": ["method"] },
@@ -729,7 +729,18 @@
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
         "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
-        "name": { "type": "string", "description": "The entity to resolve, by name — or a registry reference, `oci://<host>/<repository>:<tag>` or `@<digest>` in place of `:<tag>`, to read the entity published at that coordinate." }
+        "name": { "type": "string", "description": "The entity to resolve, by name — or a registry reference, `oci://<host>/<repository>:<tag>` or `@<digest>` in place of `:<tag>`, to read the entity published at that coordinate." },
+        "release": { "type": "string", "description": "The Release to resolve the name in the terms of, as a path relative to the workspace root. The name is then resolved through the catalog directories the workspace configuration gives that Release, so a name several variants in one workspace declare, one per Release, resolves to the variant that Release builds with, and a name it does not resolve is refused with an account naming that Release's entry under `workspace.releases`. Absent, the name is resolved over the workspace's own catalog directories. A registry reference takes no Release and is refused with one, as is a value that names no Release file." }
+      }
+    },
+    "CatalogIndexParams": {
+      "type": "object",
+      "description": "Answers with the entities the workspace holds: every entity its documents declare, and the Features its catalog directories declare.",
+      "additionalProperties": false,
+      "properties": {
+        "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
+        "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
+        "release": { "type": "string", "description": "The Release to list the entities in the terms of, as a path relative to the workspace root. The Features are then the ones the catalog directories the workspace configuration gives that Release declare, and a document under a catalog directory only other Releases read is left out, so a workspace keeping variants of one entity side by side, one per Release, is listed with the variant that Release builds with. Absent, the listing is the workspace's own. A value that names no Release file is refused." }
       }
     },
     "ReleaseClosureParams": {
