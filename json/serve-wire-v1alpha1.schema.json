@@ -1106,7 +1106,7 @@
     },
     "LintParams": {
       "type": "object",
-      "description": "Checks catalog publishing conventions over one entity, over everything a Release's closure reaches, or over everything under the configured catalog directories. Nothing is written under any mode.",
+      "description": "Checks catalog publishing conventions over one entity, over everything a Release's closure reaches, or over everything under the configured catalog directories. Nothing is written under any mode. Naming neither an entity nor a Release checks the whole catalog: in a workspace whose configuration gives no Release catalog directories of its own, once over the workspace's directories; in a workspace that names Releases under workspace.releases, once for each Release over the directories that Release reads, never over all of them together.",
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -2368,19 +2368,36 @@
     },
     "LintResult": {
       "type": "object",
-      "description": "What the convention check found, counted by severity and listed per document.",
+      "description": "What the convention check found, counted by severity and listed per document. A whole-catalog check that ran once for each Release also carries passes; the counts and files then cover every pass together.",
       "required": ["checked", "findings", "errors", "warnings", "infos", "files", "halted"],
       "additionalProperties": false,
       "properties": {
         "entity": { "type": "string", "description": "The one entity that was checked, where the request named one." },
         "release": { "type": "string", "description": "The Release whose closure was checked, where the request named one." },
-        "checked": { "type": "integer", "description": "How many documents were checked." },
+        "checked": { "type": "integer", "description": "How many documents were checked. Where the check ran once for each Release, the sum over the passes: a document two passes read is counted in each." },
         "findings": { "type": "integer", "description": "How many findings there are in total." },
         "errors": { "type": "integer", "description": "How many of them are errors." },
         "warnings": { "type": "integer", "description": "How many of them are warnings." },
         "infos": { "type": "integer", "description": "How many of them are informational." },
         "files": { "type": ["array", "null"], "description": "The findings, per document.", "items": { "$ref": "#/$defs/LintFileFindings" } },
-        "halted": { "type": "boolean", "description": "Whether the check stopped rather than finishing with findings." }
+        "halted": { "type": "boolean", "description": "Whether the check stopped rather than finishing with findings." },
+        "passes": { "type": ["array", "null"], "description": "The whole-catalog check one pass at a time, present only where it ran once for each Release because the workspace names Releases under workspace.releases. Each pass says which Releases its findings were found for. Absent for a workspace that names none, which is checked once over its own directories, and for a check of one entity or of a Release's closure.", "items": { "$ref": "#/$defs/LintPass" } }
+      }
+    },
+    "LintPass": {
+      "type": "object",
+      "description": "One pass of a whole-catalog convention check in a workspace that gives its Releases catalog directories of their own: the Releases it was run for, the directories it read, and what it found there.",
+      "required": ["releases", "catalogDirs", "checked", "findings", "errors", "warnings", "infos", "files"],
+      "additionalProperties": false,
+      "properties": {
+        "releases": { "type": ["array", "null"], "description": "The Releases the pass was run for, each as a path relative to the workspace root. Releases that read the same catalog directories share one pass.", "items": { "type": "string" } },
+        "catalogDirs": { "type": ["array", "null"], "description": "The catalog directories the pass read, in the order they are searched, each relative to the workspace root where it lies inside it. Empty where its Releases read no catalog directory, so the pass checked nothing and failed none of the others.", "items": { "type": "string" } },
+        "checked": { "type": "integer", "description": "How many documents the pass checked." },
+        "findings": { "type": "integer", "description": "How many findings the pass found." },
+        "errors": { "type": "integer", "description": "How many of them are errors." },
+        "warnings": { "type": "integer", "description": "How many of them are warnings." },
+        "infos": { "type": "integer", "description": "How many of them are informational." },
+        "files": { "type": ["array", "null"], "description": "The pass's findings, per document.", "items": { "$ref": "#/$defs/LintFileFindings" } }
       }
     },
     "PluginAddResult": {
