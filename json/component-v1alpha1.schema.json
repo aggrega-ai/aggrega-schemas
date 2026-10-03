@@ -201,12 +201,12 @@
                       "required": {
                         "type": "boolean",
                         "default": false,
-                        "description": "Declares that every connection wired through this socket is meant to fill this slot. It is carried as a declaration for tooling to read; a connection leaving the slot unfilled is not refused because of it."
+                        "description": "Declares that every connection wired through this socket must fill this slot. The requirement is owed by each connection separately: the build halts for every connection that leaves the slot unfilled, naming that connection and pointing at its entry in the document that wired it, while a fill written on either the Aggregate's or the Release's entry for the connection satisfies it."
                       },
                       "inject": {
                         "type": "array",
                         "items": { "type": "string", "enum": ["env", "file", "arg"] },
-                        "description": "The delivery mechanisms the slot's material is meant to reach the consuming workload through. Empty array = blackbox (the material is consumed by a Recipe internally, not delivered to the workload)."
+                        "description": "The key a slot the Component declares in its own featuresSchema takes, where it lists the inject mechanisms allowed for the slot's material. A connection's attachment carries no inject: block in either the Aggregate or the Release — one written there is refused when the document loads — so on a socket slot this list has nothing to permit or refuse."
                       },
                       "description": {
                         "type": "string",
@@ -219,7 +219,7 @@
                       },
                       "selector": {
                         "type": "string",
-                        "description": "Optional Kubernetes-style label selector, in the same grammar as a Feature's appliesTo, naming which Feature is meant to fill this slot, evaluated against the attached Feature's own labels. It is carried as a declaration for tooling to read; a fill is not refused because of it."
+                        "description": "Optional Kubernetes-style label selector, in the same grammar as a Feature's appliesTo, constraining which Feature may fill this slot on each connection, evaluated against the attached Feature's own labels. A fill whose labels do not satisfy it halts, naming the slot, the socket and the connection and pointing at the connection entry that wrote the fill, on the Aggregate or on the Release; a selector outside that grammar halts a connection that fills the slot the same way, naming the requirement it could not read. Omit to place no constraint on the fill."
                       }
                     },
                     "additionalProperties": false
