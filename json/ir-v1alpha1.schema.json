@@ -292,11 +292,11 @@
         },
         "boundary_path": {
           "type": "string",
-          "description": "The physical spatial hierarchy mapped from the Release boundaries (e.g., 'aws-prod/eks-main/payments'). Allows rendering plugins to generate boundary-aware unique identifiers."
+          "description": "The path of the Release boundary this node is placed in: the boundary names from the outermost boundary inward, joined with `/` (e.g., 'data/inner' for a component placed in a boundary `inner` declared inside a boundary `data`). A boundary name cannot contain `/`, so the path splits back into its boundaries without ambiguity. A node of an imported Aggregate the Release routes into a boundary carries that boundary's path. Allows rendering plugins to generate boundary-aware unique identifiers."
         },
         "subsystem_path": {
           "type": "string",
-          "description": "The logical spatial hierarchy mapped from the Aggregate subsystems (e.g., 'finance-module/ledger-api'). Allows rendering plugins to generate logical metadata tags."
+          "description": "The path of the Aggregate subsystem this node's component is declared in: the subsystem names from the outermost subsystem inward, joined with `.` (e.g., 'backend.storage' for a component declared in a subsystem `storage` nested inside a subsystem `backend`). A subsystem name cannot contain `.`, so the path splits back into its subsystems without ambiguity. A component of an Aggregate that declares top-level `components` carries the synthesized `default`, marked by `synthesized_subsystem`. The path is relative to the Aggregate that declares the component: a node an imported Aggregate contributes carries its path within that Aggregate, without the name it is imported under (e.g., 'tier' for a component in the imported Aggregate's subsystem `tier`), so nodes from different Aggregates can share one path. The node's ID, which begins with the import name, and `source_file` tell them apart."
         },
         "synthesized_subsystem": {
           "type": "boolean",
