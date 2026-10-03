@@ -88,7 +88,7 @@
           },
           "uses": {
             "type": "object",
-            "description": "The enriched topological edge map. Keyed by the Developer's alias (e.g., 'my_db', 'my_api'). Each entry is a compiler-assembled view of the target node's identity, resolved provides, injection mapping, and cascaded annotations. This is NOT the raw IR edge — it is an enriched projection built by the compiler specifically for template consumption.",
+            "description": "The enriched topological edge map. Keyed by the Developer's alias (e.g., 'my_db', 'my_api'). Each entry is a compiler-assembled view of the target node's identity, resolved provides, injection mapping, and cascaded annotations, and of the attachments written on that connection. This is NOT the raw IR edge — it is an enriched projection built by the compiler specifically for template consumption. A template that ranges this map sees the connections in key order — sorted by alias — not in the order they were written.",
             "additionalProperties": {
               "$ref": "#/$defs/enriched_edge"
             }
@@ -118,7 +118,7 @@
       },
       "features": {
         "type": "object",
-        "description": "Every attachment on this node, keyed by the instance name the author gave it. One pillar carries them all whatever they produce — an operational Feature, a credential Feature, an identity Feature — because what differs between attachments is what they produce, not how a template reads them. A Recipe reads them to adapt its rendering to the attached capabilities and to consume what an attachment publishes.",
+        "description": "Every attachment on this node, keyed by the instance name the author gave it. One pillar carries them all whatever they produce — an operational Feature, a credential Feature, an identity Feature — because what differs between attachments is what they produce, not how a template reads them. A Recipe reads them to adapt its rendering to the attached capabilities and to consume what an attachment publishes. An attachment written on one of the node's connections is not among them: it is read under that connection, at .context.uses.<alias>.features.<slot>, so a template ranging this pillar meets only the node's own attachments.",
         "additionalProperties": { "$ref": "#/$defs/template_attachment" }
       },
       "metadata": {
@@ -401,6 +401,25 @@
           "origin_feature": {
             "type": "string",
             "description": "If this edge was autonomously declared by a Feature (including credential Features labeled feature.aggrega.ai/kind: secret), the Feature instance name. Null/absent for Developer-declared edges."
+          },
+          "origin_release": {
+            "type": "boolean",
+            "description": "True when the Release wired this connection rather than the Aggregate declaring it. Absent for a connection the Aggregate declares."
+          },
+          "values": {
+            "type": "object",
+            "description": "The per-connection developer configuration authored on the Aggregate's uses entry for this connection, carried verbatim. Absent when the connection carries none. It reaches the consuming node's context only, never the target's.",
+            "additionalProperties": true
+          },
+          "infra": {
+            "type": "object",
+            "description": "The per-connection operational configuration authored on the Release's uses entry for this connection, carried verbatim. Absent when the connection carries none. It reaches the consuming node's context only, never the target's.",
+            "additionalProperties": true
+          },
+          "features": {
+            "type": "object",
+            "description": "The attachments written on this connection, keyed by the slot name the connection's socket declares for each, each in the attachment shape .features carries: its type, resolved version, labels, values, infra, and the resolved provides of the FeatureRecipe bound to it. A Recipe reads a connection's credential as .context.uses.<alias>.features.<slot>.provides.<key>, so a consumer reaching several targets reads each target's own credential. These attachments are never part of the consuming node's own .features, so a template that ranges .features to find the node's attachments by type does not meet a connection's. Ranged in a template, the slots arrive in key order. Absent when the connection carries none.",
+            "additionalProperties": { "$ref": "#/$defs/template_attachment" }
           }
         },
         "additionalProperties": false
