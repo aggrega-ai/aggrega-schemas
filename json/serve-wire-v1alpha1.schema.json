@@ -1310,14 +1310,14 @@
     },
     "CacheRemoval": {
       "type": "object",
-      "description": "One thing a reclamation removed.",
+      "description": "One thing a reclamation removed — or, in a list of what it left in place, one thing it would have removed.",
       "required": ["class", "label", "reach", "size", "sizeText"],
       "additionalProperties": false,
       "properties": {
-        "class": { "type": "string", "description": "Which cache it was removed from." },
-        "label": { "type": "string", "description": "What was removed." },
-        "reach": { "type": "string", "description": "Whether the cache it came from belongs to this workspace or is shared across the machine." },
-        "size": { "type": "integer", "description": "How many bytes it occupied." },
+        "class": { "type": "string", "description": "Which cache it belongs to." },
+        "label": { "type": "string", "description": "What it is." },
+        "reach": { "type": "string", "description": "Whether that cache belongs to this workspace or is shared across the machine." },
+        "size": { "type": "integer", "description": "How many bytes it occupies, or occupied before it was removed." },
         "sizeText": { "type": "string", "description": "The same size written the way a person reads one." }
       }
     },
@@ -1338,13 +1338,16 @@
     "CacheCleared": {
       "type": "object",
       "description": "One cache a clearing emptied.",
-      "required": ["class", "reach", "size", "sizeText"],
+      "required": ["class", "reach", "size", "sizeText", "heldOpenFiles", "heldOpenBytes", "heldOpenBytesText"],
       "additionalProperties": false,
       "properties": {
         "class": { "type": "string", "description": "Which cache was emptied." },
         "reach": { "type": "string", "description": "Whether it belongs to this workspace or is shared across the machine." },
         "size": { "type": "integer", "description": "How many bytes were reclaimed from it." },
-        "sizeText": { "type": "string", "description": "The same size written the way a person reads one." }
+        "sizeText": { "type": "string", "description": "The same size written the way a person reads one." },
+        "heldOpenFiles": { "type": "integer", "description": "How many files the clearing left in this cache because another process had them open. Only Windows refuses to remove an open file, so everywhere else this is zero. A later clearing removes them once that process has finished with them." },
+        "heldOpenBytes": { "type": "integer", "description": "How many bytes those files occupy. They are not counted in size, which is what the clearing reclaimed." },
+        "heldOpenBytesText": { "type": "string", "description": "The same figure written the way a person reads one." }
       }
     },
     "ConfigWriteScope": {
@@ -1982,10 +1985,11 @@
     "CachePruneResult": {
       "type": "object",
       "description": "What a reclamation removed, what it kept, and what it could not reclaim.",
-      "required": ["removed", "retainedCount", "reclaimedBytes", "reclaimedBytesText", "unattributedCount", "unattributedSize", "unattributedSizeText", "notPruneEligible", "scope"],
+      "required": ["removed", "heldOpen", "retainedCount", "reclaimedBytes", "reclaimedBytesText", "unattributedCount", "unattributedSize", "unattributedSizeText", "notPruneEligible", "scope"],
       "additionalProperties": false,
       "properties": {
         "removed": { "type": ["array", "null"], "description": "What was removed.", "items": { "$ref": "#/$defs/CacheRemoval" } },
+        "heldOpen": { "type": ["array", "null"], "description": "What the prune would have removed but left in place because another process had it open. Only Windows refuses to remove an open file, so everywhere else this is empty. These entries are counted as neither removed nor kept, none of their bytes count as reclaimed, and a later prune reclaims them; an entry that is a directory may already have lost the files in it that were not open.", "items": { "$ref": "#/$defs/CacheRemoval" } },
         "retainedCount": { "type": "integer", "description": "How many entries were kept." },
         "reclaimedBytes": { "type": "integer", "description": "How many bytes were reclaimed." },
         "reclaimedBytesText": { "type": "string", "description": "The same figure written the way a person reads one." },
@@ -1999,11 +2003,12 @@
     "CacheEvictResult": {
       "type": "object",
       "description": "What reclaiming down to a size removed, and what remains.",
-      "required": ["withinCapBefore", "removed", "totalBefore", "totalBeforeText", "reclaimedBytes", "reclaimedBytesText", "remainingBytes", "remainingBytesText", "capBytes", "capBytesText", "scope"],
+      "required": ["withinCapBefore", "removed", "heldOpen", "totalBefore", "totalBeforeText", "reclaimedBytes", "reclaimedBytesText", "remainingBytes", "remainingBytesText", "capBytes", "capBytesText", "scope"],
       "additionalProperties": false,
       "properties": {
         "withinCapBefore": { "type": "boolean", "description": "Whether what was held already fitted under the size, so nothing needed removing." },
         "removed": { "type": ["array", "null"], "description": "What was removed.", "items": { "$ref": "#/$defs/CacheRemoval" } },
+        "heldOpen": { "type": ["array", "null"], "description": "What the reclaiming would have removed but left in place because another process had it open; it went on to the next-oldest entry instead. Only Windows refuses to remove an open file, so everywhere else this is empty. These entries still count toward the bytes that remain, and a later reclaiming can remove them.", "items": { "$ref": "#/$defs/CacheRemoval" } },
         "totalBefore": { "type": "integer", "description": "How many bytes were held before." },
         "totalBeforeText": { "type": "string", "description": "The same figure written the way a person reads one." },
         "reclaimedBytes": { "type": "integer", "description": "How many bytes were reclaimed." },
