@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://aggrega.ai/schemas/template-context-v1alpha1.schema.json",
     "title": "Aggrega Internal Template Context",
-    "description": "The runtime view assembled by the Go compiler and injected into Recipe and FeatureRecipe Go templates during rendering. When rendering an attachment FeatureRecipe the compiler additionally populates .attachment_name and .inject with the attachment-scoped context. For boundary-scope FeatureRecipes (spec.executionScope: boundary), the .context, .workload, .attachment_name, .inject, and .inject_raw pillars are absent and a .boundary.* pillar is populated instead — see the boundary block at the bottom of properties. This is NOT persisted to disk; it exists only in compiler memory during rendering. This schema documents the contract between the compiler and Ops template authors.\n\nBase-rendering stage availability, in the order the stages run:\n  Provides evaluation (locals preamble, then provides): node-local pillars only. A locals entry reads the entries above it in its own block; a provides template reads the node's whole resolved .locals. Self-reference banned (no provides entry reads another).\n  Source resolution (locals publication + source eval): all pillars; .source and .workload absent. Those locals are published onto .locals here, then source: is evaluated against them.\n  Values mapping (valuesMapping): all pillars + .source; .workload absent.\n  Workload synthesis (workload eval): all pillars + .source; .workload being evaluated (absent from self-reference).\n  Artifact evaluation (artifacts): all pillars + .source + .workload (fullest context).",
+    "description": "The runtime view assembled by the Go compiler and injected into Recipe and FeatureRecipe Go templates during rendering. When rendering an attachment FeatureRecipe the compiler additionally populates .attachment_name and .inject with the attachment-scoped context, and, on the templates that produce the attachment's own resources, .context.used_by with the components that use its host. For boundary-scope FeatureRecipes (spec.executionScope: boundary), the .context, .workload, .attachment_name, .inject, and .inject_raw pillars are absent and a .boundary.* pillar is populated instead — see the boundary block at the bottom of properties. This is NOT persisted to disk; it exists only in compiler memory during rendering. This schema documents the contract between the compiler and Ops template authors.\n\nBase-rendering stage availability, in the order the stages run:\n  Provides evaluation (locals preamble, then provides): node-local pillars only. A locals entry reads the entries above it in its own block; a provides template reads the node's whole resolved .locals. Self-reference banned (no provides entry reads another).\n  Source resolution (locals publication + source eval): all pillars; .source and .workload absent. Those locals are published onto .locals here, then source: is evaluated against them.\n  Values mapping (valuesMapping): all pillars + .source; .workload absent.\n  Workload synthesis (workload eval): all pillars + .source; .workload being evaluated (absent from self-reference).\n  Artifact evaluation (artifacts): all pillars + .source + .workload (fullest context).",
     "type": "object",
     "required": [
       "context",
@@ -91,6 +91,13 @@
             "description": "The enriched topological edge map. Keyed by the Developer's alias (e.g., 'my_db', 'my_api'). Each entry is a compiler-assembled view of the target node's identity, resolved provides, injection mapping, and cascaded annotations, and of the attachments written on that connection. This is NOT the raw IR edge — it is an enriched projection built by the compiler specifically for template consumption. A template that ranges this map sees the connections in key order — sorted by alias — not in the order they were written.",
             "additionalProperties": {
               "$ref": "#/$defs/enriched_edge"
+            }
+          },
+          "used_by": {
+            "type": "array",
+            "description": "The components that use this one: one entry per uses connection another component makes to it, in the order the connecting components are written and then the order of each one's own uses entries. A component connecting twice appears twice. Read only by a FeatureRecipe attached to the component, and only in the templates that produce the attachment's own resources — its valuesMapping, workload and artifacts. It is absent from the component's own Recipe templates, from an injectMapping and from a pipeline step's with and when, because the output of each of those can land in the component's own rendered output, which stays the same whoever connects to it. Each entry is a list item rather than a key, so a template ranging it meets the callers in that order.",
+            "items": {
+              "$ref": "#/$defs/inbound_edge"
             }
           }
         },
@@ -271,6 +278,31 @@
     },
     "additionalProperties": false,
     "$defs": {
+      "inbound_edge": {
+        "type": "object",
+        "description": "One connection another component makes to the component an attached FeatureRecipe renders for: who connects, through which socket, and what the connecting component publishes. Every value is a string the compiler carries without interpreting it.",
+        "required": [
+          "component_id",
+          "socket",
+          "provides"
+        ],
+        "properties": {
+          "component_id": {
+            "type": "string",
+            "description": "The flattened instance ID of the connecting component (e.g., 'frontend' or 'data-layer.etl') — the value a subDirectory path template reads as .component_id, spelled as .context.uses.<alias>.target spells the other end of a connection."
+          },
+          "socket": {
+            "type": "string",
+            "description": "The usesSchema category the connecting component draws this connection through (e.g., 'databases', 'apis')."
+          },
+          "provides": {
+            "type": "object",
+            "description": "The connecting component's resolved provides, narrowed to the keys its Component declares — the same values a consumer of that component reads at .context.uses.<alias>.provides. Empty when it publishes none.",
+            "additionalProperties": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      },
       "template_attachment": {
         "type": "object",
         "description": "One attachment as a template reads it: the per-instance view of an attached Feature. Every attachment exposes the same fields regardless of what it produces, so .features.<name> reads the same way whether that name is a slot the entity declared or a free attachment.",
