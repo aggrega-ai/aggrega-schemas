@@ -696,7 +696,8 @@
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
         "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
-        "release": { "type": "string", "description": "The Release to resolve, as a path relative to the workspace root. An absolute path is refused." }
+        "release": { "type": "string", "description": "The Release to resolve, as a path relative to the workspace root. An absolute path is refused." },
+        "unredacted": { "type": "boolean", "description": "Whether to answer with the values an author declared sensitive in the clear. Absent or false, each of them is withheld from the graph and a marker naming why stands in its place, as the command line's graph output withholds them; true answers with the graph as the Release compiles to it, those values included." }
       }
     },
     "BuildParams": {
@@ -1843,7 +1844,7 @@
       "required": ["graph"],
       "additionalProperties": false,
       "properties": {
-        "graph": { "description": "The graph document, carried through as the compiler emitted it. Its own shape is the graph's published contract and is not restated here." }
+        "graph": { "description": "The graph document. The values an author declared sensitive are withheld from it unless the request asked for them with unredacted; everything else is carried through as the compiler emitted it. Its own shape is the graph's published contract and is not restated here." }
       }
     },
     "BuildResult": {
