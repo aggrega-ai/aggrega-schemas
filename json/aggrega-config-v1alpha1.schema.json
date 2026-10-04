@@ -9,7 +9,7 @@
     "workspace": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Workspace root marker. Its PRESENCE marks the directory as the workspace root; it carries only the root-defining catalog directories — the workspace's own, and any a Release is given of its own. Every setting that is not root-defining lives at the top level rather than here. Write `workspace: {}` to mark a root with no vendored catalog directories.",
+      "description": "Workspace root marker. Its presence alone marks the directory as the workspace root; it carries only the root-defining catalog directories — the workspace's own, and any a Release is given of its own. Every setting that is not root-defining lives at the top level rather than here. Write `workspace: {}` to mark a root with no vendored catalog directories.",
       "properties": {
         "catalog_dirs": {
           "type": "array",
