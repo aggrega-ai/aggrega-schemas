@@ -206,7 +206,7 @@
                       "inject": {
                         "type": "array",
                         "items": { "type": "string", "enum": ["env", "file", "arg"] },
-                        "description": "The key a slot the Component declares in its own featuresSchema takes, where it lists the inject mechanisms allowed for the slot's material. A connection's attachment carries no inject: block in either the Aggregate or the Release — one written there is refused when the document loads — so on a socket slot this list has nothing to permit or refuse."
+                        "description": "The inject mechanisms a Workload entry may use to deliver this slot's material, as on a slot the Component declares in its own featuresSchema. A connection's attachment carries no inject: block of its own in either the Aggregate or the Release — one written there is refused when the document loads — so a Workload delivers it by naming the connection beside this slot, and that entry is held to this list."
                       },
                       "description": {
                         "type": "string",

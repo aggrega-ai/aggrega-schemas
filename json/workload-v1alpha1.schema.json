@@ -215,7 +215,7 @@
         },
         "attachments": {
           "type": "object",
-          "description": "Ordered map of env-or-file name → { from, as, path? }. Each entry references a slot declared in the Component's featuresSchema and delivers what the attachment filling that slot published. The 'as' field selects the delivery mechanism, which must be allowlisted in the slot's inject: array. Blackbox slots (inject: []) MAY NOT appear here.",
+          "description": "Ordered map of env-or-file name → { from, as, key?, path?, connection? }. Each entry references a slot declared in the Component's featuresSchema — or, when the entry names a connection, a slot that connection's socket declares — and delivers what the attachment filling that slot published. The 'as' field selects the delivery mechanism, which must be allowlisted in the slot's inject: array. Blackbox slots (inject: []) MAY NOT appear here.",
           "additionalProperties": { "$ref": "#/$defs/containerAttachment" }
         },
         "envFrom": {
@@ -228,9 +228,16 @@
               { "required": ["configMap"] },
               { "required": ["secret"] }
             ],
+            "allOf": [
+              {
+                "if": { "required": ["connection"] },
+                "then": { "required": ["secret"] }
+              }
+            ],
             "properties": {
               "configMap": { "type": "string", "description": "Name of a ConfigMap source emitted by this Recipe's artifacts input or an attached Feature." },
-              "secret": { "type": "string", "description": "Name of a featuresSchema slot; the imported Secret's name is resolved from the slot's provides." },
+              "secret": { "type": "string", "description": "Name of a featuresSchema slot — the Component's own, or, when connection is set, a slot that connection's socket declares; the imported Secret's name is resolved from the slot's provides." },
+              "connection": { "type": "string", "description": "Alias of a connection the component draws — the name it is written under in the component's uses block, on the Aggregate or the Release. When set, secret names a slot the socket that connection is wired through declares, and the imported Secret is the one the attachment that connection carries in that slot published, so a component reaching several targets imports each one's own Secret. Meaningful only beside secret. A connection the component does not draw, or a slot its socket does not declare, is refused naming both." },
               "prefix": { "type": "string", "description": "Optional prefix prepended to every imported environment variable name." }
             }
           }
@@ -339,7 +346,8 @@
       "required": ["from", "as"],
       "additionalProperties": false,
       "properties": {
-        "from": { "type": "string", "description": "Name of a slot declared in the Component's featuresSchema." },
+        "from": { "type": "string", "description": "Name of a slot declared in the Component's featuresSchema — or, when connection is set, of a slot the socket that connection is wired through declares." },
+        "connection": { "type": "string", "description": "Alias of a connection the component draws — the name it is written under in the component's uses block, on the Aggregate or the Release. When set, from names a slot the socket that connection is wired through declares (usesSchema.<socket>.featuresSchema), and the entry delivers what the attachment that connection carries in that slot published, so a component reaching several targets presents each its own credential. The slot's inject: allowlist governs as, exactly as for a slot the Component declares. A connection the component does not draw, or a slot its socket does not declare, is refused naming both." },
         "as": { "type": "string", "enum": ["env", "file"], "description": "Delivery mechanism. Must be allowlisted in the slot's inject: array." },
         "key": { "type": "string", "description": "For as: env, the specific data key of the referenced slot's secret this entry reads. Set it when the slot's secret carries several data keys, so this entry selects one of them by name; two entries may reference the same slot with different keys to read several keys from one secret. When omitted, the entry reads the slot's single published key. Ignored for as: file, which mounts the whole secret." },
         "path": { "type": "string", "description": "File path inside the container (required when as: file)." }
