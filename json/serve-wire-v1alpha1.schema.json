@@ -2212,11 +2212,13 @@
     },
     "CatalogIndexResult": {
       "type": "object",
-      "description": "Every entity the workspace index holds.",
-      "required": ["entities"],
+      "description": "Every entity the workspace index holds, and the links leading out of the workspace, to directories and to files, that were not read for it.",
+      "required": ["entities", "unreadLinkedDirs", "unreadLinkedFiles"],
       "additionalProperties": false,
       "properties": {
-        "entities": { "type": ["array", "null"], "description": "Each entity.", "items": { "$ref": "#/$defs/CatalogEntity" } }
+        "entities": { "type": ["array", "null"], "description": "Each entity.", "items": { "$ref": "#/$defs/CatalogEntity" } },
+        "unreadLinkedDirs": { "type": "array", "description": "Each link under the workspace root that leads to a directory outside it, named relative to the root where the link itself sits, in the order the workspace is searched. No directory outside the root is searched, so no document behind one of these links is among entities as the workspace's own, and a client listing entities can say why. Not named: a link to a directory inside the root, which is searched, or left out, where it actually sits; a link wherever a directory would be left out, whether by where it sits, by its name or by a .gitignore; a link that cannot be resolved, because it leads nowhere or round a loop; and, in an answer given in a Release's terms, a link under a catalog directory only other Releases read. Empty when the workspace holds none.", "items": { "type": "string" } },
+        "unreadLinkedFiles": { "type": "array", "description": "Each link under the workspace root that is named like a YAML file, its own name ending in .yaml or .yml, and leads to a file outside the root, named relative to the root where the link itself sits, in the order the workspace is searched. Such a file is not read for the index, whatever it declares, so the entity it declares is not among entities as the workspace's own, and a client listing entities can say why; the configured catalog directories are how entities outside the workspace are read. Not named: a link to a file that the workspace configuration names as a Release, as build.authoring_release or as a key of workspace.releases, and that declares one, which is read and listed in entities at the link's own place; a link to a file inside the root, which is read at the link's own place; a link a .gitignore leaves out, or one inside a directory the search leaves out; a link that leads to no file, whether to a directory, which unreadLinkedDirs names where it leads out of the root, or nowhere, or round a loop; and, in an answer given in a Release's terms, a link under a catalog directory only other Releases read. Empty when the workspace holds none.", "items": { "type": "string" } }
       }
     },
     "AttachCandidatesResult": {
