@@ -280,7 +280,7 @@
     "$defs": {
       "inbound_edge": {
         "type": "object",
-        "description": "One connection another component makes to the component an attached FeatureRecipe renders for: who connects, through which socket, and what the connecting component publishes. Every value is a string the compiler carries without interpreting it.",
+        "description": "One connection another component makes to the component an attached FeatureRecipe renders for: who connects, through which socket, what the connecting component publishes, and the namespace and boundary it is placed in. Every value is a string the compiler carries without interpreting it.",
         "required": [
           "component_id",
           "socket",
@@ -299,6 +299,14 @@
             "type": "object",
             "description": "The connecting component's resolved provides, narrowed to the keys its Component declares — the same values a consumer of that component reads at .context.uses.<alias>.provides. Empty when it publishes none.",
             "additionalProperties": { "type": "string" }
+          },
+          "source_namespace": {
+            "type": "string",
+            "description": "The namespace the connecting component is placed in: the aggrega.ai/namespace annotation its own render receives — its boundaries' annotations, with its own Release entry's annotations applied last, so a component whose entry sets or clears the namespace carries its own setting rather than its boundary's. It is the value a boundary-scope FeatureRecipe reads as source_namespace on the same connection's entry in the .boundary uses-edge lists. Absent when no namespace applies to the connecting component; guard with `if` or `with` before printing it."
+          },
+          "source_boundary_path": {
+            "type": "string",
+            "description": "The slash-separated path of the Release boundary that holds the connecting component (e.g. 'edge' or 'aws-prod/payments') — the value a boundary-scope FeatureRecipe reads as source_boundary_path on the same connection's entry in the .boundary uses-edge lists."
           }
         },
         "additionalProperties": false
