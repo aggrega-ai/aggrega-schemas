@@ -272,6 +272,11 @@
           "default": "component",
           "description": "Whether this FeatureRecipe's Resource Generation runs per-component (default, today's behavior) or once per boundary attachment. Boundary-scope FeatureRecipes deduplicate by (boundary_path, FR-instance) and receive a different TemplateContext shape (.boundary.* pillars instead of per-component .context.* pillars). The injectMapping continues to fan per-consumer regardless of executionScope."
         },
+        "readsCallerRenderFacts": {
+          "type": "boolean",
+          "default": false,
+          "description": "Declares that this FeatureRecipe's templates read what the Components connecting to the one it is attached to rendered: the render facts each of those callers' providers reports about its own output. Where it is true and the FeatureRecipe renders per component, each attachment of it renders after every Component in the build has rendered, instead of right after the Component it is attached to, so each caller's render is complete before the attachment is evaluated. Where it is false or absent, the attachment renders right after its Component, and the build halts on a template written inline in this FeatureRecipe that reads a caller's render facts beneath '.context.used_by'."
+        },
         "assertions": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[string]",
