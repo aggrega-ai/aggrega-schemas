@@ -85,6 +85,7 @@
         "aggrega/resolveDependencies",
         "aggrega/scaffoldEntity",
         "aggrega/search",
+        "aggrega/setActiveRelease",
         "aggrega/signArtifacts",
         "aggrega/validate"
       ]
@@ -258,6 +259,10 @@
         {
           "if": { "properties": { "method": { "const": "aggrega/activeRelease" } }, "required": ["method"] },
           "then": { "properties": { "params": { "$ref": "#/$defs/WorkspaceAndProgressParams" } } }
+        },
+        {
+          "if": { "properties": { "method": { "const": "aggrega/setActiveRelease" } }, "required": ["method"] },
+          "then": { "properties": { "params": { "$ref": "#/$defs/SetActiveReleaseParams" } } }
         },
         {
           "if": { "properties": { "method": { "const": "aggrega/editDocument" } }, "required": ["method"] },
@@ -1040,6 +1045,16 @@
         "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
         "graphNode": { "type": "string", "description": "The graph node the attachment is for." },
         "release": { "type": "string", "description": "The Release whose graph the node belongs to, as a path relative to the workspace root." }
+      }
+    },
+    "SetActiveReleaseParams": {
+      "type": "object",
+      "description": "Records a Release as the workspace's default by writing its active-Release marker, `.aggrega/active-release`: the choice `aggrega/activeRelease` reports reads the marker after the configuration's authoring Release. The marker is written inside the workspace and nowhere else: where the `.aggrega` directory or the marker is a link leading out of the workspace, whether or not the place it leads to exists yet, the write is refused naming the link and nothing is written. The answer is the one `aggrega/activeRelease` gives once the marker is written, so it names a different Release where the configuration's authoring Release outranks the marker.",
+      "additionalProperties": false,
+      "properties": {
+        "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
+        "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
+        "release": { "type": "string", "description": "The Release to record, as a path relative to the workspace root. An absolute path, and one climbing out of the workspace, are refused; so is one leading out of it through a link, unless the workspace configuration names that Release." }
       }
     },
     "EditDocumentParams": {
