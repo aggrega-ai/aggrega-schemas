@@ -207,7 +207,7 @@
         },
         "render_facts": {
           "type": "array",
-          "description": "Facts the guest reports about what it emitted for this node, in the order the guest lists them. Each fact pairs a name with a value, and both are the guest's own vocabulary: which facts a provider reports, what each name means and what shape each value takes are part of that provider's documented contract, not of this socket's. The host carries the list verbatim and in order — it reads no name, parses no value and never derives a fact itself — so a provider can report something only its own format knowledge can see, such as a property of the documents it wrote, without the host learning that format. Reporting facts never changes what is written: the files the host writes are the files the guest returned, whether or not facts accompany them. The guest lists its facts in a fixed order so the payload is byte-identical across runs of identical input. Absent when the guest reports nothing, which is a complete answer rather than a missing one.",
+          "description": "Facts the guest reports about what it emitted for this node, in the order the guest lists them. Each fact pairs a name with a value, and both are the guest's own vocabulary: which facts a provider reports, what each name means and what its entries hold are part of that provider's documented contract, not of this socket's. Every fact's value is a list, even when it holds one entry: the host refuses a fact whose value is anything else, naming the provider and the fact, and halts the build. That is the one thing the host learns about a value. It keys facts by name and hands each list to the templates that read it, joining the lists of one name reported by more than one render of the same node in the order those renders ran, and it never learns what a name or an entry means or derives a fact itself — so a provider can report something only its own format knowledge can see, such as a property of the documents it wrote, without the host learning that format. Reporting facts never changes what is written: the files the host writes are the files the guest returned, whether or not facts accompany them. The guest lists its facts in a fixed order so the payload is byte-identical across runs of identical input. Absent when the guest reports nothing, which is a complete answer rather than a missing one.",
           "items": {
             "$ref": "#/$defs/RenderFact"
           }
@@ -288,7 +288,7 @@
     },
     "RenderFact": {
       "type": "object",
-      "description": "One fact a Provider guest reports about what it emitted for a node: a name and a value, both defined and documented by the provider. The host carries the fact exactly as the guest wrote it and reads neither half.",
+      "description": "One fact a Provider guest reports about what it emitted for a node: a name and a list of entries, both defined and documented by the provider. The host carries the fact as the guest wrote it, refuses one whose value is not a list, and learns nothing else about either half.",
       "required": [
         "name",
         "value"
@@ -300,8 +300,9 @@
           "description": "The fact's name, from the provider's own documented vocabulary."
         },
         "value": {
+          "type": "array",
           "x-aggrega-go-type": "json.RawMessage",
-          "description": "The fact's value: any JSON value — an object, an array, a string, a number, a boolean — in the shape the provider documents for that name. It is carried as the JSON document the guest wrote, byte for byte, so the order of an object's keys and of an array's items is the guest's own."
+          "description": "The fact's value: a JSON array — always a list, even with one entry or none — whose entries are any JSON values in the shape the provider documents for that name. A list is what lets one name be reported by more than one render of a node: the host joins the lists into one. It is carried as the JSON document the guest wrote, byte for byte, so the order of the list's entries and of each object's keys is the guest's own."
         }
       }
     },
