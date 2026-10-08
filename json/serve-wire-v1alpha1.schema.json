@@ -2366,7 +2366,7 @@
       "description": "The connection whose entry the position falls inside, or why none is reported. Exactly one half is present: graphNode and connection together, or noConnectionReason alone. A position anywhere inside an entry — on its alias, its target or its attachments — is inside that entry, the innermost one where entries nest; a position on a socket's own key, above the entries written under it, is inside none.",
       "additionalProperties": false,
       "properties": {
-        "graphNode": { "type": "string", "description": "The graph node whose component draws the connection, by the id the compiled graph keys it under — the value the candidacy and container requests take as graphNode." },
+        "graphNode": { "type": "string", "description": "The id of the node whose component draws the connection, as the compiled graph keys it — the value the candidacy and container requests take as graphNode." },
         "connection": { "$ref": "#/$defs/ConnectionCoordinate", "description": "The connection, by its socket and its alias, with document naming the document the position was read in — the value the candidacy and container requests take as connection." },
         "noConnectionReason": {
           "type": "string",
