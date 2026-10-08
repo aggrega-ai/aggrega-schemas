@@ -157,7 +157,7 @@
       },
       "attachment_name": {
         "type": "string",
-        "description": "Only populated when rendering an attachment FeatureRecipe. Contains the attachment's instance name \u2014 the slot it fills in the owning entity's featuresSchema, or the free name the author gave it (e.g., 'admin_password', 'db_credentials'). Used to construct deterministic resource names (e.g., '{{ .context.instance_id }}-{{ .attachment_name }}')."      },
+        "description": "Only populated when rendering an attachment FeatureRecipe. Contains the attachment's instance name \u2014 the slot it fills in the owning entity's featuresSchema, or the free name the author gave it (e.g., 'admin_password', 'db_credentials'). Used to construct deterministic resource names that differ per attachment, composed after the host component's name: '{{ .context.rendered_name }}-{{ .attachment_name | replace \"_\" \"-\" }}' where the host's provider reports a rendered name, as helm does — the host's name spelled in the characters a Kubernetes name allows, with the attachment name's underscores folded to hyphens — and '{{ .context.instance_id }}-{{ .attachment_name }}' where the host's provider reports none."      },
       "inject": {
         "description": "Only populated when rendering an attachment FeatureRecipe that carries an authored inject block (e.g., { env: { OPENAI_API_KEY: 'api_token' } }). Distinct from .context.inject which is the base component's pre-hydrated delivery pipe from uses edges. Evaluates to null/absent for attachments with no authored inject and for base Recipes.",
         "type": "object",
