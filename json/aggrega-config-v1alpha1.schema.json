@@ -192,6 +192,11 @@
               "type": "boolean",
               "default": false,
               "description": "When true, the publishing-linter suppresses the provides-declared-by-component rule. That rule reports each key a Recipe publishes in `spec.provides` that the Component named by its `spec.implements` does not declare in the `provides` pillar of its `spec.schema`. The two are separate surfaces: what a Recipe publishes is the value a consumer receives, while what the Component declares is the output contract an `inject` `from:` reference is checked against — so a key that is published without being declared makes such a reference halt. A Recipe publishing more than its Component declares is otherwise accepted at build time, which is why the finding is advisory rather than a refusal to publish. Default false."
+            },
+            "allow_connection_credential_mismatches": {
+              "type": "boolean",
+              "default": false,
+              "description": "When true, the publishing-linter suppresses the connection-credential-matches-target-key rule, which `aggrega lint --release` runs over the Release it names: the Release, the Aggregate it deploys and the Components that Aggregate's instances use. For each connection whose target declares the key it requires of its callers, the rule compares what the two ends reference: the credential the connection presents and the key the target holds in its own slot. It reports two ends naming different secrets, and a key declared at one end only, and it never quotes either. Neither end can see the other's attachments, so the two agree only by authoring discipline — usually one parameter feeding both — and a build accepts them either way, which is why the finding is advisory. A workspace whose two ends deliberately differ opts out here. Default false."
             }
           }
         }

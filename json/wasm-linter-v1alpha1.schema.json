@@ -10,7 +10,7 @@
   "$defs": {
     "LinterInput": {
       "type": "object",
-      "description": "The payload the host hands the publishing-linter plugin on each invocation. rule_id selects which rule the plugin dispatches to. entity_kind identifies the entity kind being linted (Component, Feature, Recipe, FeatureRecipe, SchemaLibrary, MappingLibrary, Aggregate). proposed carries the parsed entity structure being classified (the host parses YAML to JSON before sending; the plugin never sees raw bytes). previous carries the parsed previous-version entity for the schema-evolution rule; omitted when not applicable. implemented_component carries a related entity of a different kind — the Component a linted Recipe realizes — for rules that compare an entity against a contract another entity declares; omitted when not applicable. policies carries the per-workspace publishing-discipline configuration the rule consults.",
+      "description": "The payload the host hands the publishing-linter plugin on each invocation. rule_id selects which rule the plugin dispatches to. entity_kind identifies the entity kind being linted (Component, Feature, Recipe, FeatureRecipe, SchemaLibrary, MappingLibrary, Aggregate). proposed carries the parsed entity structure being classified (the host parses YAML to JSON before sending; the plugin never sees raw bytes). previous carries the parsed previous-version entity for the schema-evolution rule; omitted when not applicable. implemented_component carries a related entity of a different kind — the Component a linted Recipe realizes — for rules that compare an entity against a contract another entity declares; omitted when not applicable. release and components carry the rest of a Release for a rule that reads one whole — proposed is then the Aggregate the Release deploys, release that Release, and components the Component each of the Aggregate's component instances is an instance of; both are omitted on every other input. policies carries the per-workspace publishing-discipline configuration the rule consults.",
       "required": [
         "rule_id",
         "entity_kind",
@@ -49,6 +49,17 @@
           "description": "Parsed structure of the Component a linted Recipe names in spec.implements, resolved by the host. It is a related entity of a DIFFERENT kind from the one being linted, which is what distinguishes it from previous: previous carries another version of the same entity, while this carries the Component whose declared output contract the Recipe realizes. The host resolves it through the same catalog lookup a build uses, keyed on the Component's name, so all three pin forms spec.implements accepts (unversioned, exact, major-compatible range) reach the same entry. Omitted when the linted entity is not a Recipe, when it names no Component, or when no Component of that name is reachable in the workspace's catalog directories. An absent value means the comparison is unavailable, not that the contract is empty: a rule that reads this field emits no finding when it is absent.",
           "type": "object",
           "x-aggrega-go-type": "json.RawMessage"
+        },
+        "release": {
+          "description": "Parsed structure of the Release a release-scoped lint names, with its extends chain folded in, so a child Release carries what it inherits from its base. The host converts it from YAML to JSON as it does proposed. Its spec.parameters block is removed before it is handed over: a parameter's value can be the credential itself, no rule reads the block, and so no parameter value reaches a linter plugin through this field. Present only on the input of a rule that reads a whole Release, where proposed is the Aggregate this Release deploys, as its author wrote it; omitted on every other input.",
+          "type": "object",
+          "x-aggrega-go-type": "json.RawMessage"
+        },
+        "components": {
+          "description": "The Component each component instance of the Aggregate is an instance of, keyed by the instance name the Aggregate gives it, which is the same key the Aggregate's and the Release's own components maps use. Each value is the Component the instance's type resolves to, with any extends chain folded in, converted to JSON as implemented_component is. An instance whose Component is not reachable in the workspace's catalog directories is absent, and a rule reads that absence as unavailable rather than as a Component declaring nothing. Present only beside release, on the input of a rule that reads a whole Release; omitted on every other input.",
+          "type": "object",
+          "additionalProperties": { "type": "object" },
+          "x-aggrega-go-type": "OrderedMap[json.RawMessage]"
         },
         "source_path": {
           "description": "Filesystem path the entity was loaded from. Populated by host callers walking the catalog filesystem; consumed by path-aware rules (e.g., category-matches-directory). Omitted when the caller has no path context.",
@@ -115,6 +126,10 @@
         "allow_undeclared_recipe_provides": {
           "type": "boolean",
           "description": "When true, suppress the provides-declared-by-component rule's findings. That rule reports each key a Recipe publishes in spec.provides that the Component named by its spec.implements does not declare in the provides pillar of its spec.schema. Publishing beyond the declared contract is accepted at build time, so the finding is advisory; a workspace whose Recipes deliberately publish keys their Component does not declare opts out here. Default false."
+        },
+        "allow_connection_credential_mismatches": {
+          "type": "boolean",
+          "description": "When true, suppress the connection-credential-matches-target-key rule's findings. That rule reads a whole Release and compares, for each connection whose target declares the key it requires of its callers, the credential the connection presents with the key the target holds: it reports two ends naming different secrets, and a key declared at one end only. Agreement between the two ends is a catalog convention rather than something a build checks, so the finding is advisory; a workspace whose two ends deliberately differ opts out here. Default false."
         }
       }
     }
