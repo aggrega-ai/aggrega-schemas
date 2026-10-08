@@ -50,6 +50,7 @@
         "aggrega/completion",
         "aggrega/configCapture",
         "aggrega/configInit",
+        "aggrega/connectionAtPosition",
         "aggrega/connectionCandidates",
         "aggrega/deprecateArtifact",
         "aggrega/diagnostics",
@@ -251,6 +252,10 @@
         {
           "if": { "properties": { "method": { "const": "aggrega/attachmentContainer" } }, "required": ["method"] },
           "then": { "properties": { "params": { "$ref": "#/$defs/AttachmentContainerParams" } } }
+        },
+        {
+          "if": { "properties": { "method": { "const": "aggrega/connectionAtPosition" } }, "required": ["method"] },
+          "then": { "properties": { "params": { "$ref": "#/$defs/ConnectionAtPositionParams" } } }
         },
         {
           "if": { "properties": { "method": { "const": "aggrega/releaseCandidates" } }, "required": ["method"] },
@@ -484,6 +489,7 @@
             { "$ref": "#/$defs/ConnectionCandidatesResult" },
             { "$ref": "#/$defs/InsertionPointResult" },
             { "$ref": "#/$defs/AttachmentContainerResult" },
+            { "$ref": "#/$defs/ConnectionAtPositionResult" },
             { "$ref": "#/$defs/ReleaseCandidatesResult" },
             { "$ref": "#/$defs/ActiveReleaseResult" },
             { "$ref": "#/$defs/EditDocumentResult" },
@@ -1049,6 +1055,18 @@
         "graphNode": { "type": "string", "description": "The graph node the attachment is for." },
         "release": { "type": "string", "description": "The Release whose graph the node belongs to, as a path relative to the workspace root." },
         "connection": { "$ref": "#/$defs/ConnectionCoordinate", "description": "One connection the graph node's component draws, when the attachment is for that connection rather than for the node: the answer then names the connection's own features container in the document its document field names, a field required here. In the Aggregate, that is the connection's entry in the document the node was authored in, refused for a connection the Release drew, which the Aggregate holds no entry for. In the Release, it is the per-edge entry under the Release's own entry for the node, whether or not the Release writes one for that connection yet, refused where the Release writes no entry for the node. A connection a Feature drew is refused in either document, because an attachment is written only on a connection a component or the Release draws." }
+      }
+    },
+    "ConnectionAtPositionParams": {
+      "type": "object",
+      "description": "Answers which connection's entry a position in an Aggregate or a Release falls inside: the graph node and the connection, in the terms the candidacy and container requests take them, or why no connection is written there. The entries are the ones an attachment is written in — the entry a component draws a connection with, under the connection's alias, in the document the component was authored in, and every per-edge entry the Release writes — each where the compiled graph records it, so whether a key is a connection is never read from what it is called.",
+      "additionalProperties": false,
+      "properties": {
+        "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
+        "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
+        "file": { "type": "string", "description": "The document the position is in: the Release, or a document the Release's graph records components as authored in — its Aggregate, or the document of a module that Aggregate imports. It is read from what the session holds for it first, and from disk otherwise." },
+        "position": { "$ref": "#/$defs/Position" },
+        "release": { "type": "string", "description": "The Release whose compiled graph records the connections, as a path relative to the workspace root. It is required for a position in the Aggregate too, because a graph node and a connection exist only on a compiled graph." }
       }
     },
     "ConnectionCoordinate": {
@@ -2341,6 +2359,24 @@
         "node": { "type": "string", "description": "The graph node the attachment is for." },
         "file": { "type": "string", "description": "The document the attachment belongs in." },
         "container": { "type": ["array", "null"], "description": "The path through that document to where it belongs.", "items": { "type": "string" } }
+      }
+    },
+    "ConnectionAtPositionResult": {
+      "type": "object",
+      "description": "The connection whose entry the position falls inside, or why none is reported. Exactly one half is present: graphNode and connection together, or noConnectionReason alone. A position anywhere inside an entry — on its alias, its target or its attachments — is inside that entry, the innermost one where entries nest; a position on a socket's own key, above the entries written under it, is inside none.",
+      "additionalProperties": false,
+      "properties": {
+        "graphNode": { "type": "string", "description": "The graph node whose component draws the connection, by the id the compiled graph keys it under — the value the candidacy and container requests take as graphNode." },
+        "connection": { "$ref": "#/$defs/ConnectionCoordinate", "description": "The connection, by its socket and its alias, with document naming the document the position was read in — the value the candidacy and container requests take as connection." },
+        "noConnectionReason": {
+          "type": "string",
+          "description": "Present only where no connection is reported: why. The set is closed.",
+          "oneOf": [
+            { "const": "no-connection-entry", "description": "The position is on no entry an attachment is written in: neither a connection a component draws, written under its alias, nor a per-edge entry in the Release. A connection written as a list of targets, and one a Feature's own block draws, carry no such entry." },
+            { "const": "feature-created-connection", "description": "The position is on the Release's entry for a connection a Feature drew, and an attachment is written only on a connection a component or the Release draws." },
+            { "const": "unknown-connection", "description": "The position is on an entry the Release writes for a connection the compiled graph does not carry." }
+          ]
+        }
       }
     },
     "ReleaseCandidatesResult": {
