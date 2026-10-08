@@ -223,6 +223,13 @@
           "$ref": "#/$defs/AttachmentConnection",
           "description": "The connection this attachment belongs to: present on every attachment written on one of the node's connections, and absent on every attachment of the node's own attachment block. An attachment written on a connection is one of the node's attachments in every other respect — keyed by its qualified name, the connection's alias and the slot joined by a dot, and taking its binding and its sensitivity from the slot the connection's socket declares — so this field is what tells the two apart, and it carries the connection as data rather than leaving it to be read out of the key. A consumer joins it to the graph's edges by socket and alias: the edge whose source is the node carrying this attachment and whose socket and alias are these is the connection the attachment is presented on, and that edge's target is what it is presented to. An attachment of a connection a Feature attachment draws never carries one, because such a connection carries no attachments.",
           "x-aggrega-go-type": "*AttachmentConnection"
+        },
+        "realization": {
+          "type": "string",
+          "description": "The FeatureRecipe that realizes this attachment, as <name>:<version>: the one the Manifest binds to it — by the attachment's own name where the Manifest's name tier maps that name, otherwise by its Feature type — which is the one a build of the same documents renders it with. For an attachment written on a connection the name the name tier is read by is its qualified name, the connection's alias and the slot joined by a dot. The value is the pair aggrega inspect prints as the attachment's realization and, where a target stamps provenance on what it renders, the aggrega.ai/recipe-uri value on the documents that FeatureRecipe renders, so a consumer joins an attachment to what it renders without translating between forms. It names the FeatureRecipe by name and version and not by capability. The field records which FeatureRecipe the Manifest binds, read from the Manifest and the catalog when the graph is built: nothing is fetched to produce it, and the FeatureRecipe is rendered only when the build renders. Absent when the Manifest binds the attachment to no FeatureRecipe the catalog holds.",
+          "examples": [
+            "conn-token-compose:1.0.0"
+          ]
         }
       },
       "additionalProperties": false
@@ -250,6 +257,13 @@
           "items": {
             "type": "string"
           }
+        },
+        "realization": {
+          "type": "string",
+          "description": "The FeatureRecipe that realizes this boundary attachment, as <name>:<version>: the one the Manifest binds to it — by the attachment's own name where the Manifest's name tier maps that name, otherwise by its Feature type — which is the one a build of the same documents renders it with. It is the same field, read the same way, as an attachment entry's realization under feature_values_mapping. Absent when the Manifest binds the attachment to no FeatureRecipe the catalog holds.",
+          "examples": [
+            "conn-token-compose:1.0.0"
+          ]
         }
       },
       "additionalProperties": false
