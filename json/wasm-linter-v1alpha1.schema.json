@@ -36,7 +36,7 @@
           ]
         },
         "proposed": {
-          "description": "Parsed structure of the entity being classified. The host converts YAML to JSON before sending, so the plugin receives an already-structured value and never sees raw bytes.",
+          "description": "Parsed structure of the entity being classified. The host converts YAML to JSON before sending, so the plugin receives an already-structured value and never sees raw bytes. On the input of a rule that reads a whole Release it is the Aggregate that Release deploys, with every parameter value removed before it is handed over: its spec.parameters block, whose declarations carry their defaults, and the parameters block of each module under spec.aggregates, which carries the values passed to that module. A parameter's value can be the credential itself, so no parameter value reaches a linter plugin through this field; template text that reads a parameter is kept as written.",
           "type": "object",
           "x-aggrega-go-type": "json.RawMessage"
         },
@@ -51,7 +51,7 @@
           "x-aggrega-go-type": "json.RawMessage"
         },
         "release": {
-          "description": "Parsed structure of the Release a release-scoped lint names, with its extends chain folded in, so a child Release carries what it inherits from its base. The host converts it from YAML to JSON as it does proposed. Its spec.parameters block is removed before it is handed over: a parameter's value can be the credential itself, no rule reads the block, and so no parameter value reaches a linter plugin through this field. Present only on the input of a rule that reads a whole Release, where proposed is the Aggregate this Release deploys, as its author wrote it; omitted on every other input.",
+          "description": "Parsed structure of the Release a release-scoped lint names, with its extends chain folded in, so a child Release carries what it inherits from its base. The host converts it from YAML to JSON as it does proposed. Its spec.parameters block is removed before it is handed over: a parameter's value can be the credential itself, no rule reads the block, and so no parameter value reaches a linter plugin through this field. Present only on the input of a rule that reads a whole Release, where proposed is the Aggregate this Release deploys, with its own parameter blocks removed in the same way; omitted on every other input.",
           "type": "object",
           "x-aggrega-go-type": "json.RawMessage"
         },
