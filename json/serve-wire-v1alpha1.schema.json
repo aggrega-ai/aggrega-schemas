@@ -2184,8 +2184,8 @@
         "pluginSize": { "type": "integer", "description": "How many bytes the plugin module published alongside a Plugin entity occupies." },
         "pluginSizeText": { "type": "string", "description": "The same size written the way a person reads one." },
         "digest": { "type": "string", "description": "The digest of what was published." },
-        "signed": { "type": "boolean", "description": "Whether what was published carries a signature." },
-        "alreadyPublished": { "type": "boolean", "description": "Whether the same bytes were already there, so nothing new was landed." },
+        "signed": { "type": "boolean", "description": "Whether this publication attached a signature: the one it made before publishing, or, on a version already published, one the version lacked." },
+        "alreadyPublished": { "type": "boolean", "description": "Whether the same bytes were already there, so no content was uploaded. Only what that publication still lacked was attached beside it: its publication date and, where this publication signs, its signature; signed says whether a signature was." },
         "dryRun": { "type": "boolean", "description": "Whether this reports what publishing would have landed rather than what it did." },
         "reach": { "$ref": "#/$defs/PublicationReach" },
         "pin": { "$ref": "#/$defs/PinResult" },
@@ -2204,7 +2204,7 @@
         "size": { "type": "integer", "description": "How many bytes were published." },
         "sizeText": { "type": "string", "description": "The same size written the way a person reads one." },
         "digest": { "type": "string", "description": "The digest of what was published." },
-        "alreadyPublished": { "type": "boolean", "description": "Whether the same bytes were already there, so nothing new was landed." },
+        "alreadyPublished": { "type": "boolean", "description": "Whether the same bytes were already there, so no content was uploaded. A publication date was attached beside it only where the artifact lacked one." },
         "dryRun": { "type": "boolean", "description": "Whether this reports what publishing would have landed rather than what it did." },
         "reach": { "$ref": "#/$defs/PublicationReach" }
       }
