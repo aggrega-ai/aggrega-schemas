@@ -28,7 +28,7 @@
           "digest": {
             "type": "string",
             "pattern": "^sha256:[a-f0-9]{64}$",
-            "description": "Digest of what a publication of the entity carries, in `sha256:` followed by 64 lowercase hex characters: the SHA-256 over the entity's document and every file it declares beside it, sorted by path, each contributing its path, whether it is executable, and the SHA-256 of its bytes. An entity that declares no file counts as its one document. Nothing else enters it — not how an archive was compressed, not a timestamp, not any permission bit but execute — so the entity records the same digest read from a catalog directory or fetched from a registry, and on any checkout of the same files."
+            "description": "Digest of what a publication of the entity carries, in `sha256:` followed by 64 lowercase hex characters: the SHA-256 over the entity's document and every file it declares beside it, sorted by path, each contributing its path and the SHA-256 of its bytes. An entity that declares no file counts as its one document. Nothing else enters it — not how an archive was compressed, not a timestamp, not any permission bit, the execute bit included — so the entity records the same digest read from a catalog directory or fetched from a registry, and on any checkout of the same files, on any system."
           },
           "manifest_digest": {
             "type": "string",
