@@ -36,12 +36,12 @@
           ]
         },
         "proposed": {
-          "description": "Parsed structure of the entity being classified. The host converts YAML to JSON before sending, so the plugin receives an already-structured value and never sees raw bytes. On the input of a rule that reads a whole Release it is the Aggregate that Release deploys, with every parameter value removed before it is handed over: its spec.parameters block, whose declarations carry their defaults, and the parameters block of each module under spec.aggregates, which carries the values passed to that module. A parameter's value can be the credential itself, so no parameter value reaches a linter plugin through this field; template text that reads a parameter is kept as written.",
+          "description": "Parsed structure of the entity being classified. The host converts YAML to JSON before sending, so the plugin receives an already-structured value and never sees raw bytes. On the input of a rule that reads a whole Release it is the Aggregate that Release deploys. On every input every parameter value is removed before the entity is handed over, because a parameter's value can be the credential itself, so no parameter value reaches a linter plugin through this field. An Aggregate keeps its spec.parameters declarations, each holding only the keys the Aggregate schema admits on a parameter declaration other than default, and every declaration nested under properties, items and valuesType is held to the same: a default is removed rather than replaced, so a plugin cannot tell whether a declaration gives one, and a key the schema does not admit there is removed with whatever it holds. The parameters block of each module under spec.aggregates, which carries the values passed to that module, is removed whole, as is spec.parameters on an entity of any other kind. Template text that reads a parameter is kept as written.",
           "type": "object",
           "x-aggrega-go-type": "json.RawMessage"
         },
         "previous": {
-          "description": "Parsed structure of the previous-version entity, for rules that perform pairwise comparison (schema-evolution). Omitted when the rule does not need a previous-version reference (e.g., first publication, structural-only rules).",
+          "description": "Parsed structure of the previous-version entity, for rules that perform pairwise comparison (schema-evolution), with its parameter values removed exactly as they are from proposed. Omitted when the rule does not need a previous-version reference (e.g., first publication, structural-only rules).",
           "type": "object",
           "x-aggrega-go-type": "json.RawMessage"
         },
@@ -51,7 +51,7 @@
           "x-aggrega-go-type": "json.RawMessage"
         },
         "release": {
-          "description": "Parsed structure of the Release a release-scoped lint names, with its extends chain folded in, so a child Release carries what it inherits from its base. The host converts it from YAML to JSON as it does proposed. Its spec.parameters block is removed before it is handed over: a parameter's value can be the credential itself, no rule reads the block, and so no parameter value reaches a linter plugin through this field. Present only on the input of a rule that reads a whole Release, where proposed is the Aggregate this Release deploys, with its own parameter blocks removed in the same way; omitted on every other input.",
+          "description": "Parsed structure of the Release a release-scoped lint names, with its extends chain folded in, so a child Release carries what it inherits from its base. The host converts it from YAML to JSON as it does proposed. Its spec.parameters block holds the values that fulfil the Aggregate's parameters, so it is removed whole before the Release is handed over: a parameter's value can be the credential itself, no rule reads the block, and so no parameter value reaches a linter plugin through this field. Present only on the input of a rule that reads a whole Release, where proposed is the Aggregate this Release deploys, with its parameter values removed as proposed describes; omitted on every other input.",
           "type": "object",
           "x-aggrega-go-type": "json.RawMessage"
         },
