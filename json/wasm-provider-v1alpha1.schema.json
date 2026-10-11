@@ -323,7 +323,7 @@
     },
     "OmitEntry": {
       "type": "object",
-      "description": "One entry naming rendered units a Provider guest leaves out of a node's output, its fields already resolved to plain strings. The socket attaches no meaning to them: each provider documents what kind, name and namespace select in its own format, and matches them itself.",
+      "description": "One entry naming rendered units a Provider guest leaves out of a node's output, its fields already resolved to plain strings and marked where any of them was produced from a value declared sensitive. The socket attaches no meaning to them: each provider documents what kind, name and namespace select in its own format, and matches them itself.",
       "required": [
         "kind",
         "name"
@@ -341,6 +341,10 @@
         "namespace": {
           "type": "string",
           "description": "The namespace the named unit sits in, for a provider whose format places units in one. Absent when the author wrote none; what an entry with no namespace matches is the provider's own contract."
+        },
+        "sensitive": {
+          "type": "boolean",
+          "description": "True when the template that produced any of the entry's kind, name or namespace reads a value an author declared sensitive, or a value traced to one. It is read from each field's template against the declarations — a reference reaching a declared value, the template handing on the whole of its data, or a template that does not parse all count — and never from the resolved strings. The mark covers the whole entry rather than naming the field, so a guest treats a marked entry as it treats every other marked value on its input: it still matches and counts the entry by its fields, which is what the entry is for, and keeps every field of it out of any text a person reads — a refusal, a warning or a log line. Absent when no field's template reads such a value; absence never states that no field is sensitive."
         }
       }
     },
