@@ -82,6 +82,9 @@
         "capability",
         "implements"
       ],
+      "dependentRequired": {
+        "omits": ["source"]
+      },
       "allOf": [
         {
           "if": {
@@ -97,12 +100,13 @@
               "source": false,
               "valuesMapping": false,
               "workload": false,
-              "artifacts": false
+              "artifacts": false,
+              "omits": false
             },
-            "description": "The eval provider executes formatting in-memory. Fetching a 'source', a 'workload', 'artifacts', or utilizing base mapping fields is mathematically banned."
+            "description": "The eval provider executes formatting in-memory. Fetching a 'source', a 'workload', 'artifacts', utilizing base mapping fields, or leaving rendered documents out with 'omits' is mathematically banned."
           },
           "else": {
-            "description": "Non-eval providers use the three-input-kinds model. At least one input kind must be present: sourced (source + values overlay), synthesized (workload), or artifacts. Pairing rules apply: valuesMapping pairs with source; and a workload: block requires a provider that supports workload synthesis — a synthesized-mode Recipe bound to a non-synthesizing provider halts loudly at render time.",
+            "description": "Non-eval providers use the three-input-kinds model. At least one input kind must be present: sourced (source + values overlay), synthesized (workload), or artifacts. Pairing rules apply: valuesMapping pairs with source; omits requires source; and a workload: block requires a provider that supports workload synthesis — a synthesized-mode Recipe bound to a non-synthesizing provider halts loudly at render time.",
             "anyOf": [
               { "required": ["source"] },
               { "required": ["valuesMapping"] },
@@ -225,6 +229,38 @@
                 "additionalProperties": false
               }
             ]
+          }
+        },
+        "omits": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Documents to leave out of what this Recipe's source renders — for a fetched chart that renders a document the Release must not ship, such as a Secret holding a key the chart generates afresh on every render. Most Recipes never need it. Each entry names a rendered document by its own kind, its name and, where the entry gives one, its namespace; the provider rendering the source leaves out every document an entry matches, and what an entry matches is that provider's own documented contract. A provider that cannot leave documents out refuses a Recipe declaring this key before anything is rendered. Only what `source:` renders is filtered — a `workload:` or an `artifacts:` entry never is — so the key requires `source` and is refused on an `eval` Recipe. Every value is a template, evaluated against the context `valuesMapping` is evaluated against. An entry's `when` is evaluated first, and an entry whose `when` renders a falsy value is dropped. Every entry left active must leave something out: an active entry that matches nothing the source rendered halts the build, naming the entry. The source's own templates still run, so a template that fails still fails the build; only its output is left out.",
+          "items": {
+            "type": "object",
+            "x-aggrega-go-type": "OmitEntry",
+            "required": [
+              "kind",
+              "name"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "description": "The kind of the rendered document to leave out — the document's own `kind`, such as `Secret`. It names a kind the source renders, and is unrelated to the `kind:` a structured `source:` carries. A template."
+              },
+              "name": {
+                "type": "string",
+                "description": "The name of the rendered document to leave out — the document's own `metadata.name`. A template."
+              },
+              "namespace": {
+                "type": "string",
+                "description": "The namespace the rendered document is in, when the entry should match only a document in that namespace. Absent, or rendering to the empty string, the entry matches a document of its kind and name whatever its namespace. A template."
+              },
+              "when": {
+                "type": "string",
+                "description": "Inline Go template evaluated before the entry's other fields. When it renders a falsy value the entry is dropped: its other fields are not evaluated, nothing is left out on its account, and it is not required to match. An empty or absent `when` keeps the entry. Truthiness follows the standard convention for boolean-like template output: the strings `true`/`True`/`TRUE`, any nonzero number, and any other non-empty string are true, while `false`/`False`/`FALSE`, the empty string, and zero are false. A `when` that fails to render halts the build."
+              }
+            },
+            "additionalProperties": false
           }
         },
         "outputLabels": {
