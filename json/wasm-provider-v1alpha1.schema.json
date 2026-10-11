@@ -23,7 +23,7 @@
   "$defs": {
     "RenderNodeInput": {
       "type": "object",
-      "description": "The payload a Provider guest receives on its render_node export: the per-node IR projection the guest renders, the render-time context, and the pre-evaluated inputs the node's bound Recipe declares — an acquired-source listing, a workload, an artifact set — each present only when that Recipe declares it.",
+      "description": "The payload a Provider guest receives on its render_node export: the per-node IR projection the guest renders, the render-time context, the pre-evaluated inputs the node's bound Recipe declares — an acquired-source listing, a workload, an artifact set — each present only when that Recipe declares it, and the entries naming rendered units the guest leaves out of a source render.",
       "required": [
         "node",
         "context"
@@ -53,6 +53,13 @@
           "$ref": "#/$defs/ArtifactsProjection",
           "x-aggrega-go-type": "*ArtifactsProjection",
           "description": "The pre-evaluated artifact set the host hands the guest to place into the node's output, present when the bound Recipe declares artifacts. The host has already read each entry's source, evaluated it as a Go template against the render context, and computed the build-provenance key sets; the guest decides the output format, the provenance placement, the on-disk path, and the final bytes. Absent when the node declares no artifacts."
+        },
+        "omits": {
+          "type": "array",
+          "description": "The entries naming rendered units the guest leaves out of this node's output, in the order the author declared them. Each entry arrives resolved, its fields plain strings, and an entry that does not apply to this build is not carried. What an entry's kind, name and namespace select is this provider's own documented contract, not this socket's: the guest matches every entry against what it rendered in its own format's terms, leaves each unit an entry matches out of everything it returns — its files, the names it declares in derived_keys and the facts it reports in render_facts — and reports in the output's omitted how many units each entry matched. The entries accompany a source listing and no other input: a render of a synthesized workload or of an artifact set never carries them. Absent when there are no entries, and a guest handed none renders exactly as it would if the field did not exist.",
+          "items": {
+            "$ref": "#/$defs/OmitEntry"
+          }
         }
       }
     },
@@ -181,7 +188,7 @@
     },
     "RenderNodeOutput": {
       "type": "object",
-      "description": "The payload a Provider guest returns from its render_node export: the serialized bytes of each output file the guest emitted, the names it derived into each of its own key spaces, the facts it reports about what it emitted, and any diagnostics the guest raised while rendering. The guest returns each file's serialized bytes; the host writes them verbatim and runs no serializer. Determinism is the guest's responsibility: identical input must produce identical bytes.",
+      "description": "The payload a Provider guest returns from its render_node export: the serialized bytes of each output file the guest emitted, the names it derived into each of its own key spaces, the facts it reports about what it emitted, how many rendered units each omit entry it was handed matched, and any diagnostics the guest raised while rendering. The guest returns each file's serialized bytes; the host writes them verbatim and runs no serializer. Determinism is the guest's responsibility: identical input must produce identical bytes.",
       "required": [
         "files"
       ],
@@ -210,6 +217,14 @@
           "description": "Facts the guest reports about what it emitted for this node, in the order the guest lists them. Each fact pairs a name with a value, and both are the guest's own vocabulary: which facts a provider reports, what each name means and what its entries hold are part of that provider's documented contract, not of this socket's. Every fact's value is a list, even when it holds one entry: the host refuses a fact whose value is anything else, naming the provider and the fact, and halts the build. That is the one thing the host learns about a value. It keys facts by name and hands each list to the templates that read it, joining the lists of one name reported by more than one render of the same node in the order those renders ran, and it never learns what a name or an entry means or derives a fact itself — so a provider can report something only its own format knowledge can see, such as a property of the documents it wrote, without the host learning that format. Reporting facts never changes what is written: the files the host writes are the files the guest returned, whether or not facts accompany them. The guest lists its facts in a fixed order so the payload is byte-identical across runs of identical input. Absent when the guest reports nothing, which is a complete answer rather than a missing one.",
           "items": {
             "$ref": "#/$defs/RenderFact"
+          }
+        },
+        "omitted": {
+          "type": "array",
+          "description": "How many rendered units each entry of the input's omits matched: one count per entry the guest was handed, in the same order, each the number of units that entry matched whether or not another entry also matched them. A count of zero is a complete answer — the entry matched nothing the guest rendered. The counts are all the socket carries back about what was left out: the units themselves are simply absent from what the guest returned. Absent when the guest was handed no entries.",
+          "items": {
+            "type": "integer",
+            "minimum": 0
           }
         },
         "diagnostics": {
@@ -303,6 +318,29 @@
           "type": "array",
           "x-aggrega-go-type": "json.RawMessage",
           "description": "The fact's value: a JSON array — always a list, even with one entry or none — whose entries are any JSON values in the shape the provider documents for that name. A list is what lets one name be reported by more than one render of a node: the host joins the lists into one. It is carried as the JSON document the guest wrote, byte for byte, so the order of the list's entries and of each object's keys is the guest's own."
+        }
+      }
+    },
+    "OmitEntry": {
+      "type": "object",
+      "description": "One entry naming rendered units a Provider guest leaves out of a node's output, its fields already resolved to plain strings. The socket attaches no meaning to them: each provider documents what kind, name and namespace select in its own format, and matches them itself.",
+      "required": [
+        "kind",
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "description": "The kind of rendered unit the entry names, in the provider's own vocabulary."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the rendered unit the entry names, in the provider's own vocabulary."
+        },
+        "namespace": {
+          "type": "string",
+          "description": "The namespace the named unit sits in, for a provider whose format places units in one. Absent when the author wrote none; what an entry with no namespace matches is the provider's own contract."
         }
       }
     },

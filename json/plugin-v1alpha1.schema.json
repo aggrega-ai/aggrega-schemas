@@ -286,7 +286,7 @@
             "contract": {
               "type": "object",
               "additionalProperties": false,
-              "description": "The provider's self-declared render-behavior contract: the input kinds it renders, how it assembles a dispatch group's per-node output and which directories that output sits under, the template-delimiter pair it applies to imported artifact files, whether one loaded instance may serve every crossing, whether it wires cross-boundary edges, and which files its ecosystem never ships beside a source. It is the publish-time record of the provider guest's `describe()` self-report, which the host cross-checks against `describe()` at publish and at load. Absent declares no render-behavior contract, and the cross-check compares only the per-export claims.",
+              "description": "The provider's self-declared render-behavior contract: the input kinds it renders, how it assembles a dispatch group's per-node output and which directories that output sits under, the template-delimiter pair it applies to imported artifact files, whether one loaded instance may serve every crossing, whether it wires cross-boundary edges, whether it honours omit entries, and which files its ecosystem never ships beside a source. It is the publish-time record of the provider guest's `describe()` self-report, which the host cross-checks against `describe()` at publish and at load. Absent declares no render-behavior contract, and the cross-check compares only the per-export claims.",
               "properties": {
                 "inputKinds": {
                   "type": "object",
@@ -353,6 +353,10 @@
                 "crossBoundaryLinking": {
                   "type": "boolean",
                   "description": "Whether the plugin wires a cross-boundary uses edge — a uses edge whose consuming and consumed ends assemble into different dispatch groups — by emitting provider-native cross-reference wiring through a paired link_publish/link_resolve export contract. Declared true only when the plugin exports both; a claim that does not match the export pair halts at load. Absent (false) declares no cross-boundary linking, so the host routes no link crossing to the plugin."
+                },
+                "omits": {
+                  "type": "boolean",
+                  "description": "Whether the provider honours omit entries — entries naming rendered units to leave out of a node's output: it leaves every unit an entry matches out of what it renders, and reports how many units each entry matched. It is the publish-time record of the `omits` claim the provider's `describe()` reports, and a value that differs from that report halts at load. Absent (false) declares no such support."
                 },
                 "nestSegment": {
                   "type": "string",
