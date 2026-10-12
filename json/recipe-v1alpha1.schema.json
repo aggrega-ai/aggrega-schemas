@@ -103,7 +103,7 @@
               "artifacts": false,
               "omits": false
             },
-            "description": "The eval provider executes formatting in-memory. Fetching a 'source', a 'workload', 'artifacts', utilizing base mapping fields, or leaving rendered documents out with 'omits' is mathematically banned."
+            "description": "The eval provider executes formatting in-memory. Fetching a 'source', a 'workload', 'artifacts', utilizing base mapping fields, or leaving what a source renders out with 'omits' is mathematically banned."
           },
           "else": {
             "description": "Non-eval providers use the three-input-kinds model. At least one input kind must be present: sourced (source + values overlay), synthesized (workload), or artifacts. Pairing rules apply: valuesMapping pairs with source; omits requires source; and a workload: block requires a provider that supports workload synthesis — a synthesized-mode Recipe bound to a non-synthesizing provider halts loudly at render time.",
@@ -234,7 +234,7 @@
         "omits": {
           "type": "array",
           "minItems": 1,
-          "description": "Documents to leave out of what this Recipe's source renders — for a fetched chart that renders a document the Release must not ship, such as a Secret holding a key the chart generates afresh on every render. Most Recipes never need it. Each entry names a rendered document by its own kind, its name and, where the entry gives one, its namespace; the provider rendering the source leaves out every document an entry matches, and what an entry matches is that provider's own documented contract. A provider that cannot leave documents out refuses a Recipe declaring this key before anything is rendered. Only what `source:` renders is filtered — a `workload:` or an `artifacts:` entry never is — so the key requires `source` and is refused on an `eval` Recipe. Every value is a template, evaluated against the context `valuesMapping` is evaluated against. An entry's `when` is evaluated first, and an entry whose `when` renders a falsy value is dropped. Every entry left active must leave something out: an active entry that matches nothing the source rendered halts the build, naming the entry. The source's own templates still run, so a template that fails still fails the build; only its output is left out.",
+          "description": "What to leave out of what this Recipe's source renders — for a source taken as it is that renders something the Release must not ship: a document a fetched chart renders, such as a Secret holding a key the chart generates afresh on every render, or a service, a volume or a config a fetched compose file bundles. Most Recipes never need it. Each entry names one unit the source renders by its kind, its name and, where the entry gives one, its namespace, each in the vocabulary of the provider rendering the source — for a chart, a document by its own `kind` and `metadata.name`; for a compose file, a `service`, a `volume` or a `config` by its key under `services:`, `volumes:` or `configs:`. That provider leaves out every unit an entry matches, and what an entry matches, and what the provider refuses on an entry's account, is that provider's own documented contract. A provider that cannot leave anything out refuses a Recipe declaring this key before anything is rendered. Only what `source:` renders is filtered — a `workload:` or an `artifacts:` entry never is — so the key requires `source` and is refused on an `eval` Recipe. Every value is a template, evaluated against the context `valuesMapping` is evaluated against. An entry's `when` is evaluated first, and an entry whose `when` renders a falsy value is dropped. Every entry left active must leave something out: an active entry that matches nothing the source rendered halts the build, naming the entry. The source still renders in full — every template of a chart still runs, so a template that fails still fails the build — and only its output is left out.",
           "items": {
             "type": "object",
             "x-aggrega-go-type": "OmitEntry",
@@ -245,15 +245,15 @@
             "properties": {
               "kind": {
                 "type": "string",
-                "description": "The kind of the rendered document to leave out — the document's own `kind`, such as `Secret`. It names a kind the source renders, and is unrelated to the `kind:` a structured `source:` carries. A template."
+                "description": "The kind of the unit to leave out, in the vocabulary of the provider rendering the source: for a chart, a rendered document's own `kind`, such as `Secret`; for a compose file, `service`, `volume` or `config`. It names a kind the source renders, and is unrelated to the `kind:` a structured `source:` carries. A template."
               },
               "name": {
                 "type": "string",
-                "description": "The name of the rendered document to leave out — the document's own `metadata.name`. A template."
+                "description": "The name of the unit to leave out, in the vocabulary of the provider rendering the source: for a chart, a rendered document's own `metadata.name`; for a compose file, the unit's key under `services:`, `volumes:` or `configs:`. A template."
               },
               "namespace": {
                 "type": "string",
-                "description": "The namespace the rendered document is in, when the entry should match only a document in that namespace. Absent, or rendering to the empty string, the entry matches a document of its kind and name whatever its namespace. A template."
+                "description": "The namespace the unit to leave out is in, when the entry should match only a unit in that namespace — for a provider whose output has namespaces, as a chart's rendered documents do. Absent, or rendering to the empty string, the entry matches a unit of its kind and name whatever its namespace. A compose file has no namespaces, and compose refuses an entry that names one. A template."
               },
               "when": {
                 "type": "string",
