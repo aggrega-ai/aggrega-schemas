@@ -512,13 +512,13 @@
     },
     "FetchExternalInputResponse": {
       "type": "object",
-      "description": "The fetch-external-input host function's reply: on success the fetched content, on failure an error message. Exactly one of content or error is populated. Failure is delivered in-band rather than by trapping, so a guest carries an unresolvable URL or a fetch failure into its own diagnostics as a deterministic render failure. The request is a bare URL string rather than a structured payload, so only the reply has a declared shape.",
+      "description": "The fetch-external-input host function's reply: on success the fetched content, on failure an error message and its code. A reply that carries neither failure field is a success, so a zero-length payload is the reply with every field absent. Failure is delivered in-band rather than by trapping, so a guest carries an unresolvable URL or a fetch failure into its own diagnostics as a deterministic render failure. The request is a bare URL string rather than a structured payload, so only the reply has a declared shape.",
       "additionalProperties": false,
       "properties": {
         "content": {
           "type": "string",
-          "x-aggrega-go-type": "*string",
-          "description": "The fetched content on success; absent on failure. Unlike the byte-carrying fields elsewhere in this socket, every kit holds this one as a string and the guest decodes it to recover the bytes. Held by reference so a zero-length payload still emits the content key and stays distinguishable from a failure."
+          "x-aggrega-go-type": "[]byte",
+          "description": "The fetched payload's raw bytes on success; absent on failure, and absent when the payload is empty. The bytes cross the wire as a byte string, never as base64 text. The Go kit holds them as a byte slice; the Rust and TypeScript kits hold them as a base64 string, which each kit's fetch wrapper decodes, so every wrapper returns the payload's raw bytes."
         },
         "error": {
           "type": "string",
