@@ -1742,6 +1742,66 @@
         "code": { "type": "string", "description": "The condition's quotable name, where it has one." }
       }
     },
+    "ImportDecision": {
+      "type": "object",
+      "description": "How a conversion mapped one source node: the catalog Components the importer weighed, the one it chose, why, and how to swap the choice.",
+      "required": ["sourceNode"],
+      "additionalProperties": false,
+      "properties": {
+        "sourceNode": { "$ref": "#/$defs/DecisionSourceNode" },
+        "candidates": { "type": "array", "description": "The catalog Components the importer weighed for the node, each with its score. Absent where it weighed none.", "items": { "$ref": "#/$defs/ImportCandidate" } },
+        "chosen": { "$ref": "#/$defs/DecisionChoice" },
+        "rationale": { "type": "string", "description": "Why the importer made the choice, in its own words. Absent where it wrote none." },
+        "swapHint": { "type": "string", "description": "How to swap the choice for an alternative, in the importer's own words. Absent where it wrote none." }
+      }
+    },
+    "DecisionSourceNode": {
+      "type": "object",
+      "description": "The source node a mapping decision is about.",
+      "required": ["id", "type", "paramsSummary"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "description": "The node's identifier in the source." },
+        "type": { "type": "string", "description": "The node's type, as the source names it." },
+        "paramsSummary": { "type": "string", "description": "A summary of the node's parameters, for showing beside the decision." }
+      }
+    },
+    "ImportCandidate": {
+      "type": "object",
+      "description": "One catalog Component the importer weighed for a source node.",
+      "required": ["componentName", "score", "tier", "signals"],
+      "additionalProperties": false,
+      "properties": {
+        "componentName": { "type": "string", "description": "The Component's name." },
+        "score": { "type": "number", "x-aggrega-go-type": "float64", "description": "How well the Component matches the node, as the importer scored it." },
+        "tier": { "type": "string", "description": "The match tier the score falls in." },
+        "signals": { "$ref": "#/$defs/CandidateSignals" }
+      }
+    },
+    "CandidateSignals": {
+      "type": "object",
+      "description": "What each of the importer's signals contributed to a candidate's score.",
+      "required": ["table", "category", "domainLabels", "shape", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "table": { "type": "number", "x-aggrega-go-type": "float64", "description": "The contribution of the mapping-table signal." },
+        "category": { "type": "number", "x-aggrega-go-type": "float64", "description": "The contribution of the category signal." },
+        "domainLabels": { "type": "number", "x-aggrega-go-type": "float64", "description": "The contribution of the domain-labels signal." },
+        "shape": { "type": "number", "x-aggrega-go-type": "float64", "description": "The contribution of the shape signal." },
+        "name": { "type": "number", "x-aggrega-go-type": "float64", "description": "The contribution of the name signal." }
+      }
+    },
+    "DecisionChoice": {
+      "type": "object",
+      "description": "What the importer chose for a source node. Absent from a decision where it made no choice.",
+      "required": ["target", "mode", "tier"],
+      "additionalProperties": false,
+      "properties": {
+        "target": { "type": "string", "description": "The name of the Component chosen: an existing catalog Component, or the one drafted for the node." },
+        "mode": { "type": "string", "description": "How the choice is written: as a reference to an existing Component, or as a newly drafted one." },
+        "tier": { "type": "string", "description": "The match tier of the choice." }
+      }
+    },
     "LintFileFindings": {
       "type": "object",
       "description": "What a convention check found in one document.",
@@ -2457,7 +2517,7 @@
     "ImportResult": {
       "type": "object",
       "description": "What converting a foreign source produced, and what it could not convert.",
-      "required": ["format", "outputDir", "written", "files", "diagnostics", "halted"],
+      "required": ["format", "outputDir", "written", "files", "diagnostics", "decisions", "halted"],
       "additionalProperties": false,
       "properties": {
         "format": { "type": "string", "description": "The source format that was converted." },
@@ -2465,6 +2525,7 @@
         "written": { "type": ["array", "null"], "description": "The drafts that were written.", "items": { "type": "string" } },
         "files": { "type": ["array", "null"], "description": "The drafts and their text, for a request that asked to be shown them rather than have them written.", "items": { "$ref": "#/$defs/ImportedFile" } },
         "diagnostics": { "type": ["array", "null"], "description": "What could not be converted.", "items": { "$ref": "#/$defs/ImportDiagnostic" } },
+        "decisions": { "type": "array", "description": "How the importer mapped each source node, in the importer's order and exactly as it reported it: what tells you where the conversion guessed. Carried under both deliveries and whether or not the conversion stopped, and an empty list for an importer that reports none.", "items": { "$ref": "#/$defs/ImportDecision" } },
         "halted": { "type": "boolean", "description": "Whether the conversion stopped rather than finishing with findings." }
       }
     },
