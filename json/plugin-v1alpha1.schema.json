@@ -414,12 +414,68 @@
           "type": "object",
           "x-aggrega-go-type": "*PluginImporter",
           "additionalProperties": false,
-          "description": "The importer block for a `pluginType: importer` plugin: the foreign source formats it turns into draft Aggrega authoring files. Present only on importer plugins; absent on every other plugin type.",
+          "description": "The importer block for a `pluginType: importer` plugin: the foreign source formats it turns into draft Aggrega authoring files, and the signatures a source of those formats is recognised by. Present only on importer plugins; absent on every other plugin type.",
           "properties": {
             "capabilities": {
               "type": "array",
               "description": "Derived from the plugin's `.wasm` describe() self-report at publish and recorded here; machine-owned, do not author — a publish replaces whatever this block carried. The foreign source formats this importer turns into draft Aggrega authoring files, each written as `import:<format>` — for example `import:terraform`. The prefix is part of the entry, so one plugin advertising several formats lists one entry per format. Entries preserve author order. A requested import format resolves to the importer whose list contains the matching entry; a format no importer advertises halts the import, and a format advertised by more than one importer plugin halts as ambiguous unless a `plugins.importer` entry in the workspace configuration attaches one of them, which then runs. An empty or absent list declares no format claim, so the plugin imports nothing.",
               "items": { "type": "string" }
+            },
+            "detect": {
+              "type": "array",
+              "readOnly": true,
+              "description": "Derived from the plugin's `.wasm` describe() self-report when the entity is generated from it, and recorded here in describe()-declared order; machine-owned, do not author. The signatures a source of this importer's formats is recognised by when an import names no format. `aggrega import` reads the signatures of every importer the workspace's catalog holds, every version included, matches them against the source without knowing what any format is, and reads the source as the format of the one importer whose signature matches; a source no signature matches is refused asking for the format, and a source signatures of more than one format match is refused naming them. An importer recognising a source recognises it as every format it advertises, so an importer advertising more than one format has every match refused as ambiguous. Where present, the list must equal what the plugin's describe() reports, entry for entry and in order, and the load and the publication refuse a plugin whose report differs, naming this field. Absent makes no claim and is not compared, and the importer's formats are then reached only by naming them.",
+              "items": {
+                "type": "object",
+                "x-aggrega-go-type": "PluginDetectSignature",
+                "required": ["syntax"],
+                "additionalProperties": false,
+                "properties": {
+                  "syntax": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "The syntactic format the source is parsed as — `json` or `yaml`, for example — which is the format a parser plugin advertises as `parse:<syntax>`. The source is parsed at most once whatever number of signatures name the syntax, and a source that does not parse in it matches no signature naming it. A syntax no parser in the workspace's catalog advertises stops the recognition with that parser's absence named."
+                  },
+                  "files": {
+                    "type": "array",
+                    "description": "The file-name patterns the signature applies to, matched against the end of the source's name with its separators read as forward slashes: a pattern of one segment against the file's own name, and a pattern of several slash-separated segments against that many trailing segments of its path, so `.vscode/mcp.json` matches a file named `mcp.json` in a directory named `.vscode`. Within a segment `*` matches any run of characters, `?` one character, and `[...]` one character of a class. The signature applies when any pattern matches. Absent or empty applies it to a source of any name.",
+                    "items": { "type": "string" }
+                  },
+                  "match": {
+                    "type": "array",
+                    "description": "The predicates the parsed tree must satisfy, all of them, in declared order. Absent or empty asks nothing of the tree beyond parsing in the syntax.",
+                    "items": {
+                      "type": "object",
+                      "x-aggrega-go-type": "PluginPathMatch",
+                      "required": ["path", "is"],
+                      "not": { "required": ["equals", "prefix"] },
+                      "additionalProperties": false,
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Where in the tree the predicate looks, written as keys joined by dots from the top of the tree: `data.nodes` names the `nodes` member of the top-level `data` object. A segment written as a whole number, 0 or greater, selects that position of an array counting from zero, so `nodes.0.type` names the type of the first node; every other segment selects a member of an object."
+                        },
+                        "is": {
+                          "type": "string",
+                          "enum": ["present", "absent", "object", "array", "string", "number", "boolean"],
+                          "description": "What the path must reach: `present` holds when it reaches a value of any kind, null included; `absent` holds when it reaches nothing; `object`, `array`, `string`, `number` and `boolean` each hold when it reaches a value of that kind."
+                        },
+                        "equals": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "A string the value the path reaches must equal exactly; a value that is not a string never equals it. At most one of `equals` and `prefix` is declared on one predicate."
+                        },
+                        "prefix": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "A string the value the path reaches must begin with; a value that is not a string never begins with it. At most one of `equals` and `prefix` is declared on one predicate."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         }
