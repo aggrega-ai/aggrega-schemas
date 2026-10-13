@@ -68,7 +68,7 @@
         "policies": {
           "$ref": "#/$defs/Policies",
           "x-aggrega-go-type": "Policies",
-          "description": "The per-workspace publishing-discipline configuration the rule consults. The guest realizes it as the typed Policies object; the host pipes it through as an opaque payload it assembles from the workspace config and CLI overrides."
+          "description": "The per-workspace publishing-discipline configuration the rule consults, carried as a Policies object the host assembles from the workspace configuration and any command-line overrides."
         }
       }
     },
