@@ -10,7 +10,7 @@
   "$defs": {
     "ImportInput": {
       "type": "object",
-      "description": "The payload an importer guest receives: the source format that selects how to read the bytes, the primary source bytes, any named sources for a multi-file import, and an optional opaque options document the consumer supplies for importer-specific behavior.",
+      "description": "The payload an importer guest receives: the source format that selects how to read the bytes, the primary source bytes, any named sources for a multi-file import, an optional opaque options document the consumer supplies for importer-specific behavior, and a view of the Components the workspace's catalog holds.",
       "required": [
         "format",
         "bytes"
@@ -36,6 +36,95 @@
         "settings": {
           "x-aggrega-go-type": "json.RawMessage",
           "description": "An opaque import-options document the consumer supplies for importer-specific behavior. The host pipes it through without interpreting it; the importer reads whatever shape it documents. Absent when the consumer supplies no options."
+        },
+        "catalog": {
+          "$ref": "#/$defs/CatalogProjection",
+          "x-aggrega-go-type": "*CatalogProjection",
+          "description": "A view of the Components the workspace's own catalog holds — the catalog the importer itself was selected from — so the importer can weigh them as candidates when it maps a source node to a catalog entity. The host builds it from that local catalog alone, and it carries names, versions, labels and declared structure only: never a value, a default or a secret. Its order is fixed, so one catalog yields one byte sequence. Absent when the catalog holds no Component."
+        }
+      }
+    },
+    "CatalogProjection": {
+      "type": "object",
+      "description": "The workspace's catalog as an importer sees it: one entry per Component the catalog holds, each carrying the metadata an importer weighs when it scores a candidate.",
+      "required": [
+        "components"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "components": {
+          "type": "array",
+          "description": "One entry per Component name the catalog holds, sorted by name. Where the catalog holds several versions of one Component, its entry describes the version a reference naming the Component without a version resolves to.",
+          "items": {
+            "$ref": "#/$defs/CatalogComponent"
+          }
+        }
+      }
+    },
+    "CatalogComponent": {
+      "type": "object",
+      "description": "One Component of the workspace's catalog: its name and version, its labels, the key names its values and provides declare, and the sockets it declares for its dependencies. A Component that extends another carries what it inherits as well as what it declares itself.",
+      "required": [
+        "name",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The Component's name, as its metadata.name declares it — the name an Aggregate references it by."
+        },
+        "version": {
+          "type": "string",
+          "description": "The Component's version, as its metadata.version declares it."
+        },
+        "labels": {
+          "type": "object",
+          "x-aggrega-go-type": "map[string]string",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The Component's labels, as a string-to-string map. Absent when it carries none."
+        },
+        "values": {
+          "type": "array",
+          "description": "The top-level key names the Component's values declares, sorted. A list of names only: it never carries a value or a default. Absent when its values declares no key.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "provides": {
+          "type": "array",
+          "description": "The top-level key names the Component's provides declares, sorted. A list of names only: it never carries a value. Absent when its provides declares no key.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sockets": {
+          "type": "array",
+          "description": "The sockets the Component declares for its dependencies, in declaration order: for a Component that extends another, the sockets it inherits come first, in the order the extended Component declares them, followed by those it adds. Absent when it declares none.",
+          "items": {
+            "$ref": "#/$defs/CatalogSocket"
+          }
+        }
+      }
+    },
+    "CatalogSocket": {
+      "type": "object",
+      "description": "One socket a catalog Component declares for its dependencies: the socket's name and the label selector a dependency wired through it must satisfy.",
+      "required": [
+        "name",
+        "selector"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The socket's name, as the Component's usesSchema declares it."
+        },
+        "selector": {
+          "type": "string",
+          "description": "The socket's label selector, verbatim, in the Kubernetes-style grammar the Component writes it in: the labels a dependency wired through this socket must carry."
         }
       }
     },
