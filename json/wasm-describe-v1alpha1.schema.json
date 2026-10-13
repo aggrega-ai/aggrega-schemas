@@ -365,7 +365,7 @@
     },
     "DetectSignature": {
       "type": "object",
-      "description": "One way a source is recognised: the syntax the source is read in, the file names the signature applies to, and the predicates the parsed tree must satisfy. It matches a source whose name matches one of its file patterns, or any name where it declares none, whose bytes parse in its syntax, and whose parsed tree satisfies every one of its predicates.",
+      "description": "One way a source is recognised: the syntax the source is read in, the file names the signature applies to, and the predicates the parsed tree must satisfy. It matches a file whose name matches one of its file patterns — or, where it declares none, a source that is one file, whatever it is called — whose bytes parse in its syntax, and whose parsed tree satisfies every one of its predicates. It matches a directory where it matches one of the directory's files its patterns select, so a signature declaring no pattern matches no directory.",
       "required": [
         "syntax"
       ],
@@ -378,7 +378,7 @@
         },
         "files": {
           "type": "array",
-          "description": "The file-name patterns the signature applies to, matched against the end of the source's name with its separators read as forward slashes: a pattern of one segment is matched against the file's own name, and a pattern of several slash-separated segments against that many trailing segments of its path, so .vscode/mcp.json matches a file named mcp.json in a directory named .vscode. Within a segment, * matches any run of characters, ? matches one character, and [...] matches one character of a class. The signature applies when any pattern matches. A pattern that is not well formed is refused at load. Absent or empty applies the signature to a source of any name.",
+          "description": "The file-name patterns the signature applies to, matched against the end of the source's name with its separators read as forward slashes: a pattern of one segment is matched against the file's own name, and a pattern of several slash-separated segments against that many trailing segments of its path, so .vscode/mcp.json matches a file named mcp.json in a directory named .vscode. Within a segment, * matches any run of characters, ? matches one character, and [...] matches one character of a class. The signature applies when any pattern matches. A pattern that is not well formed is refused at load. Absent or empty applies the signature to a source that is one file, whatever it is called, and to no file of a directory. The patterns of an importer's signatures are also what decide which files of a directory an import hands it.",
           "items": {
             "type": "string"
           }

@@ -1144,8 +1144,8 @@
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
         "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
-        "source": { "type": "string", "description": "The source description to convert." },
-        "outputDir": { "type": "string", "description": "The directory under the workspace to write the drafts into. Absent writes where the same conversion in this workspace would." },
+        "source": { "type": "string", "description": "The file or the directory to convert, as an absolute path or one relative to the workspace root; a request without one is refused. It is read where it is, inside the workspace or not, and a directory is read into the files of it the importer's declared file patterns select." },
+        "outputDir": { "type": "string", "description": "The directory under the workspace to write the drafts into. It is required under dryRun as well, because every drafted path is relative to it, and a request without one is refused rather than given a destination." },
         "format": { "type": "string", "description": "The source format. Absent lets the conversion determine it." },
         "dryRun": { "type": "boolean", "description": "Whether to answer with the drafts' content rather than writing them." }
       }

@@ -438,7 +438,7 @@
                   },
                   "files": {
                     "type": "array",
-                    "description": "The file-name patterns the signature applies to, matched against the end of the source's name with its separators read as forward slashes: a pattern of one segment against the file's own name, and a pattern of several slash-separated segments against that many trailing segments of its path, so `.vscode/mcp.json` matches a file named `mcp.json` in a directory named `.vscode`. Within a segment `*` matches any run of characters, `?` one character, and `[...]` one character of a class. The signature applies when any pattern matches. Absent or empty applies it to a source of any name.",
+                    "description": "The file-name patterns the signature applies to, matched against the end of the source's name with its separators read as forward slashes: a pattern of one segment against the file's own name, and a pattern of several slash-separated segments against that many trailing segments of its path, so `.vscode/mcp.json` matches a file named `mcp.json` in a directory named `.vscode`. Within a segment `*` matches any run of characters, `?` one character, and `[...]` one character of a class. The signature applies when any pattern matches. Absent or empty applies it to a source that is one file, whatever it is called, and to no file of a directory. The patterns of an importer's signatures are also what decide which files of a directory `aggrega import` hands it.",
                     "items": { "type": "string" }
                   },
                   "match": {

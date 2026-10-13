@@ -24,11 +24,11 @@
         "bytes": {
           "type": "string",
           "x-aggrega-go-type": "[]byte",
-          "description": "The primary source bytes to import, which the importer reads as the named format. Each kit carries them in its own field type — raw where that type is a byte type, base64-encoded where it is a string the importer decodes to recover them — and the generated encoder converts between the field and the form the wire carries bytes in."
+          "description": "The primary source bytes to import, which the importer reads as the named format: the whole file where the import's source is one file, and empty where it is a directory, whose files arrive as named sources instead. Each kit carries them in its own field type — raw where that type is a byte type, base64-encoded where it is a string the importer decodes to recover them — and the generated encoder converts between the field and the form the wire carries bytes in."
         },
         "sources": {
           "type": "array",
-          "description": "Named sources for a multi-file or directory import, each carrying its own bytes. Absent for a single-file import, where the primary bytes carry the whole source.",
+          "description": "Named sources, each carrying its own bytes, in one list sorted by name. Where the import's source is a directory, there is one per file of it that the importer's declared file patterns select, named by its slash-separated path inside the directory. The files the attachment configuring the importer declares under with.sources are carried here too, each under its base name, and the host refuses an import in which a file read from the directory and one of these carry the same name. Absent where neither supplies any.",
           "items": {
             "$ref": "#/$defs/ImportSource"
           }
