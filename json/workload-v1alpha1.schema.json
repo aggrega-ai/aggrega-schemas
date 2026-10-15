@@ -92,7 +92,7 @@
     "services": {
       "type": "object",
       "x-aggrega-go-type": "OrderedMap[ServiceSpec]",
-      "description": "Ordered map of service name → service spec. On helm each entry becomes a separate K8s Service. On compose there is no separate service primitive, so entries do not map one to one: an entry whose type is NodePort or LoadBalancer publishes its ports on the workload's own compose service, an entry whose type is ClusterIP or Headless publishes nothing, and every published port is collected into that one service's port list with the host port matching the container port. Service names are suffixed by aggrega instance_id for K8s resource-name uniqueness.",
+      "description": "Ordered map of service name → service spec. On helm each entry becomes a separate K8s Service, and an entry whose type is Loopback halts the build. On compose there is no separate service primitive, so entries do not map one to one: an entry whose type is NodePort or LoadBalancer publishes its ports on every host interface of the workload's own compose service, an entry whose type is Loopback publishes its ports there on the host's loopback address only, an entry whose type is ClusterIP or Headless publishes nothing, and every published port is collected into that one service's port list with the host port matching the container port. Service names are suffixed by aggrega instance_id for K8s resource-name uniqueness.",
       "additionalProperties": { "$ref": "#/$defs/service" }
     },
     "scheduling": {
@@ -506,8 +506,8 @@
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["ClusterIP", "NodePort", "LoadBalancer", "Headless"],
-          "description": "Service type. Headless → K8s Service with clusterIP: None; compose treats ClusterIP as internal-only and LoadBalancer/NodePort as port-publishing."
+          "enum": ["ClusterIP", "NodePort", "LoadBalancer", "Headless", "Loopback"],
+          "description": "Service type: how far the entry's ports reach. ClusterIP keeps them on the target's own network, reachable from the workload's peers; Headless does too, and on helm renders a K8s Service with clusterIP: None; NodePort and LoadBalancer publish them beyond that network; Loopback publishes them on the host's own loopback address only, reachable from the machine the workload runs on and from nowhere else. helm renders ClusterIP, NodePort and LoadBalancer as the K8s Service type of the same name, and refuses a Loopback entry by name, because a K8s Service has no type that binds to a host's loopback address. compose publishes nothing for ClusterIP and Headless, publishes NodePort and LoadBalancer ports on every host interface as host:container, and publishes Loopback ports on the IPv4 loopback address as 127.0.0.1:host:container; a port that a NodePort or LoadBalancer entry also publishes is published on every interface."
         },
         "ports": {
           "type": "object",
