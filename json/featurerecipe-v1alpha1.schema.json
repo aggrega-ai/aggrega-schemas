@@ -311,7 +311,12 @@
         "readsCallerRenderFacts": {
           "type": "boolean",
           "default": false,
-          "description": "Declares that this FeatureRecipe's templates read what the Components connecting to the one it is attached to rendered: the render facts each of those callers' providers reports about its own output. Where it is true and the FeatureRecipe renders per component, each attachment of it renders after every Component in the build has rendered, instead of right after the Component it is attached to, so each caller's render is complete before the attachment is evaluated. Where it is false or absent, the attachment renders right after its Component, and the build halts on a template written inline in this FeatureRecipe that reads a caller's render facts beneath '.context.used_by'."
+          "description": "Declares that this FeatureRecipe's templates read what the Components connecting to the one it is attached to rendered: the render facts each of those callers' providers reports about its own output. Where it is true and the FeatureRecipe renders per component, each attachment of it renders after every Component in the build has rendered, instead of right after the Component it is attached to, so each caller's render is complete before the attachment is evaluated. Where it is false or absent, no caller's entry on '.context.used_by' carries render facts, the attachment renders right after its Component unless readsTargetRenderFacts is true, and the build halts on a template written inline in this FeatureRecipe that reads a caller's render facts beneath '.context.used_by'."
+        },
+        "readsTargetRenderFacts": {
+          "type": "boolean",
+          "default": false,
+          "description": "Declares that this FeatureRecipe's templates read what the Components that the one it is attached to is wired to rendered: the render facts each of those targets' providers reports about its own output, on each entry of '.context.uses'. Where it is true and the FeatureRecipe renders per component, each attachment of it renders after every Component in the build has rendered, instead of right after the Component it is attached to, so each target's render is complete before the attachment is evaluated. This is the same later render readsCallerRenderFacts causes, so setting either key, or both, makes the attachment render then. Where it is false or absent, no entry on '.context.uses' carries render facts, the attachment renders right after its Component unless readsCallerRenderFacts is true, and the build halts on a template written inline in this FeatureRecipe that reads a target's render facts beneath '.context.uses'."
         },
         "assertions": {
           "type": "object",

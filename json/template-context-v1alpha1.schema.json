@@ -88,7 +88,7 @@
           },
           "uses": {
             "type": "object",
-            "description": "The enriched topological edge map. Keyed by the Developer's alias (e.g., 'my_db', 'my_api'). Each entry is a compiler-assembled view of the target node's identity, resolved provides, injection mapping, and cascaded annotations, and of the attachments written on that connection. This is NOT the raw IR edge — it is an enriched projection built by the compiler specifically for template consumption. A template that ranges this map sees the connections in key order — sorted by alias — not in the order they were written.",
+            "description": "The enriched topological edge map. Keyed by the Developer's alias (e.g., 'my_db', 'my_api'). Each entry is a compiler-assembled view of the target node's identity, resolved provides, injection mapping, and cascaded annotations, and of the attachments written on that connection — and, for a FeatureRecipe that declares readsTargetRenderFacts, of what the target's renders reported. This is NOT the raw IR edge — it is an enriched projection built by the compiler specifically for template consumption. A template that ranges this map sees the connections in key order — sorted by alias — not in the order they were written.",
             "additionalProperties": {
               "$ref": "#/$defs/enriched_edge"
             }
@@ -476,6 +476,10 @@
             "type": "object",
             "description": "The attachments written on this connection, keyed by the slot name the connection's socket declares for each, each in the attachment shape .features carries: its type, resolved version, labels, values, infra, and the resolved provides of the FeatureRecipe bound to it. A Recipe reads a connection's credential as .context.uses.<alias>.features.<slot>.provides.<key>, so a consumer reaching several targets reads each target's own credential. These attachments are never part of the consuming node's own .features, so a template that ranges .features to find the node's attachments by type does not meet a connection's. Ranged in a template, the slots arrive in key order. Absent when the connection carries none.",
             "additionalProperties": { "$ref": "#/$defs/template_attachment" }
+          },
+          "render_facts": {
+            "$ref": "#/$defs/render_facts",
+            "description": "What the target's renders reported about the output they emitted, keyed by fact name, in the shape a caller's entry on .context.used_by carries: the facts its own provider calls reported, then those of each Feature attached to it that rendered with it, in the order they rendered, the lists one name gets from several of them joined into one in that order. Every value is a list, even with one entry, so a template always ranges over it. Present only on .context.uses for a FeatureRecipe that declares readsTargetRenderFacts — whose attachments render once every component has rendered, so every target's render is complete — and then on every entry, empty for a target whose providers report nothing. Absent for every other FeatureRecipe, from a pipeline step's with and when, from the component's own Recipe templates, and from the edge lists a boundary-scope FeatureRecipe reads."
           }
         },
         "additionalProperties": false
