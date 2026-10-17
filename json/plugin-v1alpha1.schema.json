@@ -434,7 +434,7 @@
                   "syntax": {
                     "type": "string",
                     "minLength": 1,
-                    "description": "The syntactic format the source is parsed as — `json` or `yaml`, for example — which is the format a parser plugin advertises as `parse:<syntax>`. The source is parsed at most once whatever number of signatures name the syntax, and a source that does not parse in it matches no signature naming it. A syntax no parser in the workspace's catalog advertises stops the recognition with that parser's absence named."
+                    "description": "The syntactic format the source is parsed as — `json` or `yaml`, for example — which is the format a parser plugin advertises as `parse:<syntax>`. The source is parsed through the parser the workspace's catalog serves for that syntax, or, for a syntax the catalog serves none for, through the one the compiler carries, at most once whatever number of signatures name the syntax, and a source that does not parse in it matches no signature naming it. A syntax neither serves a parser for stops the recognition with that parser's absence named."
                   },
                   "files": {
                     "type": "array",
