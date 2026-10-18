@@ -88,7 +88,7 @@
     },
     "DocumentSet": {
       "type": "object",
-      "description": "The keyed, scope-rooted set of addressable units a pipeline guest receives as its input surface. The host hands the whole set and is blind to its content; the guest selects the documents it targets by content and addresses its patches by key.",
+      "description": "The keyed, scope-rooted set of addressable units a pipeline guest receives as its input surface. The host hands the whole set and does not interpret its content; the guest selects the documents it targets by content and addresses its patches by key.",
       "required": [
         "own"
       ],

@@ -79,7 +79,7 @@ func splitIdentifier(s string) []string {
 }
 
 // stemWord strips the common inflectional endings so that "mapping"/"mappings"
-// and "port"/"ports" compare equal. Crude by design: it only has to make two
+// and "port"/"ports" compare equal. Deliberately simple: it only has to make two
 // spellings of ONE identifier match, not to be a general stemmer.
 func stemWord(w string) string {
 	w = strings.ToLower(w)
