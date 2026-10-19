@@ -200,7 +200,7 @@
       "properties": {
         "kind": {
           "type": "string",
-          "description": "The kind of entity emitted. In v1 this is Component or Aggregate; additional kinds may appear as the emission surface grows, so a reader tolerates an unrecognized kind."
+          "description": "The kind of entity emitted. In v1 this is Component, Aggregate or Release; additional kinds may appear as the emission surface grows, so a reader tolerates an unrecognized kind."
         },
         "name": {
           "type": "string",
