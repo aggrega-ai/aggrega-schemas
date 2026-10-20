@@ -112,7 +112,7 @@
         },
         "values_mapped": {
           "type": "boolean",
-          "description": "True when the values this payload carries are the output of the bound Recipe's or FeatureRecipe's valuesMapping, rather than the node's values handed on as the author wrote them. A guest that binds values to inputs its source declares — a template's parameters, a module's arguments — reads this to bind only values a mapping produced for that source, and to leave values written for something else, such as the Recipe's artifacts, unread. It records how the values were produced and is never derived from a key's name or a value's content. Absent where no valuesMapping ran, and on a payload carrying no values."
+          "description": "True when the values this payload carries are the output of the bound Recipe's or FeatureRecipe's valuesMapping, rather than the node's values handed on as the author wrote them. A guest whose own contract binds to the inputs its source declares only the values a mapping produced reads this, and leaves values written for something else, such as the Recipe's artifacts, unread; a guest that binds the node's values to its source however they were produced does not read it. It records how the values were produced and is never derived from a key's name or a value's content. Absent where no valuesMapping ran, and on a payload carrying no values."
         },
         "uses": {
           "type": "object",
