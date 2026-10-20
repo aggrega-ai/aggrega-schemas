@@ -729,7 +729,7 @@
         },
         "values_mapped": {
           "type": "boolean",
-          "description": "True when the values this node carries are the output of its bound Recipe's valuesMapping, rather than the node's values handed on as the author wrote them — the same mark the render_node call for this node carried on its node projection, carried here beside the values it describes. Absent where no valuesMapping ran, and wherever values is absent. Whether an assembler reads it is that assembler's own contract: one whose render_node binds a mapped node's values to the inputs its source declares can learn from it which names that binding filled, while one that places a node's values as its inputs however they were produced does not read it. It records how the values were produced and is never derived from a key's name or a value's content."
+          "description": "True when the values this node carries are the output of its bound Recipe's or FeatureRecipe's valuesMapping (a component's Recipe, an attached Feature's FeatureRecipe), rather than the node's values handed on as the author wrote them — the same mark the render_node call for this node carried on its node projection, carried here beside the values it describes. Absent where no valuesMapping ran, and wherever values is absent. Whether an assembler reads it is that assembler's own contract: one whose render_node binds a mapped node's values to the inputs its source declares can learn from it which names that binding filled, while one that places a node's values as its inputs however they were produced does not read it. It records how the values were produced and is never derived from a key's name or a value's content."
         }
       }
     },
