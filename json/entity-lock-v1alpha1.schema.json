@@ -57,7 +57,7 @@
     },
     "artifactDigests": {
       "type": "array",
-      "description": "Content pins for the files this entity's artifacts import via $import, frozen at resolution and read back at build to verify the imported file has not drifted. One entry per artifact whose value is a file import; an inline (literal) artifact is already part of the entity and carries no separate pin, and an artifact taken from a library is pinned by the version that library resolved at.",
+      "description": "Content pins for the files this entity's artifacts import via $import — for a Recipe, those its boundary.artifacts entries import as well — frozen at resolution and read back at build to verify the imported file has not drifted. One entry per artifact whose value is a file import; an inline (literal) artifact is already part of the entity and carries no separate pin, and an artifact taken from a library is pinned by the version that library resolved at. A build compares an entry of either block with its pin the same way, and refuses a file that no longer matches it under the same condition.",
       "items": {
         "type": "object",
         "x-aggrega-go-type": "ArtifactDigest",
@@ -66,7 +66,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "The artifact key (the artifacts: map key) whose $import file this entry pins."
+            "description": "Which artifact's $import file this entry pins: the artifacts: map key for an entry of artifacts, and boundary/ followed by the key for an entry of a Recipe's boundary.artifacts — so an entry of each block written under one key is pinned apart."
           },
           "digest": {
             "type": "string",

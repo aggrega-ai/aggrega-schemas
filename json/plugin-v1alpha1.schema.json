@@ -286,7 +286,7 @@
             "contract": {
               "type": "object",
               "additionalProperties": false,
-              "description": "The provider's self-declared render-behavior contract: the input kinds it renders, how it assembles a dispatch group's per-node output and which directories that output sits under, the template-delimiter pair it applies to imported artifact files, whether one loaded instance may serve every crossing, whether it wires cross-boundary edges, whether it honours omit entries, and which files its ecosystem never ships beside a source. It is the publish-time record of the provider guest's `describe()` self-report, which the host cross-checks against `describe()` at publish and at load. Absent declares no render-behavior contract, and the cross-check compares only the per-export claims.",
+              "description": "The provider's self-declared render-behavior contract: the input kinds it renders, how it assembles a dispatch group's per-node output and which directories that output sits under, the template-delimiter pair it applies to imported artifact files, whether one loaded instance may serve every crossing, whether it wires cross-boundary edges, whether it honours omit entries, whether it accepts the files a Recipe contributes to its boundary's shared output, and which files its ecosystem never ships beside a source. It is the publish-time record of the provider guest's `describe()` self-report, which the host cross-checks against `describe()` at publish and at load. Absent declares no render-behavior contract, and the cross-check compares only the per-export claims.",
               "properties": {
                 "inputKinds": {
                   "type": "object",
@@ -357,6 +357,10 @@
                 "omits": {
                   "type": "boolean",
                   "description": "Whether the provider honours omit entries — entries naming rendered units to leave out of a node's output: it leaves every unit an entry matches out of what it renders, and reports how many units each entry matched. It is the publish-time record of the `omits` claim the provider's `describe()` reports, and a value that differs from that report halts at load. Absent (false) declares no such support."
+                },
+                "boundaryArtifacts": {
+                  "type": "boolean",
+                  "description": "Whether the provider accepts the files a Recipe contributes to the shared output of the boundary it renders in, under the Recipe's `spec.boundary.artifacts`: the compiler writes each such file once, in the directory holding the boundary's assembled output, and the provider's target treats it as part of that output. It is the publish-time record of the `boundary_artifacts` claim the provider's `describe()` reports, and a value that differs from that report halts at load. Absent (false) declares no such support, and a Recipe declaring the block for this provider is refused before anything renders."
                 },
                 "nestSegment": {
                   "type": "string",

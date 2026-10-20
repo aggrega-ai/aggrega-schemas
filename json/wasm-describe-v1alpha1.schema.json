@@ -218,7 +218,7 @@
     },
     "ProviderContract": {
       "type": "object",
-      "description": "A provider's self-declaration of the compile-time render behaviors it performs across the nodes it renders — the input kinds it accepts, whether and how it assembles a dispatch group's per-node output into a single artifact, the Go-template delimiter pair it applies to imported artifact files, and the files its ecosystem never ships beside a source. It describes the provider as a whole, not any one export. The load gate cross-checks it against the entity's authored claim.",
+      "description": "A provider's self-declaration of the compile-time render behaviors it performs across the nodes it renders — the input kinds it accepts, whether and how it assembles a dispatch group's per-node output into a single artifact, the Go-template delimiter pair it applies to imported artifact files, whether it accepts the files a Recipe contributes to its boundary's shared output, and the files its ecosystem never ships beside a source. It describes the provider as a whole, not any one export. The load gate cross-checks it against the entity's authored claim.",
       "required": [
         "input_kinds",
         "boundary_assembly"
@@ -255,6 +255,10 @@
         "omits": {
           "type": "boolean",
           "description": "Whether the plugin honours the omit entries a render_node input carries: it leaves every rendered unit an entry matches out of everything it returns, and reports one count per entry it was handed in the output's omitted. A plugin declares it true only when it does both. Absent (false) is the safe default: the plugin makes no claim to leave anything out."
+        },
+        "boundary_artifacts": {
+          "type": "boolean",
+          "description": "Whether the plugin's target accepts the files a Recipe contributes to the shared output of the boundary it renders in. The host evaluates those files and writes each one once, in the directory holding the dispatch group's assembled output, beside what the plugin's assembly writes; the plugin is handed none of them and reads none of them, so the claim is a statement that its target treats a file placed there as part of the boundary's output. Absent (false) is the safe default: a Recipe declaring such files for this plugin is refused before anything renders."
         },
         "nest_segment": {
           "type": "string",

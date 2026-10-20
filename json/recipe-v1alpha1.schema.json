@@ -77,7 +77,7 @@
     },
     "spec": {
       "type": "object",
-      "description": "The provider binding, source, value mapping, and pipeline for a Recipe. Supports three input kinds composed by addition: sourced (source plus valuesMapping overlay), synthesized (workload), and artifacts (named output files).",
+      "description": "The provider binding, source, value mapping, and pipeline for a Recipe. Supports three input kinds composed by addition: sourced (source plus valuesMapping overlay), synthesized (workload), and artifacts (named output files). Separately from those, a Recipe may contribute files to the shared output of the boundary it renders in, under 'boundary'.",
       "required": [
         "capability",
         "implements"
@@ -101,9 +101,10 @@
               "valuesMapping": false,
               "workload": false,
               "artifacts": false,
-              "omits": false
+              "omits": false,
+              "boundary": false
             },
-            "description": "The eval provider executes formatting in-memory. Fetching a 'source', a 'workload', 'artifacts', utilizing base mapping fields, or leaving what a source renders out with 'omits' is mathematically banned."
+            "description": "The eval provider executes formatting in-memory. Fetching a 'source', a 'workload', 'artifacts', utilizing base mapping fields, leaving what a source renders out with 'omits', or contributing files to a boundary's shared output with 'boundary' is mathematically banned."
           },
           "else": {
             "description": "Non-eval providers use the three-input-kinds model. At least one input kind must be present: sourced (source + values overlay), synthesized (workload), or artifacts. Pairing rules apply: valuesMapping pairs with source; omits requires source; and a workload: block requires a provider that supports workload synthesis — a synthesized-mode Recipe bound to a non-synthesizing provider halts loudly at render time.",
@@ -261,6 +262,45 @@
               }
             },
             "additionalProperties": false
+          }
+        },
+        "boundary": {
+          "type": "object",
+          "required": ["artifacts"],
+          "additionalProperties": false,
+          "description": "What this Recipe contributes to the shared output of the boundary it renders in, rather than to its own component's output. Most Recipes never need it: it is for a file the target reads once for the whole boundary — a Terraform provider configuration, say, which Terraform accepts only in the root configuration of a boundary and never inside one component's module. A provider accepts such files only where its contract declares `boundaryArtifacts`, and a Recipe declaring this block for a provider that does not is refused before anything renders. A FeatureRecipe carries no such block.",
+          "properties": {
+            "artifacts": {
+              "type": "object",
+              "x-aggrega-go-type": "OrderedMap[ArtifactEntry]",
+              "minProperties": 1,
+              "description": "Map of file name to file-content authoring, shaped exactly as this Recipe's own `artifacts`: the same three modes — an inline Go template string, a `$import:` of a local Go-template file, or a `$import:` of an ArtifactLibrary bundle, whose files nest under the entry's key as `<key>/<filename>` — the same key-to-filename rule, and the same template context, so an entry may read `.values`, `.infra`, `.locals` and the rest exactly as an `artifacts` entry does. What differs is where each file is written: once, in the directory holding the boundary's assembled output, beside the files the provider's own assembly writes there, rather than in this component's own directory. Every entry is evaluated for each component this Recipe renders in the boundary, and the files those evaluations produce are merged by name: one name evaluated to identical bytes by several components, or by several Recipes, is one file, while one name evaluated to different bytes halts the build naming the file and every contributor, as does a name the provider's own assembly already writes. Nothing is stamped into such a file to say which component wrote it, because it belongs to every component that declared it. An entry whose template renders to nothing writes no file. The entries are not handed to the provider, which writes the rest of the boundary's output without reading them.",
+              "propertyNames": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+                "description": "The key names the file, so it is bounded to a single filename, under the rule an `artifacts` key follows: it begins with a letter or digit and continues with letters, digits, dots, hyphens or underscores. A `/` would make one key name a path rather than a file, and a leading `.` would admit `..`, which names a location outside the boundary's output directory — the first character class refuses both. For a library import the key names the directory the bundle's files are nested under, so the same bound applies."
+              },
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "required": ["$import"],
+                    "properties": {
+                      "$import": {
+                        "type": "string",
+                        "not": {
+                          "pattern": "^oci://"
+                        },
+                        "description": "A local file path, or a bare-name ArtifactLibrary reference `<Library>#/artifacts/<entry>` (the entry names a bundle). A registry host (`oci://…`) is rejected: a library is addressed by identity, and the version is supplied by the per-Release lockfile."
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            }
           }
         },
         "outputLabels": {
