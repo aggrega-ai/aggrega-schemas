@@ -159,7 +159,7 @@
         },
         "subDirectory": {
           "type": "string",
-          "description": "Component-level sub-path override appended to the parent boundary's directory. If omitted on both boundary and component, defaults to '{{ .capability }}'. Set to '.' or '' to disable sub-directory generation."
+          "description": "Component-level sub-path override appended to the parent boundary's directory. If omitted or empty on both boundary and component, defaults to '{{ .capability }}'; an empty string written here reads as omitted. Set to '.', or to a template that evaluates to an empty string, to disable sub-directory generation."
         },
         "annotations": {
           "type": "object",
@@ -306,7 +306,7 @@
         },
         "subDirectory": {
           "type": "string",
-          "description": "Boundary-level sub-path appended to directory. If omitted on both boundary and component, defaults to '{{ .capability }}' for CI/CD auto-partitioning. Set to '.' or '' to disable."
+          "description": "Boundary-level sub-path appended to directory. If omitted or empty on both boundary and component, defaults to '{{ .capability }}' for CI/CD auto-partitioning; an empty string written here reads as omitted. Set to '.', or to a template that evaluates to an empty string, to disable."
         },
         "syncWave": {
           "type": "integer",
