@@ -88,6 +88,8 @@
         "aggrega/search",
         "aggrega/setActiveRelease",
         "aggrega/signArtifacts",
+        "aggrega/skillsInstall",
+        "aggrega/skillsList",
         "aggrega/validate"
       ]
     },
@@ -320,6 +322,14 @@
         {
           "if": { "properties": { "method": { "const": "aggrega/getSchema" } }, "required": ["method"] },
           "then": { "properties": { "params": { "$ref": "#/$defs/GetSchemaParams" } } }
+        },
+        {
+          "if": { "properties": { "method": { "const": "aggrega/skillsInstall" } }, "required": ["method"] },
+          "then": { "properties": { "params": { "$ref": "#/$defs/SkillsInstallParams" } } }
+        },
+        {
+          "if": { "properties": { "method": { "const": "aggrega/skillsList" } }, "required": ["method"] },
+          "then": { "properties": { "params": { "$ref": "#/$defs/WorkspaceAndProgressParams" } } }
         }
       ]
     },
@@ -504,7 +514,9 @@
             { "$ref": "#/$defs/PluginSyncResult" },
             { "$ref": "#/$defs/PluginGenCatalogResult" },
             { "$ref": "#/$defs/ExplainErrorResult" },
-            { "$ref": "#/$defs/GetSchemaResult" }
+            { "$ref": "#/$defs/GetSchemaResult" },
+            { "$ref": "#/$defs/SkillsInstallResult" },
+            { "$ref": "#/$defs/SkillsListResult" }
           ]
         }
       }
@@ -1250,6 +1262,17 @@
         "kind": { "type": "string", "description": "The kind whose schema to answer with. Absent answers with the kinds that can be named instead." }
       }
     },
+    "SkillsInstallParams": {
+      "type": "object",
+      "description": "Writes the assistant skill built into the binary into the skill folder of each named assistant. Without global it writes each assistant's project folder inside the workspace the request names, and every path it would write there is held to that workspace; with global it writes each assistant's per-user folder under the home directory. Every target is checked before anything is written, so a refusal leaves every folder as it was.",
+      "additionalProperties": false,
+      "properties": {
+        "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
+        "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
+        "agents": { "type": "array", "description": "The assistants to install the skill for, by the identifiers the listing reports. A request naming none is refused, and so is an identifier no skill folder is known for, by name. An identifier given twice is installed once.", "items": { "type": "string" } },
+        "global": { "type": "boolean", "description": "Write each assistant's per-user skill folder under the home directory, which it reads in every project, instead of its project folder in the workspace." }
+      }
+    },
     "ServerCapabilities": {
       "type": "object",
       "description": "What the daemon will do in this session, settled against what the client said it can handle.",
@@ -1436,6 +1459,16 @@
       "additionalProperties": false,
       "properties": {
         "machineWide": { "type": "boolean", "description": "Whether the store the change touched is shared across the machine." },
+        "workspaceRoot": { "type": "string", "description": "The workspace the request named." }
+      }
+    },
+    "SkillFolderScope": {
+      "type": "object",
+      "description": "How far a skill installation reaches. A request names one workspace, so an answer that said nothing would be read as being about that workspace — and for the per-user folders, which an assistant reads in every project, that reading is wrong.",
+      "required": ["machineWide", "workspaceRoot"],
+      "additionalProperties": false,
+      "properties": {
+        "machineWide": { "type": "boolean", "description": "Whether the folders written are the per-user ones under the home directory, which the assistant reads in every project on the machine." },
         "workspaceRoot": { "type": "string", "description": "The workspace the request named." }
       }
     },
@@ -2662,6 +2695,60 @@
         "schema": { "description": "The schema itself, carried through as the binary holds it." },
         "kinds": { "type": "array", "description": "Every token this binary answers to.", "items": { "type": "string" } },
         "entityKinds": { "type": "array", "description": "The narrower set an author writes a document of, each pairing the token a request names with the kind the document's own header declares.", "items": { "$ref": "#/$defs/EntityKindDescriptor" } }
+      }
+    },
+    "SkillsInstallResult": {
+      "type": "object",
+      "description": "What installing the assistant skill wrote, and where.",
+      "required": ["skill", "installed", "scope"],
+      "additionalProperties": false,
+      "properties": {
+        "skill": { "type": "string", "description": "The skill that was written." },
+        "installed": { "type": "array", "description": "Each skill folder written, in the order the request named the assistants. Assistants reading one shared folder share one entry, because the skill is written there once.", "items": { "$ref": "#/$defs/SkillsInstalledFolder" } },
+        "scope": { "$ref": "#/$defs/SkillFolderScope" }
+      }
+    },
+    "SkillsInstalledFolder": {
+      "type": "object",
+      "description": "One skill folder an installation wrote.",
+      "required": ["agents", "folder", "replaced"],
+      "additionalProperties": false,
+      "properties": {
+        "agents": { "type": "array", "description": "The identifiers of the named assistants that read this folder, in the order the request named them.", "items": { "type": "string" } },
+        "folder": { "type": "string", "description": "The skill's folder, as an absolute path." },
+        "replaced": { "type": "boolean", "description": "Whether a copy carrying the comment line every written copy of the skill carries — one an earlier installation wrote, or one taken from the published skills repository — was there and has been replaced. A file there without that line is refused rather than replaced." }
+      }
+    },
+    "SkillsListResult": {
+      "type": "object",
+      "description": "The skills the binary ships and every assistant an installation can write them for. Nothing is written and nothing is reached.",
+      "required": ["skills", "agents"],
+      "additionalProperties": false,
+      "properties": {
+        "skills": { "type": "array", "description": "Each skill the binary ships, in a fixed order.", "items": { "$ref": "#/$defs/SkillsListedSkill" } },
+        "agents": { "type": "array", "description": "Each assistant an installation knows a skill folder for, ordered by identifier.", "items": { "$ref": "#/$defs/SkillsListedAgent" } }
+      }
+    },
+    "SkillsListedSkill": {
+      "type": "object",
+      "description": "One skill the binary ships.",
+      "required": ["name", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "description": "The skill's name, which is also the name of the folder an installation writes." },
+        "description": { "type": "string", "description": "When an assistant uses the skill, as the skill itself declares it." }
+      }
+    },
+    "SkillsListedAgent": {
+      "type": "object",
+      "description": "One assistant an installation can write a skill for, with the two folders it reads skills from.",
+      "required": ["id", "name", "projectFolder", "userFolder"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "description": "The identifier a request names the assistant by." },
+        "name": { "type": "string", "description": "The assistant's own name." },
+        "projectFolder": { "type": "string", "description": "The folder, relative to a project's root and separated by slashes, that the assistant reads a project's skills from. A project installation writes the skill's folder inside it, in the workspace the request names." },
+        "userFolder": { "type": "string", "description": "The folder, relative to the home directory and separated by slashes, that the assistant reads the user's own skills from in every project. An installation with global writes the skill's folder inside it." }
       }
     }
   }
