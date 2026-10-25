@@ -48,7 +48,7 @@
     },
     "AnnotationTransformOutput": {
       "type": "object",
-      "description": "The response shape the annotation-transform plugin emits: a list of annotation injections the host applies to the named targets. The host applies only annotation additions to existing target coordinates with string values; an injection naming a non-existent coordinate halts the build loudly.",
+      "description": "The response shape the annotation-transform plugin emits: a list of annotation injections the host applies to the named targets. The host applies only annotation additions to existing target coordinates, each carrying a value an author could write on that annotation — a string, or an object of subkeys; an injection naming a non-existent coordinate, or carrying a value of any other shape, halts the build loudly.",
       "required": [
         "injections"
       ],
@@ -56,7 +56,7 @@
       "properties": {
         "injections": {
           "type": "array",
-          "description": "Annotation injections to apply, in order. Each names an existing target coordinate and the annotation key and string value to add there.",
+          "description": "Annotation injections to apply, in order. Each names an existing target coordinate and the annotation key and value to add there.",
           "items": {
             "$ref": "#/$defs/AnnotationInjection"
           }
@@ -87,17 +87,17 @@
         },
         "annotations": {
           "type": "object",
-          "x-aggrega-go-type": "OrderedMap[string]",
-          "description": "The component's current scalar annotation set, keyed by annotation key.",
+          "x-aggrega-go-type": "OrderedMap[any]",
+          "description": "The annotations the Release writes on the component itself, keyed by annotation key in the order they are written. Each value is what the author wrote: a string, an object of subkeys in its own written order, or null where the component opts out of an annotation it would otherwise inherit. Every key is present whatever its value, so a plugin can tell an annotation the component already carries from one it does not and add only what is absent.",
           "additionalProperties": {
-            "type": "string"
+            "type": ["string", "object", "null"]
           }
         }
       }
     },
     "AnnotationInjection": {
       "type": "object",
-      "description": "One annotation to inject onto a target: the target coordinate plus the annotation key and its string value.",
+      "description": "One annotation to inject onto a target: the target coordinate plus the annotation key and its value.",
       "required": [
         "boundary_path",
         "component_name",
@@ -119,8 +119,9 @@
           "description": "The annotation key to add on the target component."
         },
         "annotation_value": {
-          "type": "string",
-          "description": "The annotation's string value. Values are strings only; the host rejects any other shape."
+          "type": ["string", "object"],
+          "x-aggrega-go-type": "json.RawMessage",
+          "description": "The annotation's value, carried as its JSON: a string, or an object whose keys are subkeys and whose entries are what an author may write under a subkey of a structured annotation. The host reads it exactly as it reads the same value written on the component in the Release, keeping the object's key order, so an object can feed a binding that routes several subkeys at once while a string feeds a binding that routes one. Null, a list, a number, a boolean and an object with no subkeys are refused, naming the injection: an injection adds an annotation and never removes or opts out of one."
         }
       }
     },
