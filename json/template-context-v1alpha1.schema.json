@@ -230,7 +230,7 @@
         "properties": {
           "path": {
             "type": "string",
-            "description": "The boundary's evaluated directory path (post-template-evaluation). Same string used for per-(path, provider) dispatch grouping at orchestrator-time."
+            "description": "The boundary's evaluated directory path (post-template-evaluation). The same string groups the components that share an output directory and a provider when Aggrega builds the Release."
           },
           "boundary_name": {
             "type": "string",

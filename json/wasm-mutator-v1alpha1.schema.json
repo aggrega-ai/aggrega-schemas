@@ -10,7 +10,7 @@
   "$defs": {
     "MutatorInput": {
       "type": "object",
-      "description": "The payload the host hands the mutator plugin on each invocation: release-level compilation context plus a labels-only projection of the topology graph.",
+      "description": "The payload the host hands the mutator plugin on each invocation: release-level compilation context plus a projection of the topology graph carrying each node's labels and the values its instance declares.",
       "required": [
         "compilation_context",
         "graph"
@@ -80,7 +80,7 @@
     },
     "MutatorGraph": {
       "type": "object",
-      "description": "The labels-only projection of the topology graph exposed to the mutator plugin. Intentionally narrower than the full topology result: edges, values, and feature payloads are not exposed because the mutator's job is labelling, not topology reshaping.",
+      "description": "The projection of the topology graph exposed to the mutator plugin: each node's Component, its resolved version, its labels and the values its instance declares. Intentionally narrower than the full topology result: edges and feature payloads are not exposed because the mutator's job is labelling, not topology reshaping. The values are there to be read, so a configuration the developer declared can decide a label; a patch reaches labels and nothing else, so the plugin cannot change them.",
       "required": [
         "nodes"
       ],
@@ -98,7 +98,7 @@
     },
     "MutatorNode": {
       "type": "object",
-      "description": "The minimum per-node projection the mutator plugin needs to evaluate compliance rules: which Component the node implements, which version of that Component resolved, and which labels the node carries.",
+      "description": "The per-node projection the mutator plugin evaluates its rules against: which Component the node implements, which version of that Component resolved, which labels the node carries, and which values its instance declares.",
       "required": [
         "component",
         "resolved_version",
@@ -121,6 +121,12 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "values": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[any]",
+          "description": "The values the node's component instance declares in the Aggregate, keyed as the author wrote them and in the author's order. Every template in the Aggregate has already been evaluated against its parameters, so a value hoisted into a parameter arrives as the value the Release supplied, or as the parameter's default. Only the instance's own values are here: a default the Component's schema declares, and anything a Recipe or a Feature contributes, are not. A value the Component declares sensitive arrives withheld, exactly as the governance verdict over the whole graph receives it: in its place sits the same single-key withheld-marker object that verdict carries, naming the reason declared, and a sibling value no declaration reaches arrives as written. A plugin reads them to decide which labels to add; a patch cannot reach them. Absent when the instance declares no values.",
+          "additionalProperties": true
         }
       }
     },
