@@ -74,8 +74,8 @@ the served-URL claims hold but the association engine is not driven.
 
 Standing up `https://hub.aggrega.ai/schemas/` (the hub Worker serving `/schemas/*`
 statically) is infrastructure — the same hosting effort as the public
-`hub.aggrega.ai` OCI registry, and shared with the `hub-registry-hosting-and-signing`
-work. Go-live is therefore an infrastructure action, not a step performed in this
+`hub.aggrega.ai` OCI registry. Go-live is therefore an infrastructure action, not
+a step performed in this
 repository: this repo provides the artifacts (`json/`), the editor-association
 catalog, and this publish path; standing up the hub serving (and the exact
 `/schemas/<filename>` route plus any cross-schema `$ref` resolution) lands with that
