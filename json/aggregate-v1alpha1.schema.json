@@ -138,7 +138,7 @@
               "properties": {
                 "type": {
                   "type": "string",
-                  "description": "The abstract Aggregate requested (e.g., publisher/name:version, ./local/path). Resolved via the Three-Tier Entity Resolution Model (local path → workspace dir → registry)."
+                  "description": "The abstract Aggregate requested, as a reference: its metadata.name plus an optional :version (e.g., publisher/name:version), never a file path. Resolved via the Three-Tier Entity Resolution Model (workspace catalog directories → cache → registry): an Aggregate authored locally is placed under catalog/ at the workspace root or in a directory listed under workspace.catalog_dirs, and a type written as a relative file path halts the build as an entity no catalog holds."
                 },
                 "active": {
                   "anyOf": [{ "type": "boolean" }, { "type": "string" }],
@@ -385,7 +385,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "description": "The abstract Component requested (e.g., core/api-server:1.0.0). Resolved via the Three-Tier Entity Resolution Model (local path → workspace dir → registry)."
+          "description": "The abstract Component requested, as a reference: its metadata.name plus an optional :version (e.g., core/api-server:1.0.0), never a file path. Resolved via the Three-Tier Entity Resolution Model (workspace catalog directories → cache → registry): a Component authored locally is placed under catalog/ at the workspace root or in a directory listed under workspace.catalog_dirs, and a type written as a relative file path halts the build as an entity no catalog holds."
         },
         "active": {
           "anyOf": [{ "type": "boolean" }, { "type": "string" }],
