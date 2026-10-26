@@ -522,8 +522,7 @@
         "compiler_version",
         "aggregate_version",
         "manifest_version",
-        "release_version",
-        "source_identifiers"
+        "release_version"
       ],
       "properties": {
         "schema_version": {
@@ -545,13 +544,6 @@
         "release_version": {
           "type": "string",
           "description": "The exact semantic version of the Release routing file used during compilation."
-        },
-        "source_identifiers": {
-          "type": "array",
-          "description": "Present in every graph and empty in every graph the compiler emits.",
-          "items": {
-            "type": "string"
-          }
         }
       },
       "additionalProperties": true
