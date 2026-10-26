@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/lockfile-v1alpha1.schema.json",
   "title": "Aggrega Per-Release Lockfile",
-  "description": "Machine-generated lockfile pinning every URI resolved from a Release for deterministic future builds. Lives at `<release-stem>.lock` next to `<release-stem>.yaml`; produced by `aggrega pull --release <release>`; consumed by `aggrega build --release <release>`. Two provenance shapes serve two distinct closure-graph relationships: `referenced_from` (list of strings) appears on `entities`, as dotted authoring-site paths recording where in the Release / Aggregate / Manifest / `.aggrega-config.yaml` each URI was pulled in from, and on `plugins`, as the reference of each Plugin entity an artifact was reached through; `consumers` (list of `{consumer_uri, fragments}` records) appears on `schema_libraries`, `mapping_libraries`, `workload_libraries`, and `artifact_libraries` to record which catalog entity references which `<entry-name>` fragments of a library — the structured shape makes consumer-affected-by-library-bump diffs traceable without re-running closure. Schema evolution discipline: adding a new top-level section is SemVer-MINOR (additive); adding a new field inside an existing section is SemVer-MINOR; removing a key or tightening a constraint is SemVer-MAJOR.",
+  "description": "Machine-generated lockfile pinning every URI resolved from a Release for deterministic future builds. Lives at `<release-stem>.lock` next to `<release-stem>.yaml`; produced by `aggrega pull --release <release>`; consumed by `aggrega build --release <release>`. Two provenance shapes record two distinct relationships in the dependency graph: `referenced_from` (list of strings) appears on `entities`, as dotted authoring-site paths recording where in the Release / Aggregate / Manifest / `.aggrega-config.yaml` each URI was pulled in from, and on `plugins`, as the reference of each Plugin entity an artifact was reached through; `consumers` (list of `{consumer_uri, fragments}` records) appears on `schema_libraries`, `mapping_libraries`, `workload_libraries`, and `artifact_libraries` to record which catalog entity references which `<entry-name>` fragments of a library — the structured shape makes consumer-affected-by-library-bump diffs traceable without resolving the Release again. Schema evolution discipline: adding a new top-level section is SemVer-MINOR (additive); adding a new field inside an existing section is SemVer-MINOR; removing a key or tightening a constraint is SemVer-MAJOR.",
   "type": "object",
   "additionalProperties": false,
   "required": ["version", "release", "generated_at"],
@@ -10,7 +10,7 @@
     "entities": {
       "type": "array",
       "default": [],
-      "description": "Catalog entities reachable from this Release: Component, Feature, Recipe, FeatureRecipe, Plugin, Aggregate, and the Release's own Aggregate and Manifest. Each entry is keyed by canonical URI and records the resolved version, the digest of what the entity carries, and the authoring-site origins (`referenced_from`) that pulled the URI into closure.",
+      "description": "Catalog entities reachable from this Release: Component, Feature, Recipe, FeatureRecipe, Plugin, Aggregate, and the Release's own Aggregate and Manifest. Each entry is keyed by canonical URI and records the resolved version, the digest of what the entity carries, and the authoring-site origins (`referenced_from`) that pulled the URI into the Release's dependency closure.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -39,7 +39,7 @@
             "type": "array",
             "default": [],
             "items": { "type": "string" },
-            "description": "Authoring-site origins — dotted paths into Release / Aggregate / Manifest YAML (e.g. `aggregate.spec.components.api.type`) recording why this URI is in the closure."
+            "description": "Authoring-site origins — dotted paths into Release / Aggregate / Manifest YAML (e.g. `aggregate.spec.components.api.type`) recording why this URI is in the Release's dependency closure."
           },
           "signature": {
             "$ref": "#/$defs/VerifiedSignature",
@@ -63,7 +63,7 @@
     "mapping_libraries": {
       "type": "array",
       "default": [],
-      "description": "MappingLibrary entries the closure references via Recipe / FeatureRecipe `valuesMapping: { $import: ... }` sites. Each entry's `consumers` list records which catalog entity references which `<entry-name>` fragments of the library — a structured record that makes library-version-bump impact diffs traceable without re-running closure.",
+      "description": "MappingLibrary entries the Release's dependency closure reaches through Recipe / FeatureRecipe `valuesMapping: { $import: ... }` sites. Each entry's `consumers` list records which catalog entity references which `<entry-name>` fragments of the library — a structured record that makes library-version-bump impact diffs traceable without resolving the Release again.",
       "items": { "$ref": "#/$defs/LibraryEntry" }
     },
     "mutators": {
@@ -82,7 +82,7 @@
           "role": {
             "type": "string",
             "enum": ["label-transform", "annotation-transform"],
-            "description": "The transform role this attachment is bound to, fixing which runner (and therefore which facet) reconstruction dispatches it at: `label-transform` rewrites node labels at topology construction; `annotation-transform` injects annotations before expansion, during resolution. Required — the attachment's role is recorded verbatim from the authored `plugins.governance` entry, so reconstruction dispatches at the exact role it was authored for rather than inferring one."
+            "description": "The transform role this attachment is bound to, recorded verbatim from the authored `plugins.governance` entry, so a build runs the attachment at exactly that role rather than inferring one: `label-transform` rewrites node labels at topology construction; `annotation-transform` injects annotations before expansion, during resolution."
           },
           "function": {
             "type": "string",
@@ -131,7 +131,7 @@
         "properties": {
           "uri": {
             "type": "string",
-            "description": "Bare identity of the Wasm plugin's `.wasm` artifact — the `<socket>/<name>` path (e.g. `governance/aggrega-security-baseline`). The first segment is the plugin's socket (`linter`, `governance`, `formatter`, `importer`, `security`, `pipeline`, `provider`); the segment after that is the plugin name. Socket + name together form the plugin's identity — same name in different sockets is a different plugin. The physical fetch location is derived from this identity plus the configured registry, never carried in the lockfile."
+            "description": "Bare identity of the Wasm plugin's `.wasm` artifact — the `<pluginType>/<name>` path (e.g. `governance/aggrega-security-baseline`). The first segment is the plugin's type (`provider`, `linter`, `pipeline-step`, `governance`, `cli`, `parser`, `importer`); the segment after it is the plugin's name. Type and name together form the plugin's identity — the same name under two types is two plugins. The physical fetch location is derived from this identity plus the configured registry, never carried in the lockfile."
           },
           "resolved_version": {
             "type": "string",
@@ -152,7 +152,7 @@
             "type": "array",
             "default": [],
             "items": { "type": "string" },
-            "description": "Why this artifact is in the closure: the reference of each Plugin entity it was reached through, as the `entities` section records that entity (e.g. `governance/label-injector:1.0.0`)."
+            "description": "Why this artifact is in the Release's dependency closure: the reference of each Plugin entity it was reached through, as the `entities` section records that entity (e.g. `governance/label-injector:1.0.0`)."
           },
           "signature": {
             "$ref": "#/$defs/VerifiedSignature",
@@ -177,7 +177,7 @@
           },
           "plugin": {
             "type": "string",
-            "description": "Bare identity of the resolved provider-rendering plugin (a Plugin entity's `metadata.name`, the `<socket>/<name>` path, e.g. `provider/helm`). Joins by identity into the `plugins` and `entities` sections for the pinned digest and version set."
+            "description": "Bare identity of the resolved provider-rendering plugin (the Plugin entity's identity, its `metadata.pluginType` and `metadata.name` joined by a slash, e.g. `provider/helm`). Joins by identity into the `plugins` and `entities` sections for the pinned digest and version set."
           }
         }
       }
@@ -209,25 +209,25 @@
     "schema_libraries": {
       "type": "array",
       "default": [],
-      "description": "SchemaLibrary entries the closure references via `$ref` and `$import:` sites in entity `schema:` / `usesSchema:` / `featuresSchema:` content. Each entry's `consumers` list records which catalog entity references which `<entry-name>` fragments of the library — a structured record that makes library-version-bump impact diffs traceable without re-running closure.",
+      "description": "SchemaLibrary entries the Release's dependency closure reaches through `$ref` and `$import:` sites in entity `schema:` / `usesSchema:` / `featuresSchema:` content. Each entry's `consumers` list records which catalog entity references which `<entry-name>` fragments of the library — a structured record that makes library-version-bump impact diffs traceable without resolving the Release again.",
       "items": { "$ref": "#/$defs/LibraryEntry" }
     },
     "source_artifacts": {
       "type": "array",
       "default": [],
-      "description": "Source artifacts pulled from Recipe / FeatureRecipe `spec.source` fields at pull time. Each entry identifies a unique `{kind, url, chart, pinned_version}` identity with content digest, mediatype, and the structured `referenced_by:` back-pointers naming every catalog entity that resolved to this artifact. `url` is the authored identity URL; the resolved artifact location for a repo-root helm source is recorded separately under `resolved_url:` as provenance. Multiple Recipes pinning the same chart at the same version dedupe to a single entry with multiple `referenced_by:` records. The kind enum covers the four currently-supported source kinds plus one reserved (terraform-module-oci) that ships no source adapter yet.",
+      "description": "Source artifacts pulled from Recipe / FeatureRecipe `spec.source` fields at pull time. Each entry identifies a unique `{kind, url, chart, pinned_version}` identity with content digest, mediatype, and the structured `referenced_by:` back-pointers naming every catalog entity that resolved to this artifact. `url` is the authored identity URL; the resolved artifact location for a repo-root helm source is recorded separately under `resolved_url:` as provenance. Multiple Recipes pinning the same chart at the same version dedupe to a single entry with multiple `referenced_by:` records. The kind enum covers the four source kinds that resolve, and `terraform-module-oci`, which no source adapter serves: a Recipe or FeatureRecipe naming it is refused as it is read, so no pull records an entry of that kind.",
       "items": { "$ref": "#/$defs/SourceArtifactEntry" }
     },
     "toolchain": {
       "type": "object",
       "additionalProperties": false,
       "required": ["compiler_version", "core_plugins"],
-      "description": "Versions of the toolchain that produced this lockfile: the compiler's own version, and the version of each core plugin the compiler carries. Recorded so a lockfile answers after the fact which compiler and which core plugins resolved and rendered a build — a question the pinned sections cannot always answer, because a core provider plugin served from inside the compiler binary is left unpinned and so carries no recorded version of its own. VERSIONS ONLY: the stamp never records where a plugin's bytes came from, so two machines that pinned the same closure with the same compiler write the same stamp. NOT ENFORCED, BY DESIGN — nothing compares this section, warns about it, or refuses a build over it, and its absence from a lockfile is silent: the toolchain is not part of the dependency closure the lockfile pins, so enforcing the stamp would pin the compiler by proxy and impose a version lock nobody chose to adopt. For the same reason the section is waived by the byte-identity comparison between two pulls of the same inputs, on the same footing as `generated_at`.",
+      "description": "Versions of the toolchain that produced this lockfile: the compiler's own version, and the version of each core plugin the compiler carries. Recorded so a lockfile answers after the fact which compiler and which core plugins resolved and rendered a build — a question the pinned sections cannot always answer, because a core provider plugin served from inside the compiler binary is left unpinned and so carries no recorded version of its own. Versions only: the stamp never records where a plugin's bytes came from, so two machines that pinned the same dependency closure with the same compiler write the same stamp. Nothing compares this section, warns about it, or refuses a build over it, and its absence from a lockfile is silent: the toolchain is not part of the dependency closure the lockfile pins. For the same reason the section is waived by the byte-identity comparison between two pulls of the same inputs, on the same footing as `generated_at`.",
       "properties": {
         "compiler_version": {
           "type": "string",
           "pattern": "^([^/\\\\.]|\\.[^/\\\\.])*\\.?$",
-          "description": "Version of the compiler that wrote this lockfile, in the v-less form every Aggrega surface reports (`1.2.0`, not `v1.2.0`). A tagged release build records its tag; a build from source records the `(devel)` marker, so a lockfile produced by an unreleased compiler is not mistaken for release output. Recorded as a single path segment, so it carries no `/`, no `\\` and no `..`."
+          "description": "Version of the compiler that wrote this lockfile, in the v-less form every Aggrega surface reports (`1.2.0`, not `v1.2.0`). A build stamped with a version records that version — a tagged release build its tag — and a build carrying no version stamp records the `(devel)` marker, so a lockfile produced by an unstamped compiler is not mistaken for release output. Recorded as a single path segment, so it carries no `/`, no `\\` and no `..`."
         },
         "core_plugins": {
           "type": "array",
@@ -255,7 +255,7 @@
     "verdict_inputs": {
       "type": "array",
       "default": [],
-      "description": "External rule inputs a verdict-role governance attachment (`ir-verdict` / `render-verdict`) reads at compile time — a Kyverno / Rego rule file supplied through the attachment's `with.sources`. Recorded as a content digest per source, for audit and cross-pull drift visibility: the digest that shaped a verdict is diffable across pulls, so a changed rule file surfaces as a lockfile diff. This section is PROVENANCE, not a build input: unlike `mutators.sources` it carries no `content`, and build does NOT read it — a verdict plugin is cache-not-pin and reads its rule inputs live (the verdict shapes no output bytes, so it is not part of the deterministic-output pin closure). Because a verdict plugin is cache-not-pin, it is absent from the `entities` / `plugins` sections; this record therefore identifies the attachment by its authored URI, self-standing provenance rather than a closure join. Recording the digest makes the inputs that determined an accept/reject decision auditable and reproducible without pinning them into the build.",
+      "description": "External rule inputs a verdict-role governance attachment (`ir-verdict` / `render-verdict`) reads at compile time — a Kyverno / Rego rule file supplied through the attachment's `with.sources`. Recorded as a content digest per source, for audit and cross-pull drift visibility: the digest that shaped a verdict is diffable across pulls, so a changed rule file surfaces as a lockfile diff. This section is PROVENANCE, not a build input: unlike `mutators.sources` it carries no `content`, and build does NOT read it — a verdict plugin is cached rather than pinned and reads its rule inputs live (the verdict shapes no output bytes, so nothing the lockfile pins for deterministic output includes it). Because a verdict plugin is not pinned, it is absent from the `entities` / `plugins` sections; this record therefore identifies the attachment by its authored URI, standing on its own rather than pointing into those sections. Recording the digest makes the inputs that determined an accept/reject decision auditable and reproducible without pinning them into the build.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -263,7 +263,7 @@
         "properties": {
           "plugin": {
             "type": "string",
-            "description": "The verdict attachment's authored plugin URI, as written in `.aggrega-config.yaml` `plugins.governance` (e.g. `governance/aggrega-security-baseline:1.0.0`). Identifies which attachment the recorded rule inputs belong to; a verdict plugin is cache-not-pin and so has no entry in the `plugins` / `entities` sections to join to."
+            "description": "The verdict attachment's authored plugin URI, as written in `.aggrega-config.yaml` `plugins.governance` (e.g. `governance/aggrega-security-baseline:1.0.0`). Identifies which attachment the recorded rule inputs belong to; a verdict plugin is cached rather than pinned, so it has no entry in the `plugins` / `entities` sections to join to."
           },
           "role": {
             "type": "string",
@@ -296,12 +296,12 @@
     "version": {
       "type": "integer",
       "const": 1,
-      "description": "Lockfile schema version. Currently 1; future SemVer-MAJOR breaks of the schema increment this integer."
+      "description": "Lockfile schema version: 1. A SemVer-MAJOR change to the schema increments it."
     },
     "workload_libraries": {
       "type": "array",
       "default": [],
-      "description": "WorkloadLibrary entries the closure references via Recipe `workload: { $import: ... }` sites. Each entry's `consumers` list records which catalog entity references which `<entry-name>` fragments of the library — a structured record that makes library-version-bump impact diffs traceable without re-running closure.",
+      "description": "WorkloadLibrary entries the Release's dependency closure reaches through Recipe `workload: { $import: ... }` sites. Each entry's `consumers` list records which catalog entity references which `<entry-name>` fragments of the library — a structured record that makes library-version-bump impact diffs traceable without resolving the Release again.",
       "items": {
         "$ref": "#/$defs/LibraryEntry"
       }
@@ -309,7 +309,7 @@
     "artifact_libraries": {
       "type": "array",
       "default": [],
-      "description": "ArtifactLibrary entries the closure references via Recipe / FeatureRecipe `artifacts.<name>: { $import: ... }` sites. Each entry's `consumers` list records which catalog entity references which `<entry-name>` bundles of the library — a structured record that makes library-version-bump impact diffs traceable without re-running closure.",
+      "description": "ArtifactLibrary entries the Release's dependency closure reaches through Recipe / FeatureRecipe `artifacts.<name>: { $import: ... }` sites. Each entry's `consumers` list records which catalog entity references which `<entry-name>` bundles of the library — a structured record that makes library-version-bump impact diffs traceable without resolving the Release again.",
       "items": {
         "$ref": "#/$defs/LibraryEntry"
       }
@@ -408,7 +408,7 @@
             "properties": {
               "consumer_uri": {
                 "type": "string",
-                "description": "Canonical URI of the catalog entity (Component or Feature) referencing this library."
+                "description": "Canonical URI of the catalog entity referencing this library: a Component or Feature for a schema library, a Recipe or FeatureRecipe for a mapping, workload or artifact library, or another library of the same kind whose entries reference this one."
               },
               "fragments": {
                 "type": "array",
@@ -428,11 +428,11 @@
       "properties": {
         "kind": {
           "enum": ["helm-oci-chart", "helm-https-chart", "compose-https-fragment", "git-repository", "terraform-module-oci"],
-          "description": "The source kind. Determines which adapter resolved the artifact and which mediatype is expected. `terraform-module-oci` is reserved for the future terraform provider; no adapter ships at the moment."
+          "description": "The source kind. Determines which adapter resolved the artifact and which mediatype is expected. `terraform-module-oci` belongs to the set, and no source adapter serves it: a Recipe or FeatureRecipe naming it is refused as it is read."
         },
         "url": {
           "type": "string",
-          "description": "The authored URL — the identity URL as written in the Recipe's spec.source.url. For helm-https this is the repo root (repo-root form) or the direct .tgz (direct form) exactly as authored; build reconstructs this same URL offline, so it is the stable identity the pin is keyed on. For git-repository, the cloneable repository URL. For helm-oci, the registry reference. The resolved artifact location for a repo-root helm source is recorded separately under `resolved_url:` as provenance."
+          "description": "The authored URL — the identity URL as written in the Recipe's spec.source.url. For helm-https-chart this is the repo root (repo-root form) or the direct .tgz (direct form) exactly as authored; build reconstructs this same URL offline, so it is the stable identity the pin is keyed on. For git-repository, the cloneable repository URL. For helm-oci-chart, the registry reference. For compose-https-fragment, the fragment's HTTPS URL. The resolved artifact location for a repo-root helm source is recorded separately under `resolved_url:` as provenance."
         },
         "chart": {
           "type": "string",
@@ -454,7 +454,7 @@
         "digest": {
           "type": "string",
           "pattern": "^sha256:[a-f0-9]{64}$",
-          "description": "Content digest of the resolved .tar.gz archive, in `sha256:` followed by 64 lowercase hex characters. Build-time verification reads the cache slot's bytes, recomputes the digest, and compares against this field; mismatch halts with ErrFetchIntegrity."
+          "description": "Content digest of the resolved .tar.gz archive, in `sha256:` followed by 64 lowercase hex characters. Build-time verification reads the cache slot's bytes, recomputes the digest, and compares it against this field; a mismatch halts the build, reporting a content digest mismatch."
         },
         "manifest_digest": {
           "type": "string",
@@ -463,12 +463,12 @@
         },
         "mediatype": {
           "type": "string",
-          "description": "Canonical media type the registry advertised (or the kind's default for kinds without registry metadata). Recorded for diagnostic provenance and forward-compatibility with future kind-mediatype enrichments."
+          "description": "Canonical media type the registry advertised (or the kind's default for kinds without registry metadata). Recorded for diagnostic provenance."
         },
         "referenced_by": {
           "type": "array",
           "minItems": 1,
-          "description": "Catalog entities that resolved to this artifact. The list is sorted by `(uri, field)` for deterministic output. `minItems: 1` because an artifact entry exists only because at least one Recipe / FeatureRecipe pulled it; the closure walker never emits an unreferenced entry.",
+          "description": "Catalog entities that resolved to this artifact, sorted by `(uri, field)` for deterministic output. An entry exists only because a Recipe or FeatureRecipe pulled it, so the list is never empty.",
           "items": { "$ref": "#/$defs/SourceArtifactReference" }
         }
       }
@@ -489,7 +489,7 @@
         },
         "field": {
           "type": "string",
-          "description": "Source-side path inside the entity's spec where the artifact was declared. In the current implementation the value is always `spec.source`. A future extension covering remote-URL forms of `spec.artifacts[*].source` will widen the value space."
+          "description": "Source-side path inside the entity's spec where the artifact was declared. The value is `spec.source`."
         },
         "requested_ref": {
           "type": "string",
@@ -501,7 +501,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["bundle_digest", "mode"],
-      "description": "Verified-signature fact recorded when an artifact's signature was verified at pull time, against the resolving registry's trust policy. Every signable artifact records it the same way — a catalog entity, a library, a Wasm plugin — because all of them verify through one path rather than one per kind. Records the verification mode, the keyless identity/issuer that matched (when keyless), and the content-addressed digest of the signature bundle cached in the closure. Build does not re-run verification. Before anything renders, it reads this fact on every entry it builds from, in every section: it re-hashes the cached bundle and compares the result with `bundle_digest`, halting where the blob is missing or differs; and for an entry the content cache served, it reads from that bundle which artifact the signature was made for, and halts where it was made for a different artifact than the one the build read for the entry — so a `signature` copied from one entry onto another is refused, whatever the signing requirement says. A build verifies no signature, so a bundle written into the cache by hand, made out for the entry's own artifact, is not told apart from one a pull verified. And where the workspace's trust configuration requires a signature for an entry the content cache served — the requirement `pull` applies when it fetches the artifact, so the skips and an `advisory` registry that let a pull admit an artifact with no signature let the build admit its entry too — an entry carrying no fact halts the build. An entry read from a catalog directory, from the copy inside the compiler binary, or from beside the Release is never held to that requirement.",
+      "description": "Verified-signature fact recorded when an artifact's signature was verified at pull time, against the resolving registry's trust policy. Every signable artifact records it the same way — a catalog entity, a library, a Wasm plugin — because all of them verify through one path rather than one per kind. Records the verification mode, the keyless identity/issuer that matched (when keyless), and the content-addressed digest of the signature bundle in the content cache. Build does not re-run verification. Before anything renders, it reads this fact on every entry it builds from, in every section: it re-hashes the cached bundle and compares the result with `bundle_digest`, halting where the blob is missing or differs; and for an entry the content cache served, it reads from that bundle which artifact the signature was made for, and halts where it was made for a different artifact than the one the build read for the entry — so a `signature` copied from one entry onto another is refused, whatever the signing requirement says. A build verifies no signature, so a bundle written into the cache by hand, made out for the entry's own artifact, is not told apart from one a pull verified. And where the workspace's trust configuration requires a signature for an entry the content cache served — the requirement `pull` applies when it fetches the artifact, so the skips and an `advisory` registry that let a pull admit an artifact with no signature let the build admit its entry too — an entry carrying no fact halts the build. An entry read from a catalog directory, from the copy inside the compiler binary, or from beside the Release is never held to that requirement.",
       "properties": {
         "bundle_digest": {
           "type": "string",

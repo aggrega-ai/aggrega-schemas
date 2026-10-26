@@ -13,7 +13,7 @@
     },
     "url": {
       "type": "string",
-      "description": "The authored URL — the identity URL as written in the Recipe's spec.source.url. For helm-https this is the repo root (repo-root form) or the direct .tgz (direct form) exactly as authored. For git-repository, the cloneable repository URL. For helm-oci, the registry reference. The resolved artifact location for a repo-root helm source is recorded separately under `resolved_url:` as provenance."
+      "description": "The authored URL — the identity URL as written in the Recipe's spec.source.url. For helm-https-chart this is the repo root (repo-root form) or the direct .tgz (direct form) exactly as authored. For git-repository, the cloneable repository URL. For helm-oci-chart, the registry reference. For compose-https-fragment, the fragment's HTTPS URL. The resolved artifact location for a repo-root helm source is recorded separately under `resolved_url:` as provenance."
     },
     "resolved_url": {
       "type": "string",
@@ -27,11 +27,11 @@
     "digest": {
       "type": "string",
       "pattern": "^sha256:[a-f0-9]{64}$",
-      "description": "Content digest of the cached .tar.gz archive in sha256:<hex> form. Build-time verification computes the SHA-256 of blob.tgz, compares against this field AND the lockfile entry's digest, and halts with ErrFetchIntegrity on mismatch."
+      "description": "Content digest of the cached .tar.gz archive in sha256:<hex> form. Build-time verification computes the SHA-256 of blob.tgz, compares it against this field AND the lockfile entry's digest, and halts the build, reporting a content digest mismatch, when either differs."
     },
     "mediatype": {
       "type": "string",
-      "description": "Canonical media type the registry advertised (or the kind's default for kinds without registry metadata). Recorded for diagnostic provenance and forward-compatibility with future kind-mediatype enrichments."
+      "description": "Canonical media type the registry advertised (or the kind's default for kinds without registry metadata). Recorded for diagnostic provenance."
     },
     "pulled_at": {
       "type": "string",

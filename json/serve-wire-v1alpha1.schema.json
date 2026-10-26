@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/serve-wire-v1alpha1.schema.json",
   "title": "Aggrega Background Daemon Wire Protocol",
-  "description": "The message shapes exchanged with a background compiler daemon started by `aggrega serve`. A client opens a session over that daemon with the handshake, and the session is what scopes the settings and the workspace the conversation was opened over; the daemon is the process that answers a request, sends a notification and holds what it has read. The protocol is JSON-RPC 2.0 over standard input and output, each message framed by a Content-Length header; this document describes the message bodies and neither the framing nor the transport. A body is one of four things: a request the client sends, a notification the client sends, a notification the daemon sends, or the response the daemon returns for a request. Three properties of the surface decide how the shapes below are written. First, every request admits two fields beyond the ones its own method declares — `workspaceRoot`, naming the workspace the request acts on, and `workDoneToken`, the caller-minted value progress is reported under — so both appear on every request params object here, including the three methods whose subject is not a workspace and which accept `workspaceRoot` and ignore it. Second, the daemon refuses a request params object carrying a field the method does not accept, naming what it does accept, so every params object here is closed at its top level; a nested object inside a request is not closed, because the check reads only the outermost field names. Third, a result is composed by the daemon rather than supplied by a caller, so result objects are closed at every level whose shape is fixed, and open only where the value is opaque JSON the daemon carries through without reading. One consequence of the daemon's encoding is visible on the wire and is described rather than tidied away: a collection the daemon does not mark optional is emitted as `null` when it has no value to report and as an empty collection when the value it reports is empty, so both forms are admitted wherever that applies.",
+  "description": "The message shapes exchanged with a background compiler daemon started by `aggrega serve`. A client opens a session over that daemon with the handshake, and the session is what scopes the settings and the workspace the conversation was opened over; the daemon is the process that answers a request, sends a notification and holds what it has read. The protocol is JSON-RPC 2.0 over standard input and output, each message framed by a Content-Length header; this document describes the message bodies and neither the framing nor the transport. A body is one of four things: a request the client sends, a notification the client sends, a notification the daemon sends, or the response the daemon returns for a request. Three properties of the surface decide how the shapes below are written. First, every request admits two fields beyond the ones its own method declares — `workspaceRoot`, naming the workspace the request acts on, and `workDoneToken`, the caller-minted value progress is reported under — so both appear on every request params object here, including the three methods whose subject is not a workspace: `aggrega/getSchema` and `aggrega/scaffoldEntity` accept `workspaceRoot` and ignore it, and `aggrega/initialize` reads it as the workspace the session declares. Second, the daemon refuses a request params object carrying a field the method does not accept, naming what it does accept, so every params object here is closed at its top level; a nested object inside a request is not closed, because the check reads only the outermost field names. Third, a result is composed by the daemon rather than supplied by a caller, so result objects are closed at every level whose shape is fixed, and open only where the value is opaque JSON the daemon carries through without reading. One consequence of the daemon's encoding is visible on the wire and is described rather than tidied away: a collection the daemon does not mark optional is emitted as `null` when it has no value to report and as an empty collection when the value it reports is empty, so both forms are admitted wherever that applies.",
   "oneOf": [
     { "$ref": "#/$defs/Request" },
     { "$ref": "#/$defs/ClientNotification" },
@@ -584,7 +584,15 @@
       "properties": {
         "line": { "type": "integer", "description": "The line the finding is about, counted from one." },
         "column": { "type": "integer", "description": "The column the finding is about, counted from one." },
-        "severity": { "type": "string", "description": "How serious the finding is." },
+        "severity": {
+          "type": "string",
+          "description": "How serious the finding is.",
+          "oneOf": [
+            { "const": "error", "description": "The finding is a fault. A plugin finding of halt severity is reported at this tier." },
+            { "const": "warning", "description": "The finding is reported and is not a fault. A plugin finding of warn severity is reported at this tier." },
+            { "const": "info", "description": "The finding is information, as a plugin finding of info severity is." }
+          ]
+        },
         "message": { "type": "string", "description": "What the finding says, in prose." },
         "code": { "type": "string", "description": "The condition's descriptive name, stable across releases and quotable in a suppression." },
         "shortCode": { "type": "string", "description": "The condition's short code, the form that opens a halting diagnostic." },
@@ -702,7 +710,7 @@
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
         "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
         "file": { "type": "string", "description": "The document that changed." },
-        "granularity": { "type": "string", "description": "How much of what the daemon holds to drop." }
+        "granularity": { "type": "string", "description": "How much of what the daemon holds to drop: `file` drops what it holds for the named document only; `workspace`, the default and what any other value is read as, also drops what it holds for the whole workspace." }
       }
     },
     "DiagnosticsParams": {
@@ -942,7 +950,15 @@
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
         "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
         "reference": { "type": "string", "description": "The published reference to mark." },
-        "severity": { "type": "string", "description": "How strongly the marker speaks — whether resolution reports the version or declines it." },
+        "severity": {
+          "type": "string",
+          "description": "How strongly the marker speaks — whether resolution reports the version or declines it.",
+          "oneOf": [
+            { "const": "warning", "description": "Deprecated, at the milder of the two advisory tiers: still selected when a version is chosen." },
+            { "const": "error", "description": "Deprecated, at the stronger of the two advisory tiers: still selected when a version is chosen." },
+            { "const": "retracted", "description": "Withdrawn: excluded when a version is chosen." }
+          ]
+        },
         "reason": { "type": "string", "description": "Why the version is deprecated." },
         "replacement": { "type": "string", "description": "The reference to use instead." },
         "message": { "type": "string", "description": "What a consumer meeting the marker is told." },
@@ -1119,7 +1135,16 @@
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
         "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
         "file": { "type": "string", "description": "The document to edit." },
-        "edit": { "type": "string", "description": "Which edit to apply." },
+        "edit": {
+          "type": "string",
+          "description": "Which edit to apply.",
+          "oneOf": [
+            { "const": "add-component", "description": "Adds a component instance under a components container: name is the instance name, value the Component it requests." },
+            { "const": "attach-feature", "description": "Attaches a Feature to the node the request names: name is the attachment's instance name, value the Feature it requests." },
+            { "const": "wire-edge", "description": "Wires a dependency connection from the node the request names, inside socket: name is the alias the connection is addressed by, value the node it points at." },
+            { "const": "set-value", "description": "Sets one value on the node the request names: name is the value's key, value a scalar." }
+          ]
+        },
         "node": { "type": "array", "description": "The path through the document to the entry being edited.", "items": { "type": "string" } },
         "socket": { "type": "string", "description": "The socket the edit is about, for an edit that wires one." },
         "name": { "type": "string", "description": "The name the edit writes." },
@@ -1173,7 +1198,7 @@
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootAccepted" },
         "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
-        "kind": { "type": "string", "description": "The entity kind to draft, named as a lowercase-hyphenated schema token such as component, aggregate, release or recipe." },
+        "kind": { "type": "string", "description": "The entity kind to draft, named by its lowercase token, such as component, aggregate, release, recipe or featurerecipe — the token `aggrega/getSchema` lists for it." },
         "name": { "type": "string", "description": "The name to write into the drafted document." }
       }
     },
@@ -1579,7 +1604,7 @@
       "required": ["kind", "documentKind", "acceptedBy"],
       "additionalProperties": false,
       "properties": {
-        "kind": { "type": "string", "description": "The lowercase-hyphenated token a request names." },
+        "kind": { "type": "string", "description": "The lowercase token a request names, such as component or featurerecipe." },
         "documentKind": { "type": "string", "description": "The kind the document's own header declares." },
         "acceptedBy": { "$ref": "#/$defs/EntityKindAcceptance", "description": "Which operations accept a document of this kind named on its own — by its path, or by its name for inspection — with nothing else sent beside it. A member is true when that operation does not refuse a document for being of this kind; a document it accepts may still be refused for what the document says." }
       }
@@ -1655,7 +1680,15 @@
         "repo": { "type": "string", "description": "The repository the marker is on." },
         "version": { "type": "string", "description": "The version the marker covers." },
         "recorded": { "type": "boolean", "description": "Whether the marker's own signature verified, and the index therefore carries it." },
-        "severity": { "type": "string", "description": "How strongly the marker speaks." },
+        "severity": {
+          "type": "string",
+          "description": "How strongly the marker speaks.",
+          "oneOf": [
+            { "const": "warning", "description": "Deprecated, at the milder of the two advisory tiers: still selected when a version is chosen." },
+            { "const": "error", "description": "Deprecated, at the stronger of the two advisory tiers: still selected when a version is chosen." },
+            { "const": "retracted", "description": "Withdrawn: excluded when a version is chosen." }
+          ]
+        },
         "reason": { "type": "string", "description": "Why the version is deprecated." }
       }
     },
@@ -1976,7 +2009,15 @@
       "additionalProperties": false,
       "properties": {
         "reference": { "type": "string", "description": "The reference that was marked." },
-        "severity": { "type": "string", "description": "How strongly the marker speaks." },
+        "severity": {
+          "type": "string",
+          "description": "How strongly the marker speaks.",
+          "oneOf": [
+            { "const": "warning", "description": "Deprecated, at the milder of the two advisory tiers: still selected when a version is chosen." },
+            { "const": "error", "description": "Deprecated, at the stronger of the two advisory tiers: still selected when a version is chosen." },
+            { "const": "retracted", "description": "Withdrawn: excluded when a version is chosen." }
+          ]
+        },
         "issuedOn": { "type": "string", "description": "When the marker was issued." },
         "digest": { "type": "string", "description": "The digest of the marker that was published." }
       }

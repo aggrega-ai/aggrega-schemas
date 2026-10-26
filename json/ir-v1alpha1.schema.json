@@ -19,13 +19,16 @@
       ],
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "The maintainer's name."
         },
         "email": {
-          "type": "string"
+          "type": "string",
+          "description": "The maintainer's email address."
         },
         "url": {
-          "type": "string"
+          "type": "string",
+          "description": "The maintainer's web address."
         }
       }
     },
@@ -43,15 +46,15 @@
         },
         "side": {
           "type": "string",
-          "description": "Authoring surface the annotation was declared on; empty for explicit leaves."
+          "description": "Authoring surface the annotation was declared on; absent for explicit leaves."
         },
         "annotation_key": {
           "type": "string",
-          "description": "Annotation name that contributed this leaf; empty for explicit leaves."
+          "description": "Annotation name that contributed this leaf; absent for explicit leaves."
         },
         "annotation_source": {
           "type": "string",
-          "description": "Source location of the annotation declaration as <file-path>:<dotted-yaml-key-path>; empty for explicit leaves."
+          "description": "Source location of the annotation declaration as <file-path>:<dotted-yaml-key-path>; absent for explicit leaves."
         },
         "overridden_annotation": {
           "$ref": "#/$defs/FieldProvenance",
@@ -98,7 +101,7 @@
         },
         "labels": {
           "type": "object",
-          "description": "The attached Feature's catalog labels, carried verbatim in the order its catalog entity declares them — never filtered, normalised or prefix-stripped, so a consumer reads exactly what the catalog author wrote. The compiler reads none of them. Empty when the Feature declares no labels, and when its type resolves to no catalog entity.",
+          "description": "The attached Feature's catalog labels, carried verbatim in the order its catalog entity declares them — never filtered, normalised or prefix-stripped, so a consumer reads exactly what the catalog author wrote. The compiler reads none of them. Absent when the Feature declares no labels, and when its type resolves to no catalog entity.",
           "additionalProperties": {
             "type": "string"
           },
@@ -106,7 +109,7 @@
         },
         "catalog_annotations": {
           "type": "object",
-          "description": "The attached Feature's catalog annotations — the metadata.annotations of the Feature entity this attachment names — carried verbatim in the order that entity declares them, never filtered, normalised or prefix-stripped, so a consumer reads exactly what the catalog author wrote, including keys in the author's own namespace. The compiler reads none of them. Distinct from annotation_key and annotation_source, which name and locate the annotation that caused this attachment to exist at all: those two report how the attachment came to be, this one reports the metadata of the entity it names, and an attachment written in a features: block carries these annotations while carrying neither of those. Empty when the Feature declares no annotations, and when its type resolves to no catalog entity.",
+          "description": "The attached Feature's catalog annotations — the metadata.annotations of the Feature entity this attachment names — carried verbatim in the order that entity declares them, never filtered, normalised or prefix-stripped, so a consumer reads exactly what the catalog author wrote, including keys in the author's own namespace. The compiler reads none of them. Distinct from annotation_key and annotation_source, which name and locate the annotation that caused this attachment to exist at all: those two report how the attachment came to be, this one reports the metadata of the entity it names, and an attachment written in a features: block carries these annotations while carrying neither of those. Absent when the Feature declares no annotations, and when its type resolves to no catalog entity.",
           "additionalProperties": {
             "type": "string"
           },
@@ -138,18 +141,21 @@
           "properties": {
             "env": {
               "type": "object",
+              "description": "Environment variable delivery: keys are the consumer's local variable names, values are the target's provides keys.",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "file": {
               "type": "object",
+              "description": "File mount delivery: keys are the consumer's local file paths, values are the target's provides keys.",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "arg": {
               "type": "object",
+              "description": "Command-line argument delivery: keys are the consumer's flag prefixes, values are the target's provides keys.",
               "additionalProperties": {
                 "type": "string"
               }
@@ -175,11 +181,11 @@
         },
         "annotation_key": {
           "type": "string",
-          "description": "Annotation name that triggered a synthetic attachment. Empty when origin is explicit."
+          "description": "Annotation name that triggered a synthetic attachment. Absent when origin is explicit."
         },
         "annotation_source": {
           "type": "string",
-          "description": "Source location of the annotation declaration as <release-file-path>:<dotted-yaml-key-path>. Empty when origin is explicit."
+          "description": "Source location of the annotation declaration as <release-file-path>:<dotted-yaml-key-path>. Absent when origin is explicit."
         },
         "values_provenance": {
           "type": "object",
@@ -203,7 +209,7 @@
         },
         "sensitive_inject": {
           "type": "object",
-          "description": "The delivery keys of inject whose referenced provides key the attached Feature declares sensitive, in inject's own shape: mechanism, then delivery key, with the referenced provides key as the value. A subset of inject. Empty when the attachment declares no delivery mechanism or references no sensitive provides key.",
+          "description": "The delivery keys of inject whose referenced provides key the attached Feature declares sensitive, in inject's own shape: mechanism, then delivery key, with the referenced provides key as the value. A subset of inject. Absent when the attachment declares no delivery mechanism or references no sensitive provides key.",
           "additionalProperties": {
             "type": "object",
             "additionalProperties": {
@@ -214,7 +220,7 @@
         },
         "sensitive_payload_leaves": {
           "type": "array",
-          "description": "The leaves this attachment's values and infra payload carries that the attached Feature declares sensitive, each as the pillar-prefixed dotted path the datum occupies: values.<path> or infra.<path>. The payload read here is the one the attachment ends up carrying, so a leaf standing at a value the Feature's schema declares as a default is named alongside one an author wrote — a filled default is a datum the payload carries, and a marking read off the written block alone would leave it unnamed. This is the per-leaf unit of the sensitivity marking, and it answers a question neither of the other two does — sensitive gives one answer for the whole attachment, sensitive_inject gives one per inject delivery key, and neither names an individual leaf. A leaf appears where a path the Feature's schema declares sensitive covers it: the declaration names that leaf, or names an object containing it, so a leaf beneath an object a declaration covers is named by that declaration. Matching runs segment-wise over the dotted path, with nothing read out of the path's own text and no value inspected, so a declaration at `db` covers `db.password` and does not reach a sibling leaf named `dbPassword`. The per-attachment answer is never spread across individual leaves, which would assert something false about a leaf left readable. An absent key states that this attachment names no leaf its Feature declares sensitive. It does not assert that the payload is insensitive, and it does not separate an attachment that has no such leaf to name from a producer that does not report this axis at all — a guest that reads an absent key as permission to display or emit a value in the clear has read it backwards. The marking is part of this payload's contract rather than a response to any one plugin: a policy that needs it can be written whenever the need arises, without the payload having to be widened first to make it expressible, so a plugin finding this key absent learns what absence states above and nothing about whether anything reads the key. Leaves arrive in the order the payload holds them, the values pillar's before the infra pillar's — the same order the values and infra payloads themselves carry, and what makes the payload byte-identical across runs of identical input. Absent when the attachment carries no leaf its Feature declares sensitive.",
+          "description": "The leaves this attachment's values and infra payload carries that the attached Feature declares sensitive, each as the pillar-prefixed dotted path the datum occupies: values.<path> or infra.<path>. The payload read here is the one the attachment ends up carrying, so a leaf standing at a value the Feature's schema declares as a default is named alongside one an author wrote — a filled default is a datum the payload carries, and a marking read off the written block alone would leave it unnamed. This is the per-leaf unit of the sensitivity marking, and it answers a question neither of the other two does — sensitive gives one answer for the whole attachment, sensitive_inject gives one per inject delivery key, and neither names an individual leaf. A leaf appears where a path the Feature's schema declares sensitive covers it: the declaration names that leaf, or names an object containing it, so a leaf beneath an object a declaration covers is named by that declaration. Matching runs segment-wise over the dotted path, with nothing read out of the path's own text and no value inspected, so a declaration at `db` covers `db.password` and does not reach a sibling leaf named `dbPassword`. The per-attachment answer is never spread across individual leaves, which would assert something false about a leaf left readable. An absent key states that this attachment names no leaf its Feature declares sensitive. It does not assert that the payload is insensitive, and it does not separate an attachment that has no such leaf to name from a producer that does not report this axis at all — a guest that reads an absent key as permission to display or emit a value in the clear has read it backwards. Leaves arrive in the order the payload holds them, the values pillar's before the infra pillar's — the same order the values and infra payloads themselves carry, and what makes the payload byte-identical across runs of identical input. Absent when the attachment carries no leaf its Feature declares sensitive.",
           "items": {
             "type": "string"
           }
@@ -274,21 +280,26 @@
       "properties": {
         "maintainers": {
           "type": "array",
+          "description": "The maintainers the Catalog entity lists as owning it.",
           "items": {
             "$ref": "#/$defs/Maintainer"
           }
         },
         "license": {
-          "type": "string"
+          "type": "string",
+          "description": "The SPDX license identifier the Catalog entity declares for the software it describes."
         },
         "repository": {
-          "type": "string"
+          "type": "string",
+          "description": "The URL of the Git repository the Catalog entity names as holding its source files."
         },
         "home": {
-          "type": "string"
+          "type": "string",
+          "description": "The URL of the Catalog entity's home page, wiki or documentation."
         },
         "keywords": {
           "type": "array",
+          "description": "The descriptive keywords the Catalog entity declares.",
           "items": {
             "type": "string"
           }
@@ -306,7 +317,7 @@
       "properties": {
         "description": {
           "type": "string",
-          "description": "Optional developer-authored documentation describing this component instance's role in the application. Passed through from the Aggregate for augmenting rendering and linting diagnostics."
+          "description": "Optional developer-authored documentation describing this component instance's role in the application. Carried through from the Aggregate for rendering and for lint diagnostics."
         },
         "labels": {
           "type": "object",
@@ -379,7 +390,7 @@
         },
         "source_file": {
           "type": "string",
-          "description": "Workspace-relative path of the Aggregate file where this node was authored. Root-tier nodes carry the root Aggregate's path; sub-aggregate nodes carry the imported Aggregate's file path. The emitter normalizes against the workspace root (the directory containing .aggrega-config.yaml) so the IR wire shape stays byte-identical across developer machines whose workspaces live at different absolute paths. Consumers that filter diagnostics per file resolve the field against the same workspace root before comparison. Empty when the emitter has no workspace concept (e.g., synthetic test fixtures); the field is omitted from the JSON when empty."
+          "description": "Workspace-relative path of the Aggregate file where this node was authored. Root-tier nodes carry the root Aggregate's path; sub-aggregate nodes carry the imported Aggregate's file path. The path is relative to the workspace root (the directory containing .aggrega-config.yaml), so the graph is byte-identical on machines whose workspaces sit at different absolute paths. Consumers that filter diagnostics per file resolve the field against the same workspace root before comparison. Absent when the graph was built without a workspace root."
         },
         "uses": {
           "description": "The node's `uses` block exactly as authored: each socket name maps to either a list of target instance names or an alias-keyed map of connection entries, in the order the author declared them. This is the block as written, which is a different fact from the resolved connections in `edges`: a socket the author populated appears here even where it produced no connection, so a reader can tell a socket the author filled apart from a socket that reaches a target. Absent when the node authored no `uses` block. Opaque at this schema layer; a policy plugin that reads it parses the bytes.",
@@ -405,10 +416,12 @@
       ],
       "properties": {
         "source": {
-          "type": "string"
+          "type": "string",
+          "description": "The ID of the consuming node, where the connection starts."
         },
         "target": {
-          "type": "string"
+          "type": "string",
+          "description": "The ID of the node the connection reaches."
         },
         "socket": {
           "type": "string",
@@ -441,13 +454,13 @@
         "values": {
           "type": "object",
           "additionalProperties": true,
-          "description": "Resolved per-connection developer values for this edge (from the Aggregate edge), validated at resolution against the valueSchema declared by the source socket (the socket on the consuming component, which is the edge's source) and projected into the consuming node's render context at .uses.<alias>.values. Keys the author omitted are filled from the socket's declared defaults; an authored value wins.",
+          "description": "Resolved per-connection developer values for this edge (from the Aggregate edge), validated at resolution against the valueSchema declared by the source socket (the socket on the consuming component, which is the edge's source) and projected into the consuming node's render context at .context.uses.<alias>.values. Keys the author omitted are filled from the socket's declared defaults; an authored value wins.",
           "x-aggrega-go-type": "json.RawMessage"
         },
         "infra": {
           "type": "object",
           "additionalProperties": true,
-          "description": "Resolved per-connection infra for this edge, supplied by a Release edge entry, validated at resolution against the infraSchema declared by the source socket (the socket on the consuming component, which is the edge's source) and projected at .uses.<alias>.infra. Keys the author omitted are filled from the socket's declared defaults; an authored value wins.",
+          "description": "Resolved per-connection infra for this edge, supplied by a Release edge entry, validated at resolution against the infraSchema declared by the source socket (the socket on the consuming component, which is the edge's source) and projected at .context.uses.<alias>.infra. Keys the author omitted are filled from the socket's declared defaults; an authored value wins.",
           "x-aggrega-go-type": "json.RawMessage"
         },
         "inject": {
@@ -456,18 +469,21 @@
           "properties": {
             "env": {
               "type": "object",
+              "description": "Environment variable delivery: keys are the consumer's local variable names, values are the target's provides keys.",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "file": {
               "type": "object",
+              "description": "File mount delivery: keys are the consumer's local file paths, values are the target's provides keys.",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "arg": {
               "type": "object",
+              "description": "Command-line argument delivery: keys are the consumer's flag prefixes, values are the target's provides keys.",
               "additionalProperties": {
                 "type": "string"
               }
@@ -486,13 +502,14 @@
     },
     "IRMetadata": {
       "type": "object",
+      "description": "Identity of the graph: the Aggregate it was built from.",
       "required": [
         "aggregate_name"
       ],
       "properties": {
         "aggregate_name": {
           "type": "string",
-          "description": "The Aggregate's metadata.name. Follows IR snake_case convention."
+          "description": "The Aggregate's metadata.name."
         }
       },
       "additionalProperties": false
@@ -510,11 +527,12 @@
       ],
       "properties": {
         "schema_version": {
-          "type": "string"
+          "type": "string",
+          "description": "The version of the IR schema the graph conforms to — aggrega.ai/v1alpha1, the same value the graph's apiVersion carries."
         },
         "compiler_version": {
           "type": "string",
-          "description": "Mandatory compliance stamp. Identifies the specific Go compiler binary used to generate this graph."
+          "description": "Mandatory compliance stamp. Identifies, by its version, the aggrega binary that built this graph."
         },
         "aggregate_version": {
           "type": "string",
@@ -530,6 +548,7 @@
         },
         "source_identifiers": {
           "type": "array",
+          "description": "Present in every graph and empty in every graph the compiler emits.",
           "items": {
             "type": "string"
           }
@@ -539,6 +558,7 @@
     },
     "IRSpec": {
       "type": "object",
+      "description": "The graph itself: its nodes, its edges and the payloads keyed by node.",
       "required": [
         "nodes",
         "edges",
@@ -598,7 +618,7 @@
         },
         "boundary_features": {
           "type": "object",
-          "description": "Un-folded projection of each boundary's Feature attachments, keyed by boundary path then by instance name. Mirrors the boundaries' feature attachments as the single source both lock-time source resolution and the render-time boundary-scope dispatch read, so neither re-walks the routing tree. Present only when the graph has boundary-level Feature attachments.",
+          "description": "Each boundary's Feature attachments, keyed by boundary path then by instance name. Present only when the graph has boundary-level Feature attachments.",
           "patternProperties": {
             "^[a-zA-Z0-9_./-]+$": {
               "type": "object",

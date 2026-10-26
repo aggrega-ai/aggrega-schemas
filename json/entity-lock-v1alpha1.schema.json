@@ -10,7 +10,7 @@
     "version": {
       "type": "integer",
       "const": 1,
-      "description": "Entity-lock schema version. Currently 1; future SemVer-MAJOR breaks of the schema increment this integer."
+      "description": "Entity-lock schema version: 1. A SemVer-MAJOR change to the schema increments it."
     },
     "sourceDigests": {
       "type": "array",
@@ -23,11 +23,11 @@
         "properties": {
           "kind": {
             "enum": ["helm-oci-chart", "helm-https-chart", "compose-https-fragment", "git-repository", "terraform-module-oci"],
-            "description": "The resolved source kind. One of a closed set — the same set the lockfile's source-artifact `kind` and the cache metadata's `kind` carry — because all three record the same resolved-source identities and a build reads the kind to choose the loader. `terraform-module-oci` is reserved for the future terraform provider; no adapter ships at the moment."
+            "description": "The resolved source kind. One of a closed set — the same set the lockfile's source-artifact `kind` and the cache metadata's `kind` carry — because all three record the same resolved-source identities and a build reads the kind to choose the loader. `terraform-module-oci` belongs to the set, and no source adapter serves it: a Recipe or FeatureRecipe naming it is refused as it is read."
           },
           "url": {
             "type": "string",
-            "description": "The authored source URL the digest pins — the identity URL as written in spec.source.url (a repo root or a direct .tgz for helm-https). Build reconstructs this same URL offline, so it is the stable identity the pin is keyed on, not a resolved artifact location."
+            "description": "The authored source URL the digest pins — the identity URL as written in spec.source.url (a repo root or a direct .tgz for helm-https-chart). Build reconstructs this same URL offline, so it is the stable identity the pin is keyed on, not a resolved artifact location."
           },
           "chart": {
             "type": "string",

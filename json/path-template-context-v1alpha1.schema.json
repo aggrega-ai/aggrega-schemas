@@ -1,8 +1,8 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://aggrega.ai/schemas/path-template-context-v1alpha1.schema.json",
-    "title": "Aggrega Internal Path-Template Context",
-    "description": "The variable allowlist consumed by Go templates evaluated against Release.spec.boundaries[].directory and Release.spec.boundaries[].subDirectory (and the per-component subDirectory override) when Aggrega builds the Release. Path templates use missingkey=error (distinct from the global missingkey=zero regime for value templates) plus parse-time validation: every field reference in a path template must appear in this allowlist for the relevant context (directory: vs subDirectory:); unknown fields produce a Loud Guardrail error at parse time, never at render time. The asymmetry with value-template laxity is documented at aggrega-docs/language-reference/path-template-variables.md.",
+    "title": "Aggrega Path-Template Context",
+    "description": "The variable allowlist consumed by Go templates evaluated against Release.spec.boundaries[].directory and Release.spec.boundaries[].subDirectory (and the per-component subDirectory override) when Aggrega builds the Release. Path templates use missingkey=error (distinct from the global missingkey=zero regime for value templates) plus parse-time validation: every field reference in a path template must appear in this allowlist for the relevant context (directory: vs subDirectory:); unknown fields produce a Loud Guardrail error at parse time, never at render time. The Path-Template Variables page of the language reference teaches the difference from value templates.",
     "type": "object",
     "properties": {
       "capability": {
@@ -24,19 +24,25 @@
       },
       "parent_boundary": {
         "type": "object",
-        "description": "Available in directory: AND subDirectory:. The parent boundary's already-resolved values. Populated via depth-first walk evaluating each boundary's templates with its parent's resolved values; children never see their own values here. Top-level boundary referencing parent_boundary produces an explicit error: 'path template at <boundary_name> references {{ .parent_boundary.* }} but boundary is at the top level (no parent)'.",
+        "description": "Available in directory: AND subDirectory:. The parent boundary's already-resolved values. Populated via depth-first walk evaluating each boundary's templates with its parent's resolved values; children never see their own values here. A top-level boundary has no parent, so a key read under parent_boundary there halts the build, naming the boundary, the template field and the missing key.",
         "properties": {
           "directory": {
             "type": "string",
             "description": "Parent's evaluated directory string."
           },
-          "subDirectory": {
-            "type": "string",
-            "description": "Parent's evaluated subDirectory string."
-          },
           "boundary_name": {
             "type": "string",
             "description": "Parent's name (the map key in release.spec.boundaries)."
+          },
+          "parameters": {
+            "type": "object",
+            "description": "The Release's parameter map — the same map .parameters carries.",
+            "additionalProperties": true
+          },
+          "annotations": {
+            "type": "object",
+            "description": "The parent boundary's annotations after the cascade resolves.",
+            "additionalProperties": { "type": "string" }
           }
         },
         "additionalProperties": false
