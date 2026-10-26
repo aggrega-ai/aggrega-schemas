@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/aggregate-v1alpha1.schema.json",
   "title": "Aggrega Developer Intent (Aggregate)",
-  "description": "The recursive, parameterized AI architecture. Acts as both the root application and reusable module.",
+  "description": "The recursive, parameterized AI architecture. Acts as both the root of a build and a reusable module.",
   "type": "object",
   "required": [
     "apiVersion",
@@ -102,7 +102,7 @@
         "parameters": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[any]",
-          "description": "Global environment contract. Each entry is a typed-contract object authoring the compact-form vocabulary subset (type, description, default, enum, min/max, minLength/maxLength, pattern, format, validate, validateMessage, required, items, valuesType, properties). Nested structure is expressed via the typed-form properties: sub-field. Release fulfillment may be inline (parameters: {...}) or single-source file import (parameters: {$import: <path>}); the parameter-contract layer validates the merged map against this contract before parameter interpolation. See aggrega-docs/language-reference/entities/aggregate.md for the full vocabulary.",
+          "description": "Global environment contract. Each entry is a typed-contract object authoring the compact-form vocabulary subset (type, description, default, enum, min/max, minLength/maxLength, pattern, format, validate, validateMessage, required, items, valuesType, properties). Nested structure is expressed via the typed-form properties: sub-field. Release fulfillment may be inline (parameters: {...}) or single-source file import (parameters: {$import: <path>}); the parameter-contract layer validates the merged map against this contract before parameter interpolation. The Aggregate page of the language reference teaches the full vocabulary.",
           "additionalProperties": {
             "type": "object",
             "description": "Typed contract authoring the compact-form vocabulary subset.",
@@ -178,7 +178,7 @@
         "components": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[ComponentInstance]",
-          "description": "The map of logical atomic components that make up this Aggregate, authored directly at the top level. Top-level components and subsystems are mutually exclusive — declaring both is rejected. When components are authored here (without subsystems), the compiler folds them into a synthesized default subsystem at load, so every downstream pass sees a uniform subsystem-bearing structure; the synthesized default is marked as such in the IR.",
+          "description": "The map of logical atomic components that make up this Aggregate, authored directly at the top level. Top-level components and subsystems are mutually exclusive — declaring both is rejected. When components are authored here (without subsystems), the compiler folds them into a synthesized default subsystem at load, and the IR marks that subsystem as synthesized.",
           "patternProperties": {
             "^[a-zA-Z0-9_-]+$": {
               "$ref": "#/$defs/component_instance"
@@ -241,7 +241,7 @@
                     "values": {
                       "type": "object",
                       "additionalProperties": true,
-                      "description": "Per-connection developer values for this edge, validated by the conformance gate at resolution (not structurally here) against the valueSchema declared by the source socket — the socket on this component, the one whose uses block carries this entry. Projected into the consuming node's render context at .uses.<alias>.values. Per-connection infra is the operator's surface and is authored on a Release edge entry, not here."
+                      "description": "Per-connection developer values for this edge, validated when the build resolves the Aggregate (not structurally here) against the valueSchema declared by the source socket — the socket on this component, the one whose uses block carries this entry. Projected into the consuming node's render context at .context.uses.<alias>.values. Per-connection infra is the operator's surface and is authored on a Release edge entry, not here."
                     },
                     "features": {
                       "type": "object",
@@ -284,7 +284,7 @@
                     "values": {
                       "type": "object",
                       "additionalProperties": true,
-                      "description": "Per-connection developer values for this edge, validated by the conformance gate at resolution (not structurally here) against the valueSchema declared by the source socket — the socket on this component, the one whose uses block carries this entry. Projected into the consuming node's render context at .uses.<alias>.values. Per-connection infra is the operator's surface and is authored on a Release edge entry, not here."
+                      "description": "Per-connection developer values for this edge. A Feature's socket declares no contract for them, so they are not validated: they are carried verbatim onto the connection in the IR graph and into the render context at .context.uses.<alias>.values, where the attached Feature's FeatureRecipe templates read them. Per-connection infra is the operator's surface and is authored on a Release edge entry, not here."
                     }
                   },
                   "additionalProperties": false
@@ -327,7 +327,7 @@
         },
         "annotations": {
           "type": "object",
-          "description": "Developer-authored annotations on this subsystem. Values are strings or null; explicit null on a key inherited from a parent subsystem removes the inherited binding from this subsystem (annotation-driven Feature opt-out). Annotations declared here are inherited by nested subsystems and by contained components; closer-level wins per-key. Cascades down to the .context.annotations.aggregate bucket on each derived IR node.",
+          "description": "Developer-authored annotations on this subsystem. Values are strings, structured objects (a map of subkey to value, merged per subkey with an inherited structured value), or null; explicit null on a key inherited from a parent subsystem removes the inherited binding from this subsystem (annotation-driven Feature opt-out). Annotations declared here are inherited by nested subsystems and by contained components; closer-level wins per-key. Cascades down to the .context.annotations.aggregate bucket on each derived IR node.",
           "additionalProperties": {
             "type": ["string", "object", "null"]
           }
@@ -394,11 +394,11 @@
         },
         "description": {
           "type": "string",
-          "description": "Optional documentation describing this component instance's role in the application. Passed through to the IR graph for augmenting rendering."
+          "description": "Optional documentation describing this component instance's role in the application. Carried through to the IR graph."
         },
         "annotations": {
           "type": "object",
-          "description": "Developer-authored annotations on this component. Values are strings or null; explicit null on a key inherited from a parent subsystem removes the inherited binding from this component (annotation-driven Feature opt-out). Component-level annotations override inherited subsystem-level annotations per key; sibling components in the same subsystem retain their own annotation maps independently.",
+          "description": "Developer-authored annotations on this component. Values are strings, structured objects (a map of subkey to value, merged per subkey with an inherited structured value), or null; explicit null on a key inherited from a parent subsystem removes the inherited binding from this component (annotation-driven Feature opt-out). Component-level annotations override inherited subsystem-level annotations per key; sibling components in the same subsystem retain their own annotation maps independently.",
           "additionalProperties": {
             "type": ["string", "object", "null"]
           }
@@ -413,7 +413,7 @@
         },
         "inject": {
           "$ref": "#/$defs/inject_block",
-          "description": "Component-level self-inject. Injects the component's own values (via 'value:') or own provides keys (via 'from:') directly into the delivery pipe (.context.inject). Only allowed if the Component catalog entity declares 'spec.inject' with the corresponding mechanisms. The compiler validates that no inject key collides with keys declared in uses[].inject — collisions cause ErrInjectKeyCollision fatal halt."
+          "description": "Component-level self-inject. Injects the component's own values (via 'value:') or own provides keys (via 'from:') directly into the delivery pipe (.context.inject). Only allowed if the Component catalog entity declares 'spec.inject' with the corresponding mechanisms. An inject key that collides with a key declared in uses[].inject halts the build as a duplicate delivery key across inject sources."
         },
         "features": {
           "type": "object",

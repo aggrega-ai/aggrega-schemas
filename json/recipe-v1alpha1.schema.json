@@ -38,7 +38,7 @@
         },
         "description": {
           "type": "string",
-          "description": "What this entity is and what it is for, written for someone deciding whether to use it. Open with a sentence naming the thing, then add what a reader needs in order to choose it and use it correctly — what it expects from a deployment, and anything surprising about how it behaves. A short paragraph is the usual length."
+          "description": "What this entity is and what it is for, written for someone deciding whether to use it. Open with a sentence naming the thing, then add what a reader needs in order to choose it and use it correctly — what it expects from the Release that deploys it, and anything surprising about how it behaves. A short paragraph is the usual length."
         },
         "maintainers": {
           "type": "array",
@@ -127,11 +127,11 @@
           "description": "Declares which catalog component type this recipe is able to implement (exact version 'core/api-server:1.0.0', major-compatible range 'core/api-server:^1.0.0', or unversioned 'core/api-server'). The compiler uses it to verify Manifest mappings and to suggest candidates in diagnostics and editor completion; it never resolves a build. `aggrega lint` reads it as well, to locate the Component whose declared `provides` contract a Recipe's published keys are compared against. The Manifest mapping is the user's explicit deployment choice, pinned in the lockfile."
         },
         "source": {
-          "description": "The location of the infrastructure code. Accepts a Universal URI string, or an open structured object whose provider-defined keys are exposed to the Recipe's templates as '.source.*'.",
+          "description": "The location of the infrastructure code. Accepts a URI string, or an open structured object whose provider-defined keys are exposed to the Recipe's templates as '.source.*'.",
           "oneOf": [
             {
               "type": "string",
-              "description": "Universal URI string (e.g., './src', 'git::https://...', 'oci://...'). Used for local paths, OCI artifacts, and Git repositories."
+              "description": "A URI string (e.g., './src', 'git::https://...', 'oci://...'). Used for local paths, OCI artifacts, and Git repositories."
             },
             {
               "type": "object",
@@ -320,7 +320,7 @@
         },
         "pipeline": {
           "type": "array",
-          "description": "Sequential list of Wasm plugins to execute for stateful AST mutation directly on the base infrastructure.",
+          "description": "Sequential list of Wasm pipeline steps run after render over the rendered document set, each returning RFC 6902 patches and side effects.",
           "items": {
             "type": "object",
             "x-aggrega-go-type": "PipelineStep",
@@ -337,7 +337,7 @@
               },
               "plugin": {
                 "type": "string",
-                "description": "The reference to the Plugin entity this step runs, always scoped by the plugin's own socket type: `<pluginType>/<name>` with an optional version, as in `parser/yaml` or `parser/yaml:1.0.0`. The scope is mandatory rather than one form among several — an unscoped `name:version` is refused, because two sockets may hold a plugin of the same name and the scope is what makes the entity resolvable. The entity's spec.plugin is the content-addressed .wasm artifact; the build resolves the entity to its artifact and loads the bytes. A bare .wasm or artifact reference is not accepted here."
+                "description": "The reference to the Plugin entity this step runs, always scoped by the plugin's own socket type: `<pluginType>/<name>` with an optional version, as in `parser/yaml` or `parser/yaml:1.0.0`. The scope is mandatory rather than one form among several — an unscoped `name:version` is refused, because two sockets may hold a plugin of the same name and the scope is what makes the entity resolvable. The build resolves the entity to its content-addressed .wasm artifact — located from the plugin's identity and the configured registry, its digest pinned in the lockfile — and loads the bytes. A bare .wasm or artifact reference is not accepted here."
               },
               "function": {
                 "type": "string",
@@ -362,7 +362,7 @@
         "assertions": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[string]",
-          "description": "Build-time cross-field validation. Each entry is a named assertion: the key is a stable rule identifier surfaced in error messages; the value is a Go template string with `{{ fail \"message\" }}` halt semantics. Multiple named assertions per entity evaluate per-instance in author-declared order; the first failing assertion halts the build. Recipe assertions evaluate after recipe binding (post-binding, post-allProvides-evaluation, pre-render) and express implementation invariants of the specific chart or module the Recipe sources. Template context: .values / .infra / .uses / .features / .metadata plus .provides / .locals / .recipe. The evaluator uses missingkey=error: references to undefined keys halt with a no-such-key diagnostic. Because the bare reference halts before any fallback can run, a plain `default` does not supply an optional-field fallback on this surface — gate the reference with `hasKey`, or use the `optional` helper, which performs the presence check directly. Reading the key through `index` does not supply one either: `index` halts on a map key the map does not hold, naming the key.",
+          "description": "Build-time cross-field validation. Each entry is a named assertion: the key is a stable rule identifier surfaced in error messages; the value is a Go template string with `{{ fail \"message\" }}` halt semantics. Multiple named assertions per entity evaluate per-instance in author-declared order; the first failing assertion halts the build. Recipe assertions evaluate after recipe binding and after the provides are evaluated, before render, and express implementation invariants of the specific chart or module the Recipe sources. Template context: .values / .infra / .uses / .features / .metadata plus .provides / .locals / .recipe. The evaluator uses missingkey=error: references to undefined keys halt with a no-such-key diagnostic. Because the bare reference halts before any fallback can run, a plain `default` does not supply an optional-field fallback on this surface — gate the reference with `hasKey`, or use the `optional` helper, which performs the presence check directly. Reading the key through `index` does not supply one either: `index` halts on a map key the map does not hold, naming the key.",
           "additionalProperties": {
             "type": "string"
           }

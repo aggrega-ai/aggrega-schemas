@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/manifest-v1alpha1.schema.json",
   "title": "Aggrega Dependency Lockfile (Manifest)",
-  "description": "A single, global lockfile that maps abstract Developer Interfaces to concrete Ops Implementations via O(1) dictionary lookups based strictly on Instance Names.",
+  "description": "A single, global lockfile that maps abstract component and Feature types to concrete Recipe and FeatureRecipe implementations, by type, with a per-instance override by name.",
   "type": "object",
   "required": [
     "apiVersion",
@@ -38,7 +38,7 @@
         },
         "description": {
           "type": "string",
-          "description": "What this entity is and what it is for, written for someone deciding whether to use it. Open with a sentence naming the thing, then add what a reader needs in order to choose it and use it correctly — what it expects from a deployment, and anything surprising about how it behaves. A short paragraph is the usual length."
+          "description": "What this entity is and what it is for, written for someone deciding whether to use it. Open with a sentence naming the thing, then add what a reader needs in order to choose it and use it correctly — what it expects from the Release that uses it, and anything surprising about how it behaves. A short paragraph is the usual length."
         },
         "maintainers": {
           "type": "array",
@@ -89,7 +89,7 @@
       "properties": {
         "extends": {
           "type": "string",
-          "description": "URI of a base Manifest to inherit mappings from. Child mappings safely overwrite the base to support frictionless local dev loops."
+          "description": "URI of a base Manifest to inherit mappings from. A child's mapping replaces the base's for the same key."
         },
         "mappings": {
           "type": "object",

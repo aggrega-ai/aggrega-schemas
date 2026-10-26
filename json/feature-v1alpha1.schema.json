@@ -38,7 +38,7 @@
         },
         "description": {
           "type": "string",
-          "description": "What this entity is and what it is for, written for someone deciding whether to use it. Open with a sentence naming the thing, then add what a reader needs in order to choose it and use it correctly — what it expects from a deployment, and anything surprising about how it behaves. A short paragraph is the usual length."
+          "description": "What this entity is and what it is for, written for someone deciding whether to use it. Open with a sentence naming the thing, then add what a reader needs in order to choose it and use it correctly — what it expects from the Release that deploys it, and anything surprising about how it behaves. A short paragraph is the usual length."
         },
         "maintainers": {
           "type": "array",
@@ -184,7 +184,7 @@
          "usesSchema": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[UsesSchemaEntry]",
-          "description": "Native YAML schema defining the topology. The Go CLI natively reads this to validate selectors and allowed inject paradigms.",
+          "description": "The dependency sockets this entity declares, keyed by socket name; each connection drawn through a socket is checked against that socket's declaration — its selector and the inject mechanisms it allows.",
           "patternProperties": {
             "^[a-zA-Z0-9_-]+$": {
               "type": "object",
@@ -209,12 +209,12 @@
           "type": "object",
           "additionalProperties": true,
           "x-aggrega-go-type": "yaml.Node",
-          "description": "JSON Schema 2020-12 content covering the free-form pillars: values (the Developer's domain — application-shape parameters the Developer configures per Feature attachment in the Aggregate); infra (the Operator's domain — physical sizing knobs supplied by the Release); and provides (downstream context keys this Feature exposes to consumers via the topology pipe). Accepts three authoring modes via content-shape dispatch: (1) inline content (a YAML map carrying compact form, JSON Schema YAML, or mixed); (2) file replacement via {$import: <path>}, written at spec.schema to supply the whole contract from one file or at a single pillar to supply that pillar alone, with a relative path read against the directory holding the entity that declared it; (3) cross-document reference via {$ref: <Library>#/schemas/<name>} into a SchemaLibrary entry by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference). The companion fields usesSchema and featuresSchema cover the fixed-shape pillars (dependency sockets, attachment slots); the bridge synthesis composes the three into the entity's unified validation surface."
+          "description": "JSON Schema 2020-12 content covering the free-form pillars: values (the Developer's domain — application-shape parameters the Developer configures per Feature attachment in the Aggregate); infra (the Operator's domain — physical sizing knobs supplied by the Release); and provides (downstream context keys this Feature exposes to consumers via the topology pipe). Accepts three authoring modes via content-shape dispatch: (1) inline content (a YAML map carrying compact form, JSON Schema YAML, or mixed); (2) file replacement via {$import: <path>}, written at spec.schema to supply the whole contract from one file or at a single pillar to supply that pillar alone, with a relative path read against the directory holding the entity that declared it; (3) cross-document reference via {$ref: <Library>#/schemas/<name>} into a SchemaLibrary entry by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference). The companion fields usesSchema and featuresSchema cover the fixed-shape pillars (dependency sockets, attachment slots); the compiler composes the three into the one schema an instance is validated against."
         },
         "assertions": {
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[string]",
-          "description": "Build-time cross-field validation. Each entry is a named assertion: the key is a stable rule identifier surfaced in error messages; the value is a Go template string with `{{ fail \"message\" }}` halt semantics. Multiple named assertions per entity evaluate per-instance in author-declared order; the first failing assertion halts the build. Feature assertions evaluate post-resolution, post-analyzer-gate and pre-render, and express architectural invariants of the contract. Template context: .values / .infra / .uses / .features / .metadata. The evaluator uses missingkey=error: references to undefined keys halt with a no-such-key diagnostic. Because the bare reference halts before any fallback can run, a plain `default` does not supply an optional-field fallback on this surface — gate the reference with `hasKey`, or use the `optional` helper, which performs the presence check directly. Reading the key through `index` does not supply one either: `index` halts on a map key the map does not hold, naming the key.",
+          "description": "Build-time cross-field validation. Each entry is a named assertion: the key is a stable rule identifier surfaced in error messages; the value is a Go template string with `{{ fail \"message\" }}` halt semantics. Multiple named assertions per entity evaluate per-instance in author-declared order; the first failing assertion halts the build. Feature assertions evaluate after resolution and static analysis, before render, and express architectural invariants of the contract. Template context: .values / .infra / .uses / .features / .metadata. The evaluator uses missingkey=error: references to undefined keys halt with a no-such-key diagnostic. Because the bare reference halts before any fallback can run, a plain `default` does not supply an optional-field fallback on this surface — gate the reference with `hasKey`, or use the `optional` helper, which performs the presence check directly. Reading the key through `index` does not supply one either: `index` halts on a map key the map does not hold, naming the key.",
           "additionalProperties": {
             "type": "string"
           }

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/workload-v1alpha1.schema.json",
   "title": "Aggrega Workload",
-  "description": "Platform-owned abstract workload specification. A Recipe using synthesized mode declares exactly one Workload via the workload: keyword (inline block scalar or workload: { $import: <path> } per the unified file-import vocabulary). The target provider translates the Workload into provider-native manifests (K8s Deployment/StatefulSet/Services/PVCs for helm; compose services + volumes + networks for compose; etc.). A Workload carries no metadata of its own — no name, no labels, no annotations. Identity and labelling come from the component instance that declares it: the target provider derives each rendered resource's name from that instance and stamps the resource with the aggrega.ai/* provenance keys for that node. The Workload kind is NOT a catalog entity — this published file is the canonical Workload JSON Schema, which the aggrega-cli binary consumes directly (rebound in its pkg/schemas/jsonschema package) for in-binary Workload validation; there is no separate embedded copy.",
+  "description": "Platform-owned abstract workload specification. A Recipe using synthesized mode declares exactly one Workload via the workload: keyword (inline block scalar or workload: { $import: <path> } per the unified file-import vocabulary). The target provider translates the Workload into provider-native manifests (K8s Deployment/StatefulSet/Services/PVCs for helm; compose services + volumes + networks for compose; etc.). A Workload carries no metadata of its own — no name, no labels, no annotations. Identity and labelling come from the component instance that declares it: the target provider derives each rendered resource's name from that instance and stamps the resource with the aggrega.ai/* provenance keys for that node. The Workload kind is NOT a catalog entity — this published file is the canonical Workload JSON Schema, and the compiler validates a Workload against it.",
   "type": "object",
   "required": [
     "apiVersion",
@@ -84,7 +84,7 @@
     "containers": {
       "type": "object",
       "x-aggrega-go-type": "OrderedMap[ContainerSpec]",
-      "description": "Ordered map of container name → container spec. At least one entry required. YAML author order is preserved by the Go parser.",
+      "description": "Ordered map of container name → container spec. At least one entry required. Author order is preserved.",
       "minProperties": 1,
       "additionalProperties": { "$ref": "#/$defs/container" }
     },
@@ -389,7 +389,7 @@
       "properties": {
         "http": {
           "type": "string",
-          "description": "HTTP GET probe. Path is probed against the first container port (alphabetical by name) unless explicit port is supplied via namespaced form (deferred — single-string form is the current contract)."
+          "description": "HTTP GET probe: the path is probed against the container port whose name sorts first alphabetically."
         },
         "tcp": {
           "type": "integer",
@@ -453,7 +453,7 @@
           "required": ["source"],
           "additionalProperties": false,
           "properties": {
-            "source": { "type": "string", "description": "Name of the ConfigMap (must be emitted by this Recipe via artifacts:, or by an attached Feature — cross-Recipe refs are forbidden per self-containment §4.4)." },
+            "source": { "type": "string", "description": "Name of the ConfigMap, emitted by this Recipe via artifacts: or by an attached Feature; a ConfigMap another Recipe emits is not referenced here." },
             "items": {
               "type": "array",
               "items": { "type": "object", "additionalProperties": true },

@@ -26,7 +26,7 @@
         },
         "description": {
           "type": "string",
-          "description": "What this entity is and what it is for, written for someone deciding whether to use it. Open with a sentence naming the thing, then add what a reader needs in order to choose it and use it correctly — what it expects from a deployment, and anything surprising about how it behaves. A short paragraph is the usual length."
+          "description": "What this entity is and what it is for, written for someone deciding whether to use it. Open with a sentence naming the thing, then add what a reader needs in order to choose it and use it correctly — what it expects from the platform it deploys to, and anything surprising about how it behaves. A short paragraph is the usual length."
         },
         "maintainers": {
           "type": "array",
@@ -212,7 +212,7 @@
     },
     "release_uses_block": {
       "type": "object",
-      "description": "Release-authored per-edge uses surface, socket-keyed then alias-keyed (mirroring the Aggregate uses topology shape). Each connection may set target (to create an edge into a declared-but-unbound socket, pointing at an existing component), infra (per-edge operator config, validated against the socket infraSchema by the conformance gate at resolution) and features (attachments filling the slots the socket declares), in any combination. values is forbidden (the Release values: ban); retargeting a developer-declared edge is a loud guardrail at build.",
+      "description": "Release-authored per-edge uses surface, socket-keyed then alias-keyed (mirroring the Aggregate uses topology shape). Each connection may set target (to create an edge into a declared-but-unbound socket, pointing at an existing component), infra (per-edge operator config, validated against the socket's infraSchema when the Release is resolved) and features (attachments filling the slots the socket declares), in any combination. values is forbidden (the Release values: ban); retargeting a developer-declared edge is a loud guardrail at build.",
       "patternProperties": {
         "^[a-zA-Z0-9_-]+$": {
           "type": "object",
@@ -227,7 +227,7 @@
                 "infra": {
                   "type": "object",
                   "additionalProperties": true,
-                  "description": "Per-edge operator infra, validated against the socket infraSchema by the conformance gate at resolution."
+                  "description": "Per-edge operator infra, validated against the socket's infraSchema when the Release is resolved."
                 },
                 "features": {
                   "type": "object",
