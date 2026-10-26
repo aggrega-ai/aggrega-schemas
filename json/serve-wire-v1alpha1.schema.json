@@ -647,6 +647,7 @@
     "WorkspaceAndProgressParams": {
       "type": "object",
       "description": "The params object of a method that declares no fields of its own. It still admits the two fields every request admits: the workspace it acts on, and a progress token.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -693,6 +694,7 @@
     "ValidateParams": {
       "type": "object",
       "description": "Checks the workspace, or one document in it, and answers with the findings.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -705,6 +707,7 @@
     "InvalidateParams": {
       "type": "object",
       "description": "Tells the daemon that a document it holds a reading of has changed, so the next answer about it is computed from the new bytes.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -716,6 +719,7 @@
     "DiagnosticsParams": {
       "type": "object",
       "description": "Answers with the findings the daemon already holds for a document, without checking it again.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -726,6 +730,7 @@
     "IrGraphParams": {
       "type": "object",
       "description": "Answers with the resolved graph a Release compiles to, without rendering it.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -737,6 +742,7 @@
     "BuildParams": {
       "type": "object",
       "description": "Compiles a Release and writes the rendered artifacts into the workspace.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -750,6 +756,7 @@
     "BuildPreviewParams": {
       "type": "object",
       "description": "Compiles a Release and reports what writing the artifacts would have produced, writing none of them. It declines the dependency-resolution field the writing build takes, because a request that writes nothing cannot fill a lockfile.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -762,6 +769,7 @@
     "EntityDefinitionParams": {
       "type": "object",
       "description": "Answers with what one entity name resolves to and where the document defining it lives.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -773,6 +781,7 @@
     "CatalogIndexParams": {
       "type": "object",
       "description": "Answers with the entities the workspace holds: every entity its documents declare, and the Features its catalog directories declare.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -783,6 +792,7 @@
     "ReleaseClosureParams": {
       "type": "object",
       "description": "Answers with everything a Release depends on, as resolution reached it.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -793,6 +803,7 @@
     "ResolveDependenciesParams": {
       "type": "object",
       "description": "Resolves a Release's dependencies, pinning them in the lockfile and acquiring the external inputs its render consumes. It reaches the configured registries and it writes.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -807,6 +818,7 @@
     "PinParams": {
       "type": "object",
       "description": "Records, in the `entity.lock` beside a Recipe or FeatureRecipe, the content pin for every input the entity reads from outside its own document. No Release is named: an input whose identity the entity writes out in full names one artifact for every Release that uses the entity, so nothing a Release supplies is needed to pin it. It reaches the hosts the entity's sources name and it writes beside the entity; the entity document itself is never written.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -818,6 +830,7 @@
     "CacheEvictParams": {
       "type": "object",
       "description": "Reclaims cached content until what remains fits under a size the request names.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -828,6 +841,7 @@
     "SearchParams": {
       "type": "object",
       "description": "Searches what the configured registries' local indexes offer. It reads the index already on disk and contacts no registry.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -845,6 +859,7 @@
     "RegistryAddParams": {
       "type": "object",
       "description": "Registers a registry and the trust policy resolution applies to what it serves. It writes the machine-wide configuration file unless the request asks otherwise, so every workspace on the machine resolves through the entry.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -864,6 +879,7 @@
     "RegistryRemoveParams": {
       "type": "object",
       "description": "Removes a registered registry. It writes the machine-wide configuration file unless the request asks otherwise.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -876,6 +892,7 @@
     "RegistryUpdateParams": {
       "type": "object",
       "description": "Refreshes the local index a search reads, reaching the registry to do it. What it writes is the index under this workspace's own configured cache directory. A registry needing a credential no ambient source carries is refused with the credential named, rather than prompted for.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -887,6 +904,7 @@
     "LogoutParams": {
       "type": "object",
       "description": "Removes a stored registry credential. The store is shared by every project on the machine, and the answer says so.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -897,6 +915,7 @@
     "PublishEntityParams": {
       "type": "object",
       "description": "Publishes an entity to a registry. What it lands is what every consumer of that registry resolves, and a published version cannot be recalled from anyone who already fetched it. Nothing is prompted for: identity resolves from what the request supplied or what the environment already carries.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -916,6 +935,7 @@
     "PublishArtifactParams": {
       "type": "object",
       "description": "Publishes an arbitrary file to a registry under a name and tag the request gives it.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -931,6 +951,7 @@
     "SignArtifactsParams": {
       "type": "object",
       "description": "Signs what is already published. A signature cannot be recalled from anyone who already fetched it.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -945,6 +966,7 @@
     "DeprecateArtifactParams": {
       "type": "object",
       "description": "Marks a published version as deprecated, so resolution can report or decline it. The marker is itself published and signed.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -972,6 +994,7 @@
     "ResolveParams": {
       "type": "object",
       "description": "Answers where the thing under the cursor is defined.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -984,6 +1007,7 @@
     "FindReferencesParams": {
       "type": "object",
       "description": "Answers where the thing under the cursor is referred to.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -996,6 +1020,7 @@
     "FindImplementationsParams": {
       "type": "object",
       "description": "Answers which documents implement the thing under the cursor.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -1008,6 +1033,7 @@
     "HoverParams": {
       "type": "object",
       "description": "Answers with what to show about the thing under the cursor.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -1020,6 +1046,7 @@
     "CompletionParams": {
       "type": "object",
       "description": "Answers with what may be written at the cursor.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -1042,6 +1069,7 @@
     "AttachCandidatesParams": {
       "type": "object",
       "description": "Answers which Features may be attached to an entity, judged against that entity's labels, and, for one connection a graph node's component draws, which may fill each slot the connection's socket declares.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -1056,6 +1084,7 @@
     "ConnectionCandidatesParams": {
       "type": "object",
       "description": "Answers which entities a socket on an entity may be wired to.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -1067,6 +1096,7 @@
     "InsertionPointParams": {
       "type": "object",
       "description": "Answers where in a document a new entry under a named container belongs, leaving composing and applying the entry to the caller that owns the buffer.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -1078,6 +1108,7 @@
     "AttachmentContainerParams": {
       "type": "object",
       "description": "Answers which document, and where in it, an attachment on a graph node, or on one connection its component draws, belongs.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -1090,6 +1121,7 @@
     "ConnectionAtPositionParams": {
       "type": "object",
       "description": "Answers which connection's entry a position in an Aggregate or a Release falls inside: the graph node and the connection, in the terms the candidacy and container requests take them, or why no connection is written there. The entries are the ones an attachment is written in — the entry a component draws a connection with, under the connection's alias, in the document the component was authored in, and every per-edge entry the Release writes — each where the compiled graph records it, so whether a key is a connection is never read from what it is called.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -1120,6 +1152,7 @@
     "SetActiveReleaseParams": {
       "type": "object",
       "description": "Records a Release as the workspace's default by writing a marker in the `.aggrega` directory: the choice `aggrega/activeRelease` reports reads that marker after the configuration's authoring Release. The marker is written inside the workspace and nowhere else: where the `.aggrega` directory or the marker is a link leading out of the workspace, whether or not the place it leads to exists yet, the write is refused naming the link and nothing is written. The answer is the one `aggrega/activeRelease` gives once the marker is written, so it names a different Release where the configuration's authoring Release outranks the marker.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -1130,6 +1163,7 @@
     "EditDocumentParams": {
       "type": "object",
       "description": "Applies one bounded edit to a document the workspace carries: one entry added under one container, or one scalar set. The composed document is checked against its kind's schema and reaches disk only if that passes, so this cannot write what the authoring schema refuses. A refused edit leaves the file byte-for-byte as it was.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -1155,6 +1189,7 @@
     "ConfigInitParams": {
       "type": "object",
       "description": "Seeds a configuration document. It writes the machine-wide file by default, since a registry and the identities trusted on it are machine-wide tooling. It reaches the named registry to read the trust policy it advertises; a registry advertising nothing is reported as such and the seeding proceeds, on the built-in baseline for the official hub and on no policy for any other registry.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -1169,6 +1204,7 @@
     "ConfigCaptureParams": {
       "type": "object",
       "description": "Freezes the resolved configuration into this workspace's own document, so the workspace is self-contained. It always writes that workspace's file and reaches nothing outside it.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -1179,6 +1215,7 @@
     "ImportParams": {
       "type": "object",
       "description": "Converts a foreign source description into draft authoring documents, and writes beside them `.aggrega-import.json`, the record of what the import wrote — the target it was given, where it was given one, each drafted file, and each key of a drafted Aggregate or Release at every depth — which a later sync reads. A source it could not fully convert is an answer rather than a failure: the drafts it did produce are written and the findings say what it could not convert — except under sync, which writes nothing from a conversion that stopped.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -1205,6 +1242,7 @@
     "LintParams": {
       "type": "object",
       "description": "Checks catalog publishing conventions over one entity, over everything a Release's closure reaches, or over everything under the configured catalog directories. Nothing is written under any mode. Naming neither an entity nor a Release checks the whole catalog: in a workspace whose configuration gives no Release catalog directories of its own, once over the workspace's directories; in a workspace that names Releases under workspace.releases, once for each Release over the directories that Release reads, never over all of them together.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -1217,6 +1255,7 @@
     "PluginAddParams": {
       "type": "object",
       "description": "Attaches a plugin to a socket the workspace configures. It reaches a registry to resolve the query to one plugin and to pin a version. The one decision a terminal would obtain — accepting a command-extension plugin's declared capabilities — arrives as a field here, so the client asks whoever is driving it and this surface never waits on a prompt.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -1234,6 +1273,7 @@
     "PluginRemoveParams": {
       "type": "object",
       "description": "Detaches a plugin from a socket the workspace configures.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -1247,6 +1287,7 @@
     "PluginSyncParams": {
       "type": "object",
       "description": "Aligns a Plugin entity's machine-owned records with the module it points at. It rewrites those records and carries every other byte of the document through unchanged.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -1258,6 +1299,7 @@
     "PluginGenCatalogParams": {
       "type": "object",
       "description": "Generates Plugin catalog documents from a plugin's own declared metadata plus an authored overlay. Regenerating over unchanged inputs produces byte-identical documents.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -1272,6 +1314,7 @@
     "ExplainErrorParams": {
       "type": "object",
       "description": "Expands a code a finding carried into what the compiler declares about that condition and the published entries that teach the authoring fix. It acquires the published documentation when the workspace has no copy; one it cannot acquire still answers what the binary declares, and says why the prose is missing.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
@@ -1292,6 +1335,7 @@
     "SkillsInstallParams": {
       "type": "object",
       "description": "Writes the assistant skill built into the binary into the skill folder of each named assistant. Without global it writes each assistant's project folder inside the workspace the request names, and every path it would write there is held to that workspace; with global it writes each assistant's per-user folder under the home directory. Every target is checked before anything is written, so a refusal leaves every folder as it was.",
+      "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
