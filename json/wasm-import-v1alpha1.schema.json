@@ -10,7 +10,7 @@
   "$defs": {
     "ImportInput": {
       "type": "object",
-      "description": "The payload an importer guest receives: the source format that selects how to read the bytes, the primary source bytes, any named sources for a multi-file import, an optional opaque options document the consumer supplies for importer-specific behavior, and a view of the Components the workspace's catalog holds.",
+      "description": "The payload an importer guest receives: the source format that selects how to read the bytes, the primary source bytes and the name of the file they were read from, any named sources for a multi-file import, an optional opaque options document the consumer supplies for importer-specific behavior, and a view of the Components the workspace's catalog holds.",
       "required": [
         "format",
         "bytes"
@@ -25,6 +25,10 @@
           "type": "string",
           "x-aggrega-go-type": "[]byte",
           "description": "The primary source bytes to import, which the importer reads as the named format: the whole file where the import's source is one file, and empty where it is a directory, whose files arrive as named sources instead. Each kit carries them in its own field type — raw where that type is a byte type, base64-encoded where it is a string the importer decodes to recover them — and the generated encoder converts between the field and the form the wire carries bytes in."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the file the primary bytes were read from: its base name, with no directory, so an importer can name the file in what it reports about it. The primary bytes arrive as no named source, so this is the one name they carry. Absent where the import's source is a directory, whose files arrive as named sources, each under its own name."
         },
         "sources": {
           "type": "array",
