@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/wasm-policy-v1alpha1.schema.json",
   "title": "Aggrega Wasm Policy Socket",
-  "description": "The wire shapes the policy.wasm plugin socket consumes (PolicyInput for the IR stage, RenderPolicyInput for the render stage) and emits (PolicyOutput). The policy validator runs during compilation; a deny verdict halts the build with a build-time diagnostic. The IR-stage input graph is the full capability-agnostic IR graph, referenced from ir-v1alpha1.schema.json rather than re-declared here, so the policy plugin sees the same node, edge, and attachment detail the compiler does; plugin authors track the IR schema version. The render-stage input carries the rendered output files instead of the graph. The wire shapes are co-canonical with the host types in aggrega-cli (the IR graph) and the generated codec in aggrega-abi.",
+  "description": "The wire shapes a governance plugin attached at a verdict role consumes — PolicyInput at the ir-verdict role, RenderPolicyInput at the render-verdict role — and emits (PolicyOutput). A verdict of halt severity stops the build with a build-time diagnostic; a warn or info verdict is reported and the build continues. The IR-stage input graph is the full capability-agnostic IR graph, referenced from ir-v1alpha1.schema.json rather than re-declared here, so the policy plugin sees the same node, edge, and attachment detail the compiler does; plugin authors track the IR schema version. The render-stage input carries the rendered output files instead of the graph. The Go, Rust and TypeScript payload types are generated from this schema into the plugin-ABI packages, so the three languages read and write one wire; a guest imports them from those packages, or through its plugin kit where the kit re-exports them.",
   "oneOf": [
     { "$ref": "#/$defs/PolicyInput" },
     { "$ref": "#/$defs/RenderPolicyInput" },
@@ -69,7 +69,7 @@
     },
     "RenderPolicyInput": {
       "type": "object",
-      "description": "The payload the render stage hands to a policy socket that declares the render stage: the rendered output files the policy reasons over. The render stage carries the rendered artifacts instead of the IR graph.",
+      "description": "The payload a governance plugin attached at the render-verdict role receives: the rendered output files the policy reasons over, in place of the IR graph.",
       "required": [
         "artifacts"
       ],

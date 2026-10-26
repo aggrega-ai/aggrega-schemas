@@ -200,7 +200,7 @@
       "properties": {
         "kind": {
           "type": "string",
-          "description": "The kind of entity emitted. In v1 this is Component, Aggregate or Release; additional kinds may appear as the emission surface grows, so a reader tolerates an unrecognized kind."
+          "description": "The kind of entity emitted. The core importers emit Component, Aggregate and Release; a reader tolerates any other kind."
         },
         "name": {
           "type": "string",
@@ -224,7 +224,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Labels to attach to the emitted entity, as a string-to-string map. Empty in v1; reserved for a future label-driven emission axis."
+          "description": "Labels to attach to the emitted entity, as a string-to-string map. The core importers leave it empty."
         },
         "annotations": {
           "type": "object",
@@ -232,7 +232,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Annotations to attach to the emitted entity, as a string-to-string map. Empty in v1; reserved for a future annotation-driven emission axis."
+          "description": "Annotations to attach to the emitted entity, as a string-to-string map. The core importers leave it empty."
         },
         "sourceRef": {
           "type": "string",

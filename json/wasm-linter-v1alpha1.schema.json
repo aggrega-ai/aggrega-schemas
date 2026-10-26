@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/wasm-linter-v1alpha1.schema.json",
   "title": "Aggrega Wasm Linter Socket",
-  "description": "The wire shapes the publishing-linter.wasm plugin socket consumes (LinterInput) and emits (LinterOutput). The linter runs at publish time over a previous-version + proposed-version entity pair (the schema-evolution rule) and at workspace lint time over individual entities (per-rule structural rules). One shipping Wasm plugin hosts many rules; the dispatcher selects which rule to run via the LinterInput.rule_id field. This schema is the single source of both wire shapes: the Go, Rust and TypeScript payload types are generated from it into the shared plugin-ABI package, and each plugin kit re-exports those generated types rather than declaring its own copy. Per-language round-trip tests encode and decode a fixture through the generated type and validate it against this schema, so a generated type that stopped matching the schema fails.",
+  "description": "The wire shapes the linter socket consumes (LinterInput) and emits (LinterOutput). The linter runs at publish time over a previous-version + proposed-version entity pair (the schema-evolution rule) and at workspace lint time over individual entities (per-rule structural rules). One shipping Wasm plugin hosts many rules; the plugin selects which rule to run by LinterInput.rule_id. This schema is the single source of both wire shapes: the Go, Rust and TypeScript payload types are generated from it into the shared plugin-ABI package, and each plugin kit re-exports those generated types rather than declaring its own copy.",
   "oneOf": [
     { "$ref": "#/$defs/LinterInput" },
     { "$ref": "#/$defs/LinterOutput" }
@@ -20,7 +20,7 @@
       "properties": {
         "rule_id": {
           "type": "string",
-          "description": "The rule the plugin should dispatch to, named by its rule id — the same kebab-case identifier the resulting finding carries in rule_id, so a suppressed or reported rule is named the same way on every surface. The recognised set is whatever the shipped plugin dispatches, and it expands as further rules ship; a rule id the plugin does not recognise produces an 'unknown_rule' finding rather than a silent pass."
+          "description": "The rule the plugin should dispatch to, named by its rule id — the same kebab-case identifier the resulting finding carries in rule_id, so a suppressed or reported rule is named the same way on every surface. The recognised set is whatever the shipped plugin dispatches; a rule id the plugin does not recognise produces an 'unknown_rule' finding rather than a silent pass."
         },
         "entity_kind": {
           "type": "string",

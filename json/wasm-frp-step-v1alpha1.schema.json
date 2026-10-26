@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/wasm-frp-step-v1alpha1.schema.json",
   "title": "Aggrega Wasm FeatureRecipe-Pipeline Step Socket",
-  "description": "The wire shapes a feature-recipe-pipeline step plugin socket consumes (FRPStepInput) and emits (FRPStepOutput). An FRP step runs per inline pipeline entry declared in a Recipe or FeatureRecipe: the host hands the step the keyed document set whole, the step selects the documents it targets by content, and it returns key-addressed RFC 6902 patches plus side effects and diagnostics. This is a distinct guest contract from the mutator socket, which runs once over the whole topology graph and returns opaque label patches. The two wire shapes are co-canonical with the host's Go types for this socket; a field-coverage parity test catches drift.",
+  "description": "The wire shapes a feature-recipe-pipeline step plugin socket consumes (FRPStepInput) and emits (FRPStepOutput). An FRP step runs per inline pipeline entry declared in a Recipe or FeatureRecipe: the host hands the step the keyed document set whole, the step selects the documents it targets by content, and it returns key-addressed RFC 6902 patches plus side effects and diagnostics. This is a distinct guest contract from the label-transform role, which runs once over the whole topology graph and returns opaque label patches. The Go, Rust and TypeScript payload types are generated from this schema into the plugin-ABI packages, so the three languages read and write one wire; a guest imports them from those packages, or through its plugin kit where the kit re-exports them.",
   "oneOf": [
     { "$ref": "#/$defs/FRPStepInput" },
     { "$ref": "#/$defs/FRPStepOutput" }
@@ -30,7 +30,7 @@
         "context": {
           "type": "object",
           "x-aggrega-go-type": "renderctx.RenderContext",
-          "description": "The render-time context the host hands the step. The step carries it through; the schema does not interpret its internal shape (an opaque passthrough), so the FRP socket schema does not bind to the cross-boundary render-context shape. The render context's own contract is the render-context wire shape; a guest that reads it consults that contract.",
+          "description": "The render-time context the host hands the step, carried as the bytes of its JSON document; this schema leaves the object undeclared, and the host reads nothing back from it. A step of a Recipe or of a component-scope FeatureRecipe receives parameters, the Release's parameter values sorted by name and absent when there are none; annotations, the node's annotations split by where each was written into aggregate, release and catalog, each absent when empty; and boundary, the boundary the node sits in: name, path (its segments), sync_wave (absent when 0), directory, sub_directory (absent when there is none) and annotations (the boundary's own, absent when empty). A step of a boundary-scope FeatureRecipe, which has no host component, receives parameters and a boundary carrying its name, path and annotations. The indentation width, yaml_indent, is not set for a step.",
           "additionalProperties": true
         },
         "step_index": {
@@ -54,7 +54,7 @@
       "properties": {
         "patches": {
           "type": "array",
-          "description": "Structured RFC 6902 operations the step emits against documents in the keyed set. Each names its target document by scope and key, then names the op, path, and value explicitly. Distinct from the mutator socket's opaque patch slice: an FRP step's patches are applied by the host and restored by snapshot on a failed step, so the operations are explicit here rather than opaque.",
+          "description": "Structured RFC 6902 operations the step emits against documents in the keyed set. Each names its target document by scope and key, then names the op, path, and value explicitly. Distinct from the label-transform role's opaque patch list: an FRP step's patches are applied by the host and restored by snapshot on a failed step, so the operations are explicit here rather than opaque.",
           "items": {
             "$ref": "#/$defs/JSONPatchOp"
           }
@@ -179,7 +179,7 @@
     },
     "SideEffect": {
       "type": "object",
-      "description": "One effect a feature-recipe-pipeline step produces beyond patching an existing document. Kind is an open string rather than a closed enum so a future effect kind extends the contract without an ABI break. When kind is emit_crd, crd carries the CRD document and file is omitted; when kind is emit_file, file carries the file to write and crd is omitted.",
+      "description": "One effect a feature-recipe-pipeline step produces beyond patching an existing document. Kind is emit_crd or emit_file; the schema leaves it an open string so a new kind can be added without an ABI break, and a build halts on any other kind. When kind is emit_crd, crd carries the CRD document and file is omitted; when kind is emit_file, file carries the file to write and crd is omitted.",
       "required": [
         "kind"
       ],
@@ -187,7 +187,7 @@
       "properties": {
         "kind": {
           "type": "string",
-          "description": "The effect kind — for example emit_crd or emit_file. An open string so a future effect kind extends the contract without an ABI break."
+          "description": "The effect kind: emit_crd or emit_file. The schema leaves the field an open string so a new kind can be added without an ABI break; a build halts on any other kind, naming the node, the side effect and the kind."
         },
         "scope": {
           "type": "string",
@@ -226,7 +226,7 @@
     },
     "PrecedingStep": {
       "type": "object",
-      "description": "One pipeline step that ran before the current step, so a guest can inspect what came before it: the step's pipeline index, the Wasm plugin URI that implemented it, and the side effects that step emitted.",
+      "description": "One pipeline step that ran before the current step, so a guest can inspect what came before it: the step's pipeline index, the plugin it named, and the side effects that step emitted.",
       "required": [
         "index",
         "plugin_uri"
@@ -239,7 +239,7 @@
         },
         "plugin_uri": {
           "type": "string",
-          "description": "The Universal URI of the Wasm plugin that implemented the preceding step."
+          "description": "The plugin the preceding pipeline entry names in its plugin field, as written."
         },
         "side_effects": {
           "type": "array",
