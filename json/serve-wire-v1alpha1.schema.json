@@ -960,7 +960,8 @@
         "fulcioUrl": { "type": "string", "description": "The certificate authority to obtain a signing certificate from." },
         "rekorUrl": { "type": "string", "description": "The transparency log to record the signature in." },
         "timestampUrl": { "type": "string", "description": "The timestamp authority to countersign with." },
-        "identityToken": { "type": "string", "description": "The identity token to sign with, supplied by the caller rather than obtained at a terminal." }
+        "identityToken": { "type": "string", "description": "The identity token to sign with, supplied by the caller rather than obtained at a terminal." },
+        "jobs": { "type": "integer", "minimum": 1, "description": "How many references are signed at once. Absent signs one after another. Each reference is still signed exactly as it would be alone — when keyless, with its own certificate and its own transparency-log entry — and the answer keeps the order the references were given." }
       }
     },
     "DeprecateArtifactParams": {
