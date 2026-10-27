@@ -85,31 +85,6 @@
       "dependentRequired": {
         "omits": ["source"]
       },
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "capability": {
-                "pattern": "^eval(:[^:]*)?$",
-                "description": "Selects the in-memory evaluation branch. It matches the capability by its bare name, so a declaration carrying a version pin ('eval:1.0.0', 'eval:^1.0.0') selects the same branch as the unpinned 'eval': the pin selects which plugin version serves the capability and is not part of the capability name. A longer name that merely begins with those letters, such as 'evaluate', is a different capability and does not select it."
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "source": false,
-              "valuesMapping": false,
-              "workload": false,
-              "artifacts": false,
-              "omits": false
-            },
-            "description": "The eval provider executes formatting in-memory. Fetching a 'source', a 'workload', or 'artifacts', or leaving what a source renders out with 'omits', is mathematically banned. injectMapping (a delivery transform, not a rendering surface) remains allowed."
-          },
-          "else": {
-            "description": "Non-eval capabilities use the three-input-kinds model (sourced, synthesized, artifacts) plus the FeatureRecipe-only injectMapping. Unlike a Recipe, a FeatureRecipe is not required to declare any input kind: a pure-wiring FeatureRecipe (capability + implements only) is valid and renders nothing — its effect is the uses-edge the Feature it implements carries. Pairing rules apply: valuesMapping requires source; omits requires source; and a workload: block requires a provider that supports workload synthesis — a synthesized-mode FeatureRecipe bound to a non-synthesizing provider halts loudly at render time."
-          }
-        }
-      ],
       "properties": {
         "capability": {
           "type": "string",
@@ -228,7 +203,7 @@
         "omits": {
           "type": "array",
           "minItems": 1,
-          "description": "What to leave out of what this FeatureRecipe's source renders — for a source taken as it is that renders something the Release must not ship: a document a fetched chart renders, such as a Secret holding a key the chart generates afresh on every render, a service, a volume or a config a fetched compose file bundles, or a resource a fetched CloudFormation template declares. Most FeatureRecipes never need it. Each entry names one unit the source renders by its kind, its name and, where the entry gives them, its namespace and the subchart it came from, each in the vocabulary of the provider rendering the source — for a chart, a document by its own `kind` and `metadata.name`; for a compose file, a `service`, a `volume` or a `config` by its key under `services:`, `volumes:` or `configs:`; for a CloudFormation template, a resource by its `Type` and its logical ID. That provider leaves out every unit an entry matches, and what an entry matches, and what the provider refuses on an entry's account, is that provider's own documented contract. A provider that cannot leave anything out refuses a FeatureRecipe declaring this key before anything is rendered. Only what `source:` renders is filtered — a `workload:` or an `artifacts:` entry never is — so the key requires `source` and is refused on an `eval` FeatureRecipe. Every value is a template, evaluated against the context `valuesMapping` is evaluated against. An entry's `when` is evaluated first, and an entry whose `when` renders a falsy value is dropped. Every entry left active must leave something out: an active entry that matches nothing the source rendered halts the build, naming the entry. The source still renders in full — every template of a chart still runs, so a template that fails still fails the build — and only its output is left out. The key is authored identically on a Recipe and on a FeatureRecipe.",
+          "description": "What to leave out of what this FeatureRecipe's source renders — for a source taken as it is that renders something the Release must not ship: a document a fetched chart renders, such as a Secret holding a key the chart generates afresh on every render, a service, a volume or a config a fetched compose file bundles, or a resource a fetched CloudFormation template declares. Most FeatureRecipes never need it. Each entry names one unit the source renders by its kind, its name and, where the entry gives them, its namespace and the subchart it came from, each in the vocabulary of the provider rendering the source — for a chart, a document by its own `kind` and `metadata.name`; for a compose file, a `service`, a `volume` or a `config` by its key under `services:`, `volumes:` or `configs:`; for a CloudFormation template, a resource by its `Type` and its logical ID. That provider leaves out every unit an entry matches, and what an entry matches, and what the provider refuses on an entry's account, is that provider's own documented contract. A provider that cannot leave anything out refuses a FeatureRecipe declaring this key before anything is rendered. Only what `source:` renders is filtered — a `workload:` or an `artifacts:` entry never is — so the key requires `source`. Every value is a template, evaluated against the context `valuesMapping` is evaluated against. An entry's `when` is evaluated first, and an entry whose `when` renders a falsy value is dropped. Every entry left active must leave something out: an active entry that matches nothing the source rendered halts the build, naming the entry. The source still renders in full — every template of a chart still runs, so a template that fails still fails the build — and only its output is left out. The key is authored identically on a Recipe and on a FeatureRecipe.",
           "items": {
             "type": "object",
             "x-aggrega-go-type": "OmitEntry",

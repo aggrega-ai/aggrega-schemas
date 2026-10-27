@@ -87,40 +87,19 @@
       },
       "allOf": [
         {
-          "if": {
-            "properties": {
-              "capability": {
-                "pattern": "^eval(:[^:]*)?$",
-                "description": "Selects the in-memory evaluation branch. It matches the capability by its bare name, so a declaration carrying a version pin ('eval:1.0.0', 'eval:^1.0.0') selects the same branch as the unpinned 'eval': the pin selects which plugin version serves the capability and is not part of the capability name. A longer name that merely begins with those letters, such as 'evaluate', is a different capability and does not select it."
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "source": false,
-              "valuesMapping": false,
-              "workload": false,
-              "artifacts": false,
-              "omits": false,
-              "boundary": false
-            },
-            "description": "The eval provider executes formatting in-memory. Fetching a 'source', a 'workload', 'artifacts', utilizing base mapping fields, leaving what a source renders out with 'omits', or contributing files to a boundary's shared output with 'boundary' is mathematically banned."
-          },
-          "else": {
-            "description": "Non-eval providers use the three-input-kinds model. At least one input kind must be present: sourced (source + values overlay), synthesized (workload), or artifacts. Pairing rules apply: valuesMapping pairs with source; omits requires source; and a workload: block requires a provider that supports workload synthesis — a synthesized-mode Recipe bound to a non-synthesizing provider halts loudly at render time.",
-            "anyOf": [
-              { "required": ["source"] },
-              { "required": ["valuesMapping"] },
-              { "required": ["workload"] },
-              { "required": ["artifacts"] }
-            ]
-          }
+          "description": "At least one input kind must be present: sourced (source + values overlay), synthesized (workload), or artifacts. Pairing rules apply: valuesMapping pairs with source; omits requires source; and a workload: block requires a provider that supports workload synthesis — a synthesized-mode Recipe bound to a non-synthesizing provider halts loudly at render time.",
+          "anyOf": [
+            { "required": ["source"] },
+            { "required": ["valuesMapping"] },
+            { "required": ["workload"] },
+            { "required": ["artifacts"] }
+          ]
         }
       ],
       "properties": {
         "capability": {
           "type": "string",
-          "description": "The explicit provider capability this recipe binds to (e.g., 'helm', 'terraform', 'compose', 'eval') — the provider kind that renders it. Accepts an optional version pin, in the same three forms as 'implements': unversioned ('helm'), exact ('helm:1.0.0'), or major-compatible range ('helm:^1.0.0'). The bare name selects the provider kind; the pin, when present, selects which version of the provider-rendering plugin serving that capability renders this recipe — highest available when unpinned, exact for an exact pin, highest-in-range for a caret. A pin that no serving plugin version satisfies halts the build loudly. Everything downstream of provider selection — output grouping, path segments, pipeline compatibility, and codec choice — keys on the bare capability, so two recipes pinning different plugin versions of the same capability coexist in one build."
+          "description": "The explicit provider capability this recipe binds to (e.g., 'helm', 'terraform', 'compose') — the provider kind that renders it. Accepts an optional version pin, in the same three forms as 'implements': unversioned ('helm'), exact ('helm:1.0.0'), or major-compatible range ('helm:^1.0.0'). The bare name selects the provider kind; the pin, when present, selects which version of the provider-rendering plugin serving that capability renders this recipe — highest available when unpinned, exact for an exact pin, highest-in-range for a caret. A pin that no serving plugin version satisfies halts the build loudly. Everything downstream of provider selection — output grouping, path segments, pipeline compatibility, and codec choice — keys on the bare capability, so two recipes pinning different plugin versions of the same capability coexist in one build."
         },
         "implements": {
           "type": "string",
@@ -235,7 +214,7 @@
         "omits": {
           "type": "array",
           "minItems": 1,
-          "description": "What to leave out of what this Recipe's source renders — for a source taken as it is that renders something the Release must not ship: a document a fetched chart renders, such as a Secret holding a key the chart generates afresh on every render, a service, a volume or a config a fetched compose file bundles, or a resource a fetched CloudFormation template declares. Most Recipes never need it. Each entry names one unit the source renders by its kind, its name and, where the entry gives them, its namespace and the subchart it came from, each in the vocabulary of the provider rendering the source — for a chart, a document by its own `kind` and `metadata.name`; for a compose file, a `service`, a `volume` or a `config` by its key under `services:`, `volumes:` or `configs:`; for a CloudFormation template, a resource by its `Type` and its logical ID. That provider leaves out every unit an entry matches, and what an entry matches, and what the provider refuses on an entry's account, is that provider's own documented contract. A provider that cannot leave anything out refuses a Recipe declaring this key before anything is rendered. Only what `source:` renders is filtered — a `workload:` or an `artifacts:` entry never is — so the key requires `source` and is refused on an `eval` Recipe. Every value is a template, evaluated against the context `valuesMapping` is evaluated against. An entry's `when` is evaluated first, and an entry whose `when` renders a falsy value is dropped. Every entry left active must leave something out: an active entry that matches nothing the source rendered halts the build, naming the entry. The source still renders in full — every template of a chart still runs, so a template that fails still fails the build — and only its output is left out.",
+          "description": "What to leave out of what this Recipe's source renders — for a source taken as it is that renders something the Release must not ship: a document a fetched chart renders, such as a Secret holding a key the chart generates afresh on every render, a service, a volume or a config a fetched compose file bundles, or a resource a fetched CloudFormation template declares. Most Recipes never need it. Each entry names one unit the source renders by its kind, its name and, where the entry gives them, its namespace and the subchart it came from, each in the vocabulary of the provider rendering the source — for a chart, a document by its own `kind` and `metadata.name`; for a compose file, a `service`, a `volume` or a `config` by its key under `services:`, `volumes:` or `configs:`; for a CloudFormation template, a resource by its `Type` and its logical ID. That provider leaves out every unit an entry matches, and what an entry matches, and what the provider refuses on an entry's account, is that provider's own documented contract. A provider that cannot leave anything out refuses a Recipe declaring this key before anything is rendered. Only what `source:` renders is filtered — a `workload:` or an `artifacts:` entry never is — so the key requires `source`. Every value is a template, evaluated against the context `valuesMapping` is evaluated against. An entry's `when` is evaluated first, and an entry whose `when` renders a falsy value is dropped. Every entry left active must leave something out: an active entry that matches nothing the source rendered halts the build, naming the entry. The source still renders in full — every template of a chart still runs, so a template that fails still fails the build — and only its output is left out.",
           "items": {
             "type": "object",
             "x-aggrega-go-type": "OmitEntry",
