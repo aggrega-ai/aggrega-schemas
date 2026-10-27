@@ -2,24 +2,19 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aggrega.ai/schemas/wasm-provider-v1alpha1.schema.json",
   "title": "Aggrega Wasm Provider Render Socket",
-  "description": "The wire shapes a Provider render plugin socket consumes and emits. A Provider guest renders one IR node into output files on its render_node export (RenderNodeInput to RenderNodeOutput), and optionally merges the per-node outputs at one boundary into a single assembled artifact on its assemble_boundary export (AssembleBoundaryInput to AssembleBoundaryOutput). AssembleBoundaryOutput carries the assembled files and any diagnostics; where each contributor's files sit is declared once on the guest's describe() contract rather than on this reply. A guest may also declare an optional validate_node_input export that structurally checks a node's resolved input before render dispatch: it consumes the same RenderNodeInput projection render_node receives and returns a ValidateNodeOutput carrying only diagnostics — a halt-severity diagnostic stops the build loudly, a warn-severity diagnostic surfaces to the build result. A guest whose target bounds or restricts the names it accepts may also declare an optional name_bound export, which the host asks before it settles a node's component identity: it consumes a NameBoundInput carrying one proposed name and returns a NameBoundOutput carrying one verdict per kind of name the guest would derive from it. A verdict carries a constraint — usable, or bounded to a shorter length — and never a name the guest built, so the knowledge of what the target accepts stays in the guest. Separately, a guest whose target derives a name of its own for the resources it renders — from author-supplied source, or from a workload it synthesizes — may declare an optional rendered_name export, which the host asks so a Recipe author can read that name and publish an address built from it: it consumes a RenderedNameInput carrying the identities the target derives from and the input kinds the node's Recipe declares, and returns a RenderedNameOutput carrying the name the guest itself will render under, or no name where it derives none. The two exports are opposite directions of one subject and neither stands in for the other — name_bound asks the guest to judge a name the host proposes, while rendered_name reports a name the guest composed, which the host carries without reading. A guest may also declare carve and reassemble, which carve its own output into addressable units for a pipeline step and splice the patched units back; boundary_env_overrides, which computes per-consumer environment overrides inside a boundary; and link_publish and link_resolve, which wire a uses edge whose ends assemble into different dispatch groups. The guest returns each output file's serialized bytes; the host writes them verbatim and runs no serializer, so determinism is the guest's responsibility: identical input must produce identical bytes. The Go, Rust and TypeScript payload types are generated from this schema into the plugin-ABI packages, so the three languages read and write one wire; a guest imports them from those packages, or through its plugin kit where the kit re-exports them.",
-  "oneOf": [
-    { "$ref": "#/$defs/RenderNodeInput" },
-    { "$ref": "#/$defs/RenderNodeOutput" },
-    { "$ref": "#/$defs/ValidateNodeOutput" },
-    { "$ref": "#/$defs/AssembleBoundaryInput" },
-    { "$ref": "#/$defs/AssembleBoundaryOutput" },
-    { "$ref": "#/$defs/BoundaryEnvOverridesInput" },
-    { "$ref": "#/$defs/BoundaryEnvOverridesOutput" },
-    { "$ref": "#/$defs/NameBoundInput" },
-    { "$ref": "#/$defs/NameBoundOutput" },
-    { "$ref": "#/$defs/RenderedNameInput" },
-    { "$ref": "#/$defs/RenderedNameOutput" },
-    { "$ref": "#/$defs/LinkPublishInput" },
-    { "$ref": "#/$defs/LinkPublishOutput" },
-    { "$ref": "#/$defs/LinkResolveInput" },
-    { "$ref": "#/$defs/LinkResolveOutput" }
-  ],
+  "description": "The wire shapes a Provider render plugin socket consumes and emits. A Provider guest renders one IR node into output files on its render_node export (RenderNodeInput to RenderNodeOutput), and optionally merges the per-node outputs at one boundary into a single assembled artifact on its assemble_boundary export (AssembleBoundaryInput to AssembleBoundaryOutput). AssembleBoundaryOutput carries the assembled files and any diagnostics; where each contributor's files sit is declared once on the guest's describe() contract rather than on this reply. A guest may also declare an optional validate_node_input export that structurally checks a node's resolved input before render dispatch: it consumes the same RenderNodeInput projection render_node receives and returns a ValidateNodeOutput carrying only diagnostics — a halt-severity diagnostic stops the build loudly, a warn-severity diagnostic surfaces to the build result. A guest whose target bounds or restricts the names it accepts may also declare an optional name_bound export, which the host asks before it settles a node's component identity: it consumes a NameBoundInput carrying one proposed name and returns a NameBoundOutput carrying one verdict per kind of name the guest would derive from it. A verdict carries a constraint — usable, or bounded to a shorter length — and never a name the guest built, so the knowledge of what the target accepts stays in the guest. Separately, a guest whose target derives a name of its own for the resources it renders — from author-supplied source, or from a workload it synthesizes — may declare an optional rendered_name export, which the host asks so a Recipe author can read that name and publish an address built from it: it consumes a RenderedNameInput carrying the identities the target derives from and the input kinds the node's Recipe declares, and returns a RenderedNameOutput carrying the name the guest itself will render under, or no name where it derives none. The two exports are opposite directions of one subject and neither stands in for the other — name_bound asks the guest to judge a name the host proposes, while rendered_name reports a name the guest composed, which the host carries without reading. A guest may also declare carve and reassemble, which carve its own output into addressable units for a pipeline step and splice the patched units back; boundary_env_overrides, which computes per-consumer environment overrides inside a boundary; and link_publish and link_resolve, which wire a uses edge whose ends assemble into different dispatch groups. Each payload's shape is the definition its export names: the x-aggrega-exports table maps every export the host calls a guest with — carve and reassemble included — to the definition of its input and the definition of its output, each as a JSON Pointer into this document's $defs, so a tool validating a payload looks its definition up there. The document root declares no shape of its own, because one document can be a valid payload of several exports (an empty object is a valid answer from validate_node_input, boundary_env_overrides, name_bound and rendered_name alike). The guest returns each output file's serialized bytes; the host writes them verbatim and runs no serializer, so determinism is the guest's responsibility: identical input must produce identical bytes. The Go, Rust and TypeScript payload types are generated from this schema into the plugin-ABI packages, so the three languages read and write one wire; a guest imports them from those packages, or through its plugin kit where the kit re-exports them.",
+  "x-aggrega-exports": {
+    "render_node": { "input": "#/$defs/RenderNodeInput", "output": "#/$defs/RenderNodeOutput" },
+    "validate_node_input": { "input": "#/$defs/RenderNodeInput", "output": "#/$defs/ValidateNodeOutput" },
+    "assemble_boundary": { "input": "#/$defs/AssembleBoundaryInput", "output": "#/$defs/AssembleBoundaryOutput" },
+    "carve": { "input": "#/$defs/CarveInput", "output": "#/$defs/CarveOutput" },
+    "reassemble": { "input": "#/$defs/ReassembleInput", "output": "#/$defs/ReassembleOutput" },
+    "name_bound": { "input": "#/$defs/NameBoundInput", "output": "#/$defs/NameBoundOutput" },
+    "rendered_name": { "input": "#/$defs/RenderedNameInput", "output": "#/$defs/RenderedNameOutput" },
+    "boundary_env_overrides": { "input": "#/$defs/BoundaryEnvOverridesInput", "output": "#/$defs/BoundaryEnvOverridesOutput" },
+    "link_publish": { "input": "#/$defs/LinkPublishInput", "output": "#/$defs/LinkPublishOutput" },
+    "link_resolve": { "input": "#/$defs/LinkResolveInput", "output": "#/$defs/LinkResolveOutput" }
+  },
   "$defs": {
     "RenderNodeInput": {
       "type": "object",
@@ -637,12 +632,6 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "boundary": {
-          "type": "object",
-          "x-aggrega-go-type": "renderctx.BoundaryContext",
-          "description": "Not populated by the host: it is absent from every assembly input. A dispatch group can merge contributors from several boundaries, so there is no single boundary to carry; a guest reads each contributor's placement from its rendered_nodes entry, its annotations and sync_wave.",
-          "additionalProperties": true
-        },
         "rendered_nodes": {
           "type": "array",
           "description": "The per-node render outputs that fed this dispatch group, in node order.",
