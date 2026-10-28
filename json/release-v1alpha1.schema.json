@@ -163,7 +163,7 @@
         },
         "annotations": {
           "type": "object",
-          "description": "Component-specific Operator annotations that override boundary-level annotations for this component. Deep-merged over boundary annotations (component wins on key collision; structured values per-subkey-merge with structured parents). Values are strings, structured objects, or null. Used for per-component provider well-known annotation overrides (e.g., aggrega.ai/chart-name). The provider is responsible for validating consistency when grouping components (e.g., helm-chart provider rejects components with different aggrega.ai/namespace values in the same chart). Explicit null on a key inherited from the parent boundary removes the inherited binding from this component (annotation-driven Feature opt-out); sibling components retain the inherited binding.",
+          "description": "Component-specific Operator annotations that override boundary-level annotations for this component. Deep-merged over boundary annotations (component wins on key collision; structured values per-subkey-merge with structured parents). Values are strings, structured objects, or null. Used for per-component provider well-known annotation overrides (e.g., aggrega.ai/namespace on the helm provider). Explicit null on a key inherited from the parent boundary removes the inherited binding from this component (annotation-driven Feature opt-out); sibling components retain the inherited binding.",
           "additionalProperties": {
             "type": ["string", "object", "null"]
           }
