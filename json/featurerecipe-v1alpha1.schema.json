@@ -285,7 +285,7 @@
           "type": "string",
           "enum": ["component", "boundary"],
           "default": "component",
-          "description": "Whether this FeatureRecipe's Resource Generation runs per-component (the default) or once per boundary attachment. Boundary-scope FeatureRecipes deduplicate by (boundary_path, FeatureRecipe instance) and receive a different TemplateContext shape (.boundary.* pillars instead of per-component .context.* pillars). The injectMapping continues to fan per-consumer regardless of executionScope."
+          "description": "Whether this FeatureRecipe's Resource Generation runs per-component (the default) or once per boundary attachment. Boundary-scope FeatureRecipes deduplicate by (boundary_path, FeatureRecipe instance) and their templates read a boundary-scope template context (the .boundary.* pillars instead of the per-component .context.* pillars). The injectMapping continues to fan per-consumer regardless of executionScope."
         },
         "readsCallerRenderFacts": {
           "type": "boolean",

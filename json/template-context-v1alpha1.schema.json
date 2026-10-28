@@ -230,7 +230,7 @@
         "properties": {
           "path": {
             "type": "string",
-            "description": "The boundary's evaluated directory path (post-template-evaluation). The same string groups the components that share an output directory and a provider when Aggrega builds the Release."
+            "description": "The path of the Release boundary the FeatureRecipe is attached to: the boundary names from the outermost inward, joined with '/' (e.g. 'bridge', 'bridge/frontend'). It names the boundary, not the directory its output is written to, which the boundary's directory: sets."
           },
           "boundary_name": {
             "type": "string",
