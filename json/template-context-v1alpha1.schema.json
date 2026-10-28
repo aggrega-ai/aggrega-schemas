@@ -387,7 +387,11 @@
           },
           "source_boundary_path": {
             "type": "string",
-            "description": "Boundary path of the source endpoint, used by a provider's no-namespace network fallback. Populated for boundary-scope views only, as source is; a component's own .context.uses entry carries it empty."
+            "description": "Boundary path of the source endpoint: the slash-separated path of the Release boundary that holds it (e.g. 'bridge/frontend'). Populated for boundary-scope views only, as source is; a component's own .context.uses entry carries it empty."
+          },
+          "source_assembly_path": {
+            "type": "string",
+            "description": "Assembly path of the source endpoint: the directory, relative to the build's output directory, that its provider assembles its output into, composed from its boundary's evaluated directory: and subDirectory: (e.g. 'bridge/compose'). Two endpoints with one assembly path render into one assembled file. A provider that places endpoints on networks reads it as the source endpoint's network when no aggrega.ai/namespace applies, as the compose provider does. Populated for boundary-scope views only, as source is; a component's own .context.uses entry carries it empty. Opaque data for a provider's network-identity resolution; the core does not interpret it."
           },
           "target_namespace": {
             "type": "string",
@@ -395,7 +399,11 @@
           },
           "target_boundary_path": {
             "type": "string",
-            "description": "Boundary path of the target endpoint, used by a provider's no-namespace network fallback. Populated for boundary-scope views only, as source is; a component's own .context.uses entry carries it empty."
+            "description": "Boundary path of the target endpoint: the slash-separated path of the Release boundary that holds it (e.g. 'bridge/backend'). Populated for boundary-scope views only, as source is; a component's own .context.uses entry carries it empty."
+          },
+          "target_assembly_path": {
+            "type": "string",
+            "description": "Assembly path of the target endpoint: the directory, relative to the build's output directory, that its provider assembles its output into, composed from its boundary's evaluated directory: and subDirectory: (e.g. 'bridge/compose'). A provider that places endpoints on networks reads it as the target endpoint's network when no aggrega.ai/namespace applies, as the compose provider does. Populated for boundary-scope views only, as source is; a component's own .context.uses entry carries it empty. Opaque data for a provider's network-identity resolution."
           },
           "provides": {
             "type": "object",
