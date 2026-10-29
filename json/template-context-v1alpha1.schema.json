@@ -232,6 +232,10 @@
             "type": "string",
             "description": "The path of the Release boundary the FeatureRecipe is attached to: the boundary names from the outermost inward, joined with '/' (e.g. 'bridge', 'bridge/frontend'). It names the boundary, not the directory its output is written to, which the boundary's directory: sets."
           },
+          "assembly_path": {
+            "type": "string",
+            "description": "The directory, relative to the build's output directory, that this attachment's own output is assembled into: its boundary's evaluated directory: and subDirectory:, the directory the build routes that output to (e.g. 'bridge/compose'). It equals a connection endpoint's source_assembly_path or target_assembly_path exactly when that endpoint renders into the same assembled file, so a FeatureRecipe compares them to tell a connection inside its own file from one in another file. Opaque data; the core does not interpret it."
+          },
           "boundary_name": {
             "type": "string",
             "description": "The boundary's name (the map key in release.spec.boundaries)."
@@ -248,7 +252,7 @@
           },
           "outgoing_cross_boundary_uses_edges": {
             "type": "array",
-            "description": "Uses edges where source is in subtree, target is outside. Used by compose-bridge: which outbound connections need the bridge to proxy.",
+            "description": "Uses edges whose source is in this boundary's subtree and whose target is outside it.",
             "items": { "type": "object", "additionalProperties": true }
           },
           "incoming_cross_boundary_uses_edges": {
@@ -391,7 +395,7 @@
           },
           "source_assembly_path": {
             "type": "string",
-            "description": "Assembly path of the source endpoint: the directory, relative to the build's output directory, that its provider assembles its output into, composed from its boundary's evaluated directory: and subDirectory: (e.g. 'bridge/compose'). Two endpoints with one assembly path render into one assembled file. A provider that places endpoints on networks reads it as the source endpoint's network when no aggrega.ai/namespace applies, as the compose provider does. Populated for boundary-scope views only, as source is; a component's own .context.uses entry carries it empty. Opaque data for a provider's network-identity resolution; the core does not interpret it."
+            "description": "Assembly path of the source endpoint: the directory, relative to the build's output directory, that its output is assembled into, composed from its boundary's evaluated directory: and subDirectory: (e.g. 'bridge/compose'). Two endpoints with one assembly path render into one assembled file, and an endpoint whose assembly path equals .boundary.assembly_path renders into the file the reading FeatureRecipe's own output is assembled into. A boundary-scope FeatureRecipe that places endpoints on networks can read it as the source endpoint's network when no aggrega.ai/namespace applies. Populated for boundary-scope views only, as source is; a component's own .context.uses entry carries it empty. Opaque data; the core does not interpret it."
           },
           "target_namespace": {
             "type": "string",
@@ -403,7 +407,7 @@
           },
           "target_assembly_path": {
             "type": "string",
-            "description": "Assembly path of the target endpoint: the directory, relative to the build's output directory, that its provider assembles its output into, composed from its boundary's evaluated directory: and subDirectory: (e.g. 'bridge/compose'). A provider that places endpoints on networks reads it as the target endpoint's network when no aggrega.ai/namespace applies, as the compose provider does. Populated for boundary-scope views only, as source is; a component's own .context.uses entry carries it empty. Opaque data for a provider's network-identity resolution."
+            "description": "Assembly path of the target endpoint: the directory, relative to the build's output directory, that its output is assembled into, composed from its boundary's evaluated directory: and subDirectory: (e.g. 'bridge/compose'). An endpoint whose assembly path equals .boundary.assembly_path renders into the file the reading FeatureRecipe's own output is assembled into. A boundary-scope FeatureRecipe that places endpoints on networks can read it as the target endpoint's network when no aggrega.ai/namespace applies. Populated for boundary-scope views only, as source is; a component's own .context.uses entry carries it empty. Opaque data; the core does not interpret it."
           },
           "provides": {
             "type": "object",
