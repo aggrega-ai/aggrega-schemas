@@ -238,7 +238,7 @@
         },
         "injectMapping": {
           "type": "string",
-          "description": "Optional inline Go template evaluated during the Pre-Render Interception phase. Outputs a JSON/YAML dictionary that the Go compiler natively deep-merges over the Caller's '.context.inject' memory pipe. Used for Wasm-free Caller-Side mutation of environment variables and delivery contracts."
+          "description": "Optional inline Go template evaluated during the Pre-Render Interception phase, once for each component the attachment reaches, against that component's template context: it reads the component's '.context', '.features' and the attachment's '.attachment_name', '.values', '.infra' and '.locals', whatever executionScope says, and a reference to '.boundary', which no component's context carries, halts the build. Outputs a JSON/YAML dictionary that the Go compiler natively deep-merges over the Caller's '.context.inject' memory pipe. Used for Wasm-free Caller-Side mutation of environment variables and delivery contracts."
         },
         "pipeline": {
           "type": "array",
@@ -285,7 +285,7 @@
           "type": "string",
           "enum": ["component", "boundary"],
           "default": "component",
-          "description": "Whether this FeatureRecipe's Resource Generation runs per-component (the default) or once per boundary attachment. Boundary-scope FeatureRecipes deduplicate by (boundary_path, FeatureRecipe instance) and their templates read a boundary-scope template context (the .boundary.* pillars instead of the per-component .context.* pillars). The injectMapping continues to fan per-consumer regardless of executionScope."
+          "description": "Whether this FeatureRecipe's Resource Generation runs per-component (the default) or once per boundary attachment. Boundary-scope FeatureRecipes deduplicate by (boundary_path, FeatureRecipe instance) and every template but the injectMapping reads a boundary-scope template context: the .boundary.* pillars instead of the per-component .context.* pillars, a reference to which halts the build. The injectMapping runs once for each component the attachment reaches regardless of executionScope, so it reads that component's context and never .boundary."
         },
         "readsCallerRenderFacts": {
           "type": "boolean",
