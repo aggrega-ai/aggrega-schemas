@@ -62,7 +62,7 @@
     "skip_signature_verification": {
       "type": "boolean",
       "default": false,
-      "description": "Global, loud opt-out from signature verification. When true, signature verification is disabled across every registry, including the mandatory hub baseline. Intended for break-glass and development scenarios; it is never silent — every pull logs a prominent warning that verification was globally disabled. Defaults to false."
+      "description": "Global, loud opt-out from signature verification. When true, signature verification is disabled across every registry, including the mandatory hub baseline. Intended for break-glass and development scenarios; it is never silent — wherever a pull would have checked a signature, it warns that verification was globally disabled. Defaults to false."
     },
     "build": {
       "type": "object",

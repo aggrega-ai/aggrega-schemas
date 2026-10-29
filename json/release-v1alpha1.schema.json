@@ -422,7 +422,7 @@
     },
     "inject_block": {
       "type": "object",
-      "description": "Agnostic injection routing. Maps local variables to target provides keys (uses[].inject) or to literal strings / template expressions (component.inject). Each delivery mechanism (env, file, arg, or custom) is authored as an array of {in, from?, value?} entries — explicit 'from' for provides references and 'value' for literals.",
+      "description": "Agnostic injection routing on a connection. Maps local variables to the target's provides keys. Each delivery mechanism (env, file, arg, or custom) is authored as an array of {in, from} entries — explicit 'from' for provides references.",
       "properties": {
         "env": {
           "$ref": "#/$defs/inject_delivery"
@@ -440,7 +440,7 @@
     },
     "inject_delivery": {
       "type": "array",
-      "description": "A single delivery mechanism, authored as an array of entries. Each entry carries an 'in' (local identifier — env var name, file path, arg flag, or custom mechanism-specific key) plus exactly one of 'from' (a provides key to resolve) or 'value' (a literal string, optionally containing Go template expressions evaluated at self-inject resolution). 'from' resolves against the target's provides in uses[].inject context, or against the component's own provides in component.inject context.",
+      "description": "A single delivery mechanism, authored as an array of entries. Each entry carries an 'in' (local identifier — env var name, file path, arg flag, or custom mechanism-specific key) plus exactly one of 'from' (a provides key to resolve) or 'value'. On a Release every entry sits on a connection, so 'from' resolves against the target's provides and an entry carrying 'value' is refused.",
       "items": {
         "type": "object",
         "required": [
@@ -469,7 +469,7 @@
           },
           "value": {
             "type": "string",
-            "description": "A literal string value. Supports Go template expressions (e.g., '{{ .values.app_token }}', '{{ .infra.namespace }}') evaluated at self-inject resolution with access to .values, .infra, .context.instance_id, .context.labels, .context.annotations.*, and .metadata.*."
+            "description": "A literal string value. Refused on every entry a Release writes: each inject block here sits on a connection, and a connection delivers the target's published keys, each named with 'from', so an entry carrying 'value' halts the build. A literal a component delivers to itself is written in the Aggregate, in the component's own inject block."
           }
         },
         "additionalProperties": false

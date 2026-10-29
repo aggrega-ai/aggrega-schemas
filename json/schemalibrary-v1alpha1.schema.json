@@ -46,7 +46,7 @@
           "type": "object",
           "x-aggrega-go-type": "OrderedMap[string]",
           "additionalProperties": { "type": "string" },
-          "description": "Author-declared labels. The compiler does not interpret label values (per the content-neutral compiler invariant); labels are metadata for discovery + hub UI surfacing."
+          "description": "Author-declared labels. The compiler is content-neutral and does not interpret label values: they are opaque metadata, carried for whatever reads the library to match on."
         },
         "annotations": {
           "type": "object",

@@ -204,7 +204,7 @@
         "properties": {
           "in": { "type": "string", "description": "The local identifier to inject into. Semantics determined by the parent mechanism (env → variable name, file → mount path, arg → flag prefix, custom → mechanism-specific key)." },
           "from": { "type": "string", "description": "A provides key to resolve. In uses[].inject, resolves against the target node's provides. In component.inject, resolves against the component's own provides." },
-          "value": { "type": "string", "description": "A literal string value. Supports Go template expressions (e.g., '{{ .values.app_token }}', '{{ .infra.namespace }}') evaluated at self-inject resolution with access to .values, .infra, .context.instance_id, .context.labels, .context.annotations.*, and .metadata.*." }
+          "value": { "type": "string", "description": "A literal string value. Supports Go template expressions evaluated at self-inject resolution with access to .values, .infra, .context.instance_id, .context.labels, .context.annotations.*, and .metadata.*. The Aggregate's own text is evaluated against .parameters before it is read, so each '{{' of a self-inject template is written escaped, as '{{\"{{\"}}': '{{\"{{\"}} .values.app_token }}' delivers the component's own app_token value, while '{{ .values.app_token }}' halts the build as an invalid parameter reference." }
         },
         "additionalProperties": false
       }

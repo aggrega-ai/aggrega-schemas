@@ -22,7 +22,7 @@
         "properties": {
           "instance_id": {
             "type": "string",
-            "description": "The absolute flattened ID of the current node (e.g., 'backend' or 'data-layer.main-db'), written into the alphabet every authored component name satisfies. Deterministic and stable across compilations for the same Aggregate. It is the name of the resources built for this node that no provider derives a name for — an artifact set placed from the Recipe, and a workload synthesized by a provider that names it after the identity — so an address published for one of those is built from this value."
+            "description": "The absolute flattened ID of the current node (e.g., 'backend', or 'data-layer-zdmain-db' for the component main-db of the module instance data-layer), written into the alphabet every authored component name satisfies. Deterministic and stable across compilations for the same Aggregate. It is the name of the resources built for this node that no provider derives a name for — an artifact set placed from the Recipe, and a workload synthesized by a provider that names it after the identity — so an address published for one of those is built from this value."
           },
           "rendered_name": {
             "type": "string",
