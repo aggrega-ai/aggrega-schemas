@@ -70,13 +70,8 @@ locally. When `node` is unavailable, the shell smoke falls back to validating th
 good and bad samples through the project's own JSON Schema validator; in that mode
 the served-URL claims hold but the association engine is not driven.
 
-## Go-live (infrastructure)
+## Where the schemas are served
 
-Standing up `https://hub.aggrega.ai/schemas/` (the hub Worker serving `/schemas/*`
-statically) is infrastructure — the same hosting effort as the public
-`hub.aggrega.ai` OCI registry. Go-live is therefore an infrastructure action, not
-a step performed in this
-repository: this repo provides the artifacts (`json/`), the editor-association
-catalog, and this publish path; standing up the hub serving (and the exact
-`/schemas/<filename>` route plus any cross-schema `$ref` resolution) lands with that
-hosting work.
+Serving `https://hub.aggrega.ai/schemas/` is the hub's own hosting, outside this
+repository; this repository provides the schema files, the editor-association
+catalog and this publish path.
