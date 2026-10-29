@@ -107,17 +107,13 @@
           "type": "object",
           "x-aggrega-go-type": "*IgnorePlugin",
           "additionalProperties": false,
-          "required": ["ref", "digest"],
-          "description": "The plugin that served the entity's capability in the author's workspace when the entity was pinned — the workspace's provider binding for that capability, or else the plugin built into the aggrega binary — and the ignore rules it declared. A pull whose own plugin for the capability declares different rules says so in an advisory, naming both plugins and the difference, and never halts on it. Absent where no plugin served the capability.",
+          "required": ["name"],
+          "description": "The plugin that served the entity's capability in the author's workspace when the entity was pinned — the workspace's provider binding for that capability, or else the plugin built into the aggrega binary — named without a version, and the ignore rules it declared. No version and no digest of the plugin is recorded: the rules are what every reading applies, so pinning again under another release of the same plugin leaves the lock unchanged unless the rules changed. A pull whose own plugin for the capability declares different rules says so in an advisory, naming both plugins and the difference, and never halts on it. Absent where no plugin served the capability.",
           "properties": {
-            "ref": {
+            "name": {
               "type": "string",
-              "description": "The plugin's entity reference, `<pluginType>/<name>:<version>`."
-            },
-            "digest": {
-              "type": "string",
-              "pattern": "^sha256:[a-f0-9]{64}$",
-              "description": "The digest of the plugin's entity document, in `sha256:` followed by 64 lowercase hex characters."
+              "minLength": 1,
+              "description": "The plugin that served the entity's capability when it was pinned, as `<pluginType>/<name>`, with no version: the rules below are what a reading applies, and the name says whose they were."
             },
             "patterns": {
               "type": "array",

@@ -370,7 +370,7 @@
                   "type": "object",
                   "x-aggrega-go-type": "*PluginSourceIgnore",
                   "additionalProperties": false,
-                  "description": "The files this provider's ecosystem never ships beside a source it renders, as ignore rules in gitignore syntax — the publish-time record of the `source_ignore` rules its self-report declares. When an author pins a Recipe or FeatureRecipe whose capability this provider serves for them, these rules are composed with the author's own `.aggregaignore` and recorded in the `entity.lock` beside the entity, together with this plugin's reference and digest, and every later publication, comparison and render of the entity's local source applies the recorded rules. Where present it must equal what the self-report declares, and the load refuses a plugin whose report differs; absent makes no claim and is not compared.",
+                  "description": "The files this provider's ecosystem never ships beside a source it renders, as ignore rules in gitignore syntax — the publish-time record of the `source_ignore` rules its self-report declares. When an author pins a Recipe or FeatureRecipe whose capability this provider serves for them, these rules are composed with the author's own `.aggregaignore` and recorded in the `entity.lock` beside the entity, together with this plugin's name, and every later publication, comparison and render of the entity's local source applies the recorded rules. Where present it must equal what the self-report declares, and the load refuses a plugin whose report differs; absent makes no claim and is not compared.",
                   "properties": {
                     "patterns": {
                       "type": "array",
