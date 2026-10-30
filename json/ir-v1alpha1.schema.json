@@ -496,6 +496,13 @@
             }
           },
           "x-aggrega-go-type": "json.RawMessage"
+        },
+        "sensitive_payload_leaves": {
+          "type": "array",
+          "description": "The leaves this edge's values and infra carry that the socket they are written against declares sensitive, each as the pillar-prefixed dotted path the datum occupies: values.<path> or infra.<path>. The declaration read is the per-connection contract on the CONSUMING component — the edge's source — under the socket this edge is wired into: its valueSchema governs values and its infraSchema governs infra, which is the same contract both payloads are validated against. The target's declarations play no part: what the target publishes is a different datum from the configuration the consumer writes for the connection. It is the same field, read the same way, as the marking on a node, a different subject from it: a node's marking names the node's own data against its Component's schema, and this one names the connection's configuration against the socket's contract, so neither is recoverable from the other. The payloads read here are the ones this edge carries, so a leaf standing at a value the socket's contract declares as a default is named alongside one an author wrote. A leaf appears where a path the contract declares sensitive covers it: the declaration names that leaf, or names an object containing it. Matching runs segment-wise over the dotted path, with nothing read out of the path's own text and no value inspected, so a declaration at `db` covers `db.password` and does not reach a sibling leaf named `dbPassword`. A surface that withholds declared-sensitive values from the graph withholds these leaves in this edge's values and infra, and in the consuming node's `uses` entry for the same connection, which carries the values as the author wrote them. An absent key states that this edge names no leaf its socket's contract declares sensitive, which includes the case where the socket declares no contract this reader could read. It does not assert that the configuration is insensitive, and a consumer that reads an absent key as permission to display or emit a value in the clear has read it backwards. Leaves arrive in the order the payloads hold them, the values pillar's before the infra pillar's, which is what keeps the graph byte-identical across runs of identical input. Absent when the edge carries no leaf its socket's contract declares sensitive.",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "additionalProperties": false
