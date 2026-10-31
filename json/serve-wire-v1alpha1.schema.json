@@ -966,26 +966,26 @@
     },
     "DeprecateArtifactParams": {
       "type": "object",
-      "description": "Marks a published version as deprecated, so resolution can report or decline it. The marker is itself published and signed.",
+      "description": "Marks a published version as deprecated, so resolution can report or decline it. The marker is itself published and signed. A request sends either one reference with its content, or a batch file whose entries carry their own — never both, and never content beside the batch file.",
       "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
         "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootSubject" },
         "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
-        "reference": { "type": "string", "description": "The published reference to mark." },
+        "reference": { "type": "string", "description": "The published reference to mark. An alternative to `from`: a request carrying both is refused." },
         "severity": {
           "type": "string",
-          "description": "How strongly the marker speaks — whether resolution reports the version or declines it.",
+          "description": "How strongly the marker speaks — whether resolution reports the version or declines it. Required with `reference`; refused beside `from`, whose batch file carries each marker's own.",
           "oneOf": [
             { "const": "warning", "description": "Deprecated, at the milder of the two advisory tiers: still selected when a version is chosen." },
             { "const": "error", "description": "Deprecated, at the stronger of the two advisory tiers: still selected when a version is chosen." },
             { "const": "retracted", "description": "Withdrawn: excluded when a version is chosen." }
           ]
         },
-        "reason": { "type": "string", "description": "Why the version is deprecated." },
-        "replacement": { "type": "string", "description": "The reference to use instead." },
-        "message": { "type": "string", "description": "What a consumer meeting the marker is told." },
-        "from": { "type": "string", "description": "The earliest version the marker covers, for marking a span rather than one version." },
+        "reason": { "type": "string", "description": "Why the version is deprecated. Required with `reference`; refused beside `from`, whose batch file carries each marker's own." },
+        "replacement": { "type": "string", "description": "The reference to use instead. Refused beside `from`, whose batch file carries each marker's own." },
+        "message": { "type": "string", "description": "What a consumer meeting the marker is told. Refused beside `from`, whose batch file carries each marker's own." },
+        "from": { "type": "string", "description": "A batch file of withdrawal entries, as a path relative to the workspace root, attaching one marker per entry. Each entry carries its own reference, severity and reason, and optionally a replacement and a message. An alternative to `reference`: a request carrying both, or carrying a severity, reason, replacement or message beside it, is refused." },
         "fulcioUrl": { "type": "string", "description": "The certificate authority to obtain a signing certificate from." },
         "rekorUrl": { "type": "string", "description": "The transparency log to record the signature in." },
         "timestampUrl": { "type": "string", "description": "The timestamp authority to countersign with." },
