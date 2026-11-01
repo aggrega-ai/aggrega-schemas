@@ -1231,13 +1231,16 @@
     },
     "ScaffoldEntityParams": {
       "type": "object",
-      "description": "Drafts a starter document for an entity kind. The skeleton is derived from the schema set the binary carries, so nothing is read from a workspace and nothing is written — the answer is text, and where it goes is the client's.",
+      "description": "Drafts a starter document for an entity kind, or writes one of the documentation's runnable examples into a new directory of the workspace, or lists them. Drafting derives the skeleton from the schema set the binary carries, so nothing is read from a workspace and nothing is written — the answer is text, and where it goes is the client's. Writing an example writes the new directory and nothing else, and the examples are read from the signed documentation bundle published for the binary's version, or the newest published before it where none is, verified against the workspace's signature policy before it is kept or read: a bundle that does not verify is refused, and offline only a copy already cached is read. A request sending the fields of two forms together — kind with example or list, list with example, name with example or list, dir without example — is refused before anything is read.",
       "additionalProperties": false,
       "properties": {
-        "workspaceRoot": { "$ref": "#/$defs/WorkspaceRootAccepted" },
+        "workspaceRoot": { "type": "string", "description": "The absolute path of the workspace. Drafting does not read it. Writing or listing an example requires it: the workspace's configuration decides where the documentation is fetched from and which signatures it must carry, and an example is written inside it." },
         "workDoneToken": { "$ref": "#/$defs/ProgressToken" },
         "kind": { "type": "string", "description": "The entity kind to draft, named by its lowercase token, such as component, aggregate, release, recipe or featurerecipe — the token `aggrega/getSchema` lists for it." },
-        "name": { "type": "string", "description": "The name to write into the drafted document." }
+        "name": { "type": "string", "description": "The name to write into the drafted document. Sent only with kind." },
+        "example": { "type": "string", "description": "The runnable example to write, by the name the list of examples gives it. Sent instead of kind." },
+        "list": { "type": "boolean", "description": "Whether to answer with every runnable example the documentation publishes, writing nothing. Sent without example and without kind." },
+        "dir": { "type": "string", "description": "The new directory to write the example into, relative to the workspace root; absent writes it into a directory named after the example there. It must not exist yet or must be empty: one holding anything is refused and left as it is, and an absolute value, or one leading out of the workspace as written or through a link, is refused before anything is read. Sent only with example." }
       }
     },
     "LintParams": {
@@ -2668,12 +2671,28 @@
     },
     "ScaffoldEntityResult": {
       "type": "object",
-      "description": "The drafted starter document.",
-      "required": ["kind", "skeleton"],
+      "description": "The drafted starter document, the list of runnable examples, or the example written — each form answering with its own fields and leaving the others absent.",
       "additionalProperties": false,
       "properties": {
-        "kind": { "type": "string", "description": "The entity kind that was drafted." },
-        "skeleton": { "type": "string", "description": "The drafted document's text." }
+        "kind": { "type": "string", "description": "The entity kind that was drafted. Present on a draft." },
+        "skeleton": { "type": "string", "description": "The drafted document's text. Present on a draft." },
+        "examples": { "type": "array", "description": "Every runnable example the documentation publishes, each once, in name order. Present on a list that found any.", "items": { "$ref": "#/$defs/ScaffoldExample" } },
+        "example": { "type": "string", "description": "The example that was written. Present on a write." },
+        "dir": { "type": "string", "description": "The directory the example was written into, relative to the workspace root, as the request named it or, where it named none, as the example's name. Present on a write." },
+        "files": { "type": "array", "description": "Each file written, relative to dir and slash-separated, in the order the documentation carries them. Present on a write.", "items": { "type": "string" } },
+        "next": { "type": "array", "description": "The commands the example's page gives for building it, line by line as the page writes them, comments included: the first shell block under its Build heading. Absent where the page gives none.", "items": { "type": "string" } },
+        "version": { "type": "string", "description": "The version of the documentation the example was read from: the binary's own where one is published for it, otherwise the newest published before it. Present on a write." }
+      }
+    },
+    "ScaffoldExample": {
+      "type": "object",
+      "description": "One runnable example the documentation publishes.",
+      "required": ["name", "level", "summary"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "description": "The example's name, which a request sends as example to write it." },
+        "level": { "type": "string", "description": "The level the example's page declares for it." },
+        "summary": { "type": "string", "description": "The first sentence of the example's page." }
       }
     },
     "LintResult": {
