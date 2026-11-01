@@ -1740,7 +1740,7 @@
     "HostUpdate": {
       "type": "object",
       "description": "What an index refresh did for one registry.",
-      "required": ["host", "indexed", "deprecationsExamined", "deprecationsRecorded", "skipped", "deprecations"],
+      "required": ["host", "indexed", "deprecationsExamined", "deprecationsRecorded", "skipped", "deprecations", "readsRetried"],
       "additionalProperties": false,
       "properties": {
         "host": { "type": "string", "description": "The registry host that was refreshed." },
@@ -1749,6 +1749,7 @@
         "deprecationsRecorded": { "type": "integer", "description": "How many markers were honoured." },
         "skipped": { "type": ["array", "null"], "description": "The repositories the walk passed over.", "items": { "$ref": "#/$defs/SkippedRepo" } },
         "deprecations": { "type": ["array", "null"], "description": "The markers the walk met.", "items": { "$ref": "#/$defs/DeprecationNote" } },
+        "readsRetried": { "type": "integer", "minimum": 0, "description": "How many of the walk's reads the registry refused or dropped in passing and were asked again, each read counted once however many attempts it took and whether or not it then succeeded; zero where none was. A walk whose reads all succeeded in the end lists no repository under `skipped`, so this count is what says how close it came to leaving one out." },
         "error": { "type": "string", "description": "What failed for this host, so a walk over several reports which of them failed without the caller correlating anything." },
         "unreachable": { "type": "boolean", "description": "Whether this registry could not be reached: its name did not resolve, a connection to it was refused or could not be opened, or a secure connection to it could not be established. It is read from the failure itself rather than from error, it is set only beside error, and only where the failure shows the registry was never reached; a registry that answered, whatever it answered, leaves it absent." }
       }
