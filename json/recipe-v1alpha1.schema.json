@@ -316,7 +316,7 @@
               "id": {
                 "type": "string",
                 "pattern": "^[a-zA-Z0-9_]+$",
-                "description": "A unique programmatic identifier for this step, allowing downstream plugins to reference its outputs."
+                "description": "A programmatic identifier for this step, unique among the steps of this pipeline: a document declaring one id on two of its steps is refused when it is read. A later step of the same pipeline reads this step's outputs as `.steps.<id>.outputs`."
               },
               "plugin": {
                 "type": "string",
