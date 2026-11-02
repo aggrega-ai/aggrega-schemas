@@ -237,6 +237,7 @@
         "provider": {
           "type": "object",
           "additionalProperties": false,
+          "not": { "required": ["wellKnownAnnotations", "readsNoWellKnownAnnotations"] },
           "description": "The provider-socket block for a `pluginType: provider` plugin: the capabilities it serves, how it translates the aggrega.ai/v1alpha1 Workload kind, which platform-native annotations it reads, and its render-behavior contract. Present only on provider-rendering plugins; absent on every other plugin type.",
           "properties": {
             "capabilities": {
@@ -250,7 +251,7 @@
             },
             "wellKnownAnnotations": {
               "type": "array",
-              "description": "The provider's support claim: the platform-native well-known annotation keys (the aggrega.ai/ namespace) this provider reads, each with the scope it is read at and the behavior applied when it is absent. Declare a key only where the provider reads it — the published support matrix is rendered from these declarations, so a key listed here is a key an author can expect to change the rendered output at the scope it names. The compiler reads the declaration in one way: a `scope` naming an input kind the provider's own `contract.inputKinds` does not claim contradicts an adjacent claim in the same entity, and the build halts naming the key and the contradiction. Nothing else about a build branches on this field, and it is distinct from the rule that governs binding a value under the reserved aggrega.ai/ prefix. Absent declares no support claim. Entries are an ordered list and preserve author order.",
+              "description": "The provider's support claim: the platform-native well-known annotation keys (the aggrega.ai/ namespace) this provider reads, each with the scope it is read at and the behavior applied when it is absent. Declare a key only where the provider reads it — the published support matrix is rendered from these declarations, so a key listed here is a key an author can expect to change the rendered output at the scope it names. The compiler reads the declaration in two ways: a `scope` naming an input kind the provider's own `contract.inputKinds` does not claim contradicts an adjacent claim in the same entity, and the build halts naming the key and the contradiction; and a build warns about an aggrega.ai/ annotation reaching a render through this provider when no entry covers it on any input kind that render declares. It is distinct from the rule that governs binding a value under the reserved aggrega.ai/ prefix. Absent declares no support claim, and no such warning is raised for this provider; a provider that reads none of these keys declares `readsNoWellKnownAnnotations` instead of this list. Entries are an ordered list and preserve author order.",
               "items": {
                 "type": "object",
                 "x-aggrega-go-type": "WellKnownAnnotation",
@@ -282,6 +283,11 @@
                   }
                 }
               }
+            },
+            "readsNoWellKnownAnnotations": {
+              "type": "boolean",
+              "const": true,
+              "description": "Declares that this provider reads none of the platform-native well-known annotation keys (the aggrega.ai/ namespace): a support claim covering no key, which is a statement where leaving both this field and `wellKnownAnnotations` out is silence. A build then warns about every aggrega.ai/ annotation that reaches a render through this provider, naming the key, the provider and the input kinds that render declares; the value still passes through untouched and the build does not halt. Only `true` may be written, so leaving the field out stays the one way to say nothing. It cannot be written together with `wellKnownAnnotations`: a provider that reads some of the keys lists those there instead."
             },
             "contract": {
               "type": "object",
