@@ -287,7 +287,7 @@
             "readsNoWellKnownAnnotations": {
               "type": "boolean",
               "const": true,
-              "description": "Declares that this provider reads none of the platform-native well-known annotation keys (the aggrega.ai/ namespace): a support claim covering no key, which is a statement where leaving both this field and `wellKnownAnnotations` out is silence. A build then warns about every aggrega.ai/ annotation that reaches a render through this provider, naming the key, the provider and the input kinds that render declares; the value still passes through untouched and the build does not halt. Only `true` may be written, so leaving the field out stays the one way to say nothing. It cannot be written together with `wellKnownAnnotations`: a provider that reads some of the keys lists those there instead."
+              "description": "Declares that this provider reads none of the platform-native annotation keys in the aggrega.ai/ namespace, the keys `wellKnownAnnotations` would otherwise list: a support claim covering no key, which is a statement where leaving both this field and `wellKnownAnnotations` out is silence. A build then warns about every aggrega.ai/ annotation that reaches a render through this provider, naming the key, the provider and the input kinds that render declares; the value still passes through untouched and the build does not halt. Only `true` may be written, so leaving the field out stays the one way to say nothing. It cannot be written together with `wellKnownAnnotations`: a provider that reads some of the keys lists those there instead."
             },
             "contract": {
               "type": "object",
