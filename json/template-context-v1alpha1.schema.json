@@ -189,7 +189,7 @@
         }
       },
       "inject_raw": {
-        "description": "The immutable, unmutated Developer intent for the inject block. Evaluates to null if the Developer omitted the inject block entirely. Used by Ops for logical checks (e.g., {{ if not .inject_raw }}) to detect omission before the mutations of inject mapping.",
+        "description": "The immutable, unmutated Developer intent for the inject block. Every mechanism the block names — env, file, arg, or a custom one such as ssm_param — is under its own name, holding the entries exactly as written (in, with from or value), in the order written, so .inject_raw.ssm_param reads a custom mechanism the way .inject_raw.env reads a core one. Evaluates to null if the Developer omitted the inject block entirely. Used by Ops for logical checks (e.g., {{ if not .inject_raw }}) to detect omission before the mutations of inject mapping.",
         "oneOf": [
           { "type": "object", "additionalProperties": true },
           { "type": "null" }
