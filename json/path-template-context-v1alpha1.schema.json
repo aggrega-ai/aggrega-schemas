@@ -20,7 +20,7 @@
       },
       "component_id": {
         "type": "string",
-        "description": "Available in subDirectory: ONLY. The flattened per-component instance ID (e.g., 'backend' or 'data-layer.main-db'). Meaningless at boundary-level and rejected by parse-time validation in directory: templates."
+        "description": "Available in subDirectory: ONLY. The identity of the contributor being placed. For a component, its flattened per-component instance ID (e.g., 'backend' or 'data-layer.main-db'). For a Feature attached at a boundary whose FeatureRecipe runs once for the boundary (executionScope: boundary), the composed component identity every resource that attachment emits carries in its aggrega.ai/component-id label (e.g., 'bfr--app--shared' for an attachment 'shared' at boundary 'app'), shortened where the attachment's rendering plugin bounds names, so the directory it names matches that label. Meaningless at boundary-level and rejected by parse-time validation in directory: templates."
       },
       "parent_boundary": {
         "type": "object",
