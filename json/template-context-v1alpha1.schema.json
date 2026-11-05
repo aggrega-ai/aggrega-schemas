@@ -210,7 +210,7 @@
         }
       },
       "source": {
-        "description": "Resolved source field content. Populated at source resolution from the Recipe's source: field after Go-template evaluation. Available from values mapping onward (valuesMapping, workload, artifacts). Evaluates to null when the Recipe has no source:. String form = URI path; object form = structured source (e.g., OCI descriptor with resolved version).",
+        "description": "Resolved source field content. On a Recipe's templates: populated at source resolution from the Recipe's source: field after Go-template evaluation, available from values mapping onward (valuesMapping, workload, artifacts), and null when the Recipe has no source:. On a FeatureRecipe's templates: the FeatureRecipe's own source: field after Go-template evaluation, evaluated before its valuesMapping and read there and on every template evaluated after it (omits, workload, artifacts, pipeline steps), never the host component's; null when the FeatureRecipe has no source:. A FeatureRecipe's injectMapping is evaluated before its source and reads the host component's. String form = URI path; object form = structured source (e.g., OCI descriptor with resolved version).",
         "oneOf": [
           { "type": "string" },
           { "type": "object", "additionalProperties": true },
