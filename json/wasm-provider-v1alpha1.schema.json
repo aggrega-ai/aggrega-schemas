@@ -912,7 +912,7 @@
     },
     "NameBoundInput": {
       "type": "object",
-      "description": "The payload a Provider guest receives on its optional name_bound export: one name the host proposes to use as a node's component identity, for the guest to judge against every name it would derive from that identity for its target. The guest answers with a constraint rather than with a name of its own — a derived name travelling back would put the host in the business of composing names for a target it knows nothing about, which is exactly what asking the question removes. A provider whose target bounds or restricts the names it accepts advertises the export; a provider whose target accepts any name omits it and is never asked, and its rendering is unchanged.",
+      "description": "The payload a Provider guest receives on its optional name_bound export: one name the host proposes to use as a node's component identity, for the guest to judge against every name it would derive from that identity for its target, together with the facts of the node's resolved workload that some of those names depend on, where the identity is settled after that workload is resolved. The guest answers with a constraint rather than with a name of its own — a derived name travelling back would put the host in the business of composing names for a target it knows nothing about, which is exactly what asking the question removes. A provider whose target bounds or restricts the names it accepts advertises the export; a provider whose target accepts any name omits it and is never asked, and its rendering is unchanged.",
       "required": [
         "proposed"
       ],
@@ -925,6 +925,17 @@
         "authored": {
           "type": "boolean",
           "description": "Whether the proposed name is one a person wrote rather than one the compiler composed from authored parts. It is carried so a guest can phrase its reason for the reader who is able to act on it. It does not decide what a refusal does: an authored name is refused and a composed one is shortened, and that decision is the host's."
+        },
+        "workload_form": {
+          "type": "string",
+          "description": "The form of the workload the node's Recipe or FeatureRecipe resolves to, as its workload template produced it, carried when the identity is settled after that workload is resolved and the workload states a form. It is carried as written; the host does not interpret it. A guest whose target bounds a name it emits for one form only — a scheduled job, whose name the target holds shorter than its other names because a suffix is appended to it for each run — reads it to judge that name. Absent means the host carries no form for this question: the node declares no workload, its workload states none, or the identity is settled before any workload is resolved. A guest then judges no name that depends on the form, and answers exactly as it would if the field did not exist."
+        },
+        "service_keys": {
+          "type": "array",
+          "description": "The keys of the Services the node's resolved workload declares, in the order the workload declares them, carried when the identity is settled after that workload is resolved and the workload declares any. A guest whose target names each Service it emits for the node from the component identity and the Service's key reads them to judge each such name. A key is written by the Recipe's or FeatureRecipe's author rather than by whoever wrote the identity, so a guest words a refusal a key causes for that author too. Absent means the host carries no keys for this question: the node declares no workload, its workload declares no Service, or the identity is settled before any workload is resolved. A guest then judges no name built from a Service key, and answers exactly as it would if the field did not exist.",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
