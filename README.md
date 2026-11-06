@@ -15,3 +15,8 @@ page per schema in this repository, generated from it.
 schema is served from, so a YAML language server in an editor can associate a
 document with its schema; [PUBLISHING.md](PUBLISHING.md) describes how the
 schemas are served.
+
+## License
+
+The Aggrega JSON Schemas are released under the Apache License, Version 2.0; the full text is in the
+[`LICENSE`](LICENSE) file.
