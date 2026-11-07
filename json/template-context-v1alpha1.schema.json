@@ -17,7 +17,8 @@
         "required": [
           "instance_id",
           "inject",
-          "uses"
+          "uses",
+          "self_inject"
         ],
         "properties": {
           "instance_id": {
@@ -91,6 +92,20 @@
             "description": "The enriched topological edge map. Keyed by the Developer's alias (e.g., 'my_db', 'my_api'). Each entry is a compiler-assembled view of the target node's identity, resolved provides, injection mapping, and cascaded annotations, and of the attachments written on that connection — and, for a FeatureRecipe that declares readsTargetRenderFacts, of what the target's renders reported. This is NOT the raw IR edge — it is an enriched projection built by the compiler specifically for template consumption. A template that ranges this map sees the connections in key order — sorted by alias — not in the order they were written.",
             "additionalProperties": {
               "$ref": "#/$defs/enriched_edge"
+            }
+          },
+          "self_inject": {
+            "type": "object",
+            "description": "Which of the component's own values and provides the developer has already given a delivery name, read from the inject: block written on the component itself — the block .inject_raw holds as written, and .context.inject holds resolved. Each mechanism the block names (env, file, arg, or a custom one such as ssm_param) maps each name the developer wrote to the own key that entry delivers, the way .context.uses.<alias>.inject maps a connection's names to the keys they read: 'provides.<key>' for an entry written with from: <key>; 'values.<key>' for an entry whose value: template reads exactly one of the component's own values and nothing else, <key> being that value's top-level key whatever text or functions surround the read and however deeply it reads into the value — '{{ .values.config.port }}', '{{ index .values.config \"port\" }}' and '{{ (default dict .values.config).port }}' all map to 'values.config'; and an empty string for every other entry — a literal, a template reading two values, a template reading anything besides the values, or a template whose read of the values the text does not attribute to one top-level key, such as '{{ index .values \"role\" }}', the values read whole, or the whole context handed to a function. So a Recipe that delivers an own value under a default name tests whether some entry already maps to 'values.<key>' and skips its default when one does, e.g. {{ range $name, $key := .context.self_inject.env }}{{ if eq $key \"values.role\" }}…{{ end }}{{ end }}. Present and empty when the developer wrote no block; a mechanism appears only when the block names it, and a template meets the names sorted however it reads them. Read from the text the developer wrote, never from a resolved value.",
+            "properties": {
+              "env": { "type": "object", "description": "Environment variable delivery: keys are the developer's variable names, values are the own key each entry delivers.", "additionalProperties": { "type": "string" } },
+              "file": { "type": "object", "description": "File mount delivery: keys are the developer's file paths, values are the own key each entry delivers.", "additionalProperties": { "type": "string" } },
+              "arg": { "type": "object", "description": "Command-line argument delivery: keys are the developer's flag prefixes, values are the own key each entry delivers.", "additionalProperties": { "type": "string" } }
+            },
+            "additionalProperties": {
+              "type": "object",
+              "description": "A custom delivery mechanism the block names (e.g., 'ssm_param'): keys are the developer's names, values are the own key each entry delivers.",
+              "additionalProperties": { "type": "string" }
             }
           },
           "used_by": {
@@ -189,7 +204,7 @@
         }
       },
       "inject_raw": {
-        "description": "The immutable, unmutated Developer intent for the inject block. Every mechanism the block names — env, file, arg, or a custom one such as ssm_param — is under its own name, holding the entries exactly as written (in, with from or value), in the order written, so .inject_raw.ssm_param reads a custom mechanism the way .inject_raw.env reads a core one. Evaluates to null if the Developer omitted the inject block entirely. Used by Ops for logical checks (e.g., {{ if not .inject_raw }}) to detect omission before the mutations of inject mapping.",
+        "description": "The immutable, unmutated Developer intent for the inject block. Every mechanism the block names — env, file, arg, or a custom one such as ssm_param — is under its own name, holding the entries exactly as written (in, with from or value), in the order written, so .inject_raw.ssm_param reads a custom mechanism the way .inject_raw.env reads a core one. Evaluates to null if the Developer omitted the inject block entirely. Used by Ops for logical checks (e.g., {{ if not .inject_raw }}) to detect omission before the mutations of inject mapping. Which of the component's own values or provides each entry delivers is read at .context.self_inject rather than out of the entries' text.",
         "oneOf": [
           { "type": "object", "additionalProperties": true },
           { "type": "null" }
