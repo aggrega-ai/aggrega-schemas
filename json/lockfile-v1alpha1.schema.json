@@ -10,12 +10,17 @@
     "entities": {
       "type": "array",
       "default": [],
-      "description": "Catalog entities reachable from this Release: Component, Feature, Recipe, FeatureRecipe, Plugin, Aggregate, and the Release's own Aggregate and Manifest. Each entry is keyed by canonical URI and records the resolved version, the digest of what the entity carries, and the authoring-site origins (`referenced_from`) that pulled the URI into the Release's dependency closure.",
+      "description": "Catalog entities reachable from this Release: Component, Feature, Recipe, FeatureRecipe, Plugin, Aggregate, the Release's own Aggregate and Manifest, and the Manifest that Manifest extends. Each entry is identified by its `kind` together with its canonical URI, so two entities of different kinds that share a name — an Aggregate and a Manifest both named `imported/flow`, say — are two entries, each held to its own digest. Each records the resolved version, the digest of what the entity carries, and the authoring-site origins (`referenced_from`) that pulled the URI into the Release's dependency closure. A lockfile whose entries carry no `kind` is out of date: `aggrega pull --release <release>` writes it again.",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["uri", "resolved_version", "digest"],
+        "required": ["kind", "uri", "resolved_version", "digest"],
         "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["aggregate", "component", "feature", "feature_recipe", "manifest", "plugin", "recipe"],
+            "description": "Kind of the catalog entity, read from where the Release, its Aggregate or its Manifest names it: `component` and `feature` for a Component or Feature type the Aggregate, the Release or a Manifest mapping names, `recipe` and `feature_recipe` for a realization a Manifest mapping binds, `plugin` for a Plugin entity, `aggregate` for the Release's own Aggregate and every Aggregate it includes, and `manifest` for the Release's own Manifest and the Manifest it extends. Together with `uri` it identifies the entry: a build compares each entry with the entity of the same kind and URI, so an edit to either of two same-named entities of different kinds is noticed."
+          },
           "uri": {
             "type": "string",
             "description": "Canonical URI of the catalog entity (e.g. `hub.aggrega.ai/component/core/compute/api-server`)."
