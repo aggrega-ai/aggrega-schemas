@@ -193,7 +193,7 @@
   "$defs": {
     "inject_delivery": {
       "type": "array",
-      "description": "A single delivery mechanism, authored as an array of entries. Each entry carries an 'in' (local identifier — env var name, file path, arg flag, or custom mechanism-specific key) plus exactly one of 'from' (a provides key to resolve) or 'value' (a literal string, optionally containing Go template expressions evaluated at self-inject resolution). 'from' resolves against the target's provides in uses[].inject context, or against the component's own provides in component.inject context.",
+      "description": "A single delivery mechanism, authored as an array of entries. Each entry carries an 'in' (local identifier — env var name, file path, arg flag, or custom mechanism-specific key) plus exactly one of 'from' (a provides key to resolve) or 'value' (a literal string, optionally containing Go template expressions evaluated at self-inject resolution). 'from' resolves against the target's provides in uses[].inject context, against the provides the attachment's FeatureRecipe publishes in an attachment's features.<name>.inject context, or against the component's own provides in component.inject context. 'value' is delivered only in component.inject: an entry carrying it in uses[].inject or in an attachment's features.<name>.inject halts the build, because those blocks deliver only keys another entity publishes.",
       "items": {
         "type": "object",
         "required": ["in"],
@@ -203,7 +203,7 @@
         ],
         "properties": {
           "in": { "type": "string", "description": "The local identifier to inject into. Semantics determined by the parent mechanism (env → variable name, file → mount path, arg → flag prefix, custom → mechanism-specific key)." },
-          "from": { "type": "string", "description": "A provides key to resolve. In uses[].inject, resolves against the target node's provides. In component.inject, resolves against the component's own provides." },
+          "from": { "type": "string", "description": "A provides key to resolve. In uses[].inject, resolves against the target node's provides. In an attachment's features.<name>.inject, resolves against the provides the attachment's FeatureRecipe publishes. In component.inject, resolves against the component's own provides." },
           "value": { "type": "string", "description": "A literal string value. Supports Go template expressions evaluated at self-inject resolution with access to .values, .infra, .context.instance_id, .context.labels, .context.annotations.*, and .metadata.*. The Aggregate's own text is evaluated against .parameters before it is read, so each '{{' of a self-inject template is written escaped, as '{{\"{{\"}}': '{{\"{{\"}} .values.app_token }}' delivers the component's own app_token value, while '{{ .values.app_token }}' halts the build as an invalid parameter reference." }
         },
         "additionalProperties": false
@@ -211,7 +211,7 @@
     },
     "inject_block": {
       "type": "object",
-      "description": "Agnostic injection routing. Maps local variables to target provides keys (uses[].inject) or to literal strings / template expressions (component.inject). Each delivery mechanism (env, file, arg, or custom) is authored as an array of {in, from?, value?} entries — explicit 'from' for provides references and 'value' for literals. A custom mechanism may take any name except all: a template reads every mechanism merged into one view at .context.inject.all, so a mechanism of that name would be hidden by it, and naming one halts the build.",
+      "description": "Agnostic injection routing. Maps local variables to target provides keys (uses[].inject), to the provides keys an attachment's FeatureRecipe publishes (features.<name>.inject), or to literal strings / template expressions and the component's own provides keys (component.inject). Each delivery mechanism (env, file, arg, or custom) is authored as an array of {in, from?, value?} entries — explicit 'from' for provides references and 'value' for literals. A custom mechanism may take any name except all: a template reads every mechanism merged into one view at .context.inject.all, so a mechanism of that name would be hidden by it, and naming one halts the build.",
       "properties": {
         "env": { "$ref": "#/$defs/inject_delivery" },
         "file": { "$ref": "#/$defs/inject_delivery" },
