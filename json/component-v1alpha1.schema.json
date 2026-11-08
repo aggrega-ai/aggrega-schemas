@@ -156,8 +156,14 @@
         },
         "inject": {
           "type": "array",
-          "description": "Allowlisted self-inject delivery mechanisms (e.g., ['env', 'file', 'arg']). When present, developers may use the inject: block at the component level in the Aggregate to inject their own values or provides keys directly into the delivery pipe. If omitted, component-level self-inject is forbidden (Black-Box pattern — the Recipe handles all internal wiring). Same semantics as usesSchema[].inject but governs the component's own values rather than cross-component topology.",
-          "items": { "type": "string" }
+          "description": "Allowlisted self-inject delivery mechanisms (e.g., ['env', 'file', 'arg']). When present, developers may use the inject: block at the component level in the Aggregate to inject their own values or provides keys directly into the delivery pipe. If omitted, component-level self-inject is forbidden (Black-Box pattern — the Recipe handles all internal wiring). Same semantics as usesSchema[].inject but governs the component's own values rather than cross-component topology. Any mechanism name may be listed except all, which no inject block can name.",
+          "items": {
+            "type": "string",
+            "not": {
+              "const": "all",
+              "description": "\"all\" is the merged view of every delivery mechanism, read at .context.inject.all, so it cannot name a mechanism"
+            }
+          }
         },
         "usesSchema": {
           "type": "object",
@@ -174,8 +180,14 @@
                 },
                 "inject": {
                   "type": "array",
-                  "items": { "type": "string" },
-                  "description": "Allowlisted delivery contracts (e.g., ['env', 'file']). If omitted, delivery dictation is banned (Black-Box pattern)."
+                  "items": {
+                    "type": "string",
+                    "not": {
+                      "const": "all",
+                      "description": "\"all\" is the merged view of every delivery mechanism, read at .context.inject.all, so it cannot name a mechanism"
+                    }
+                  },
+                  "description": "Allowlisted delivery contracts (e.g., ['env', 'file']). If omitted, delivery dictation is banned (Black-Box pattern). Any mechanism name may be listed except all, which no inject block can name."
                 },
                 "required": {
                   "type": "boolean",

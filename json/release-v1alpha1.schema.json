@@ -422,7 +422,7 @@
     },
     "inject_block": {
       "type": "object",
-      "description": "Agnostic injection routing on a connection. Maps local variables to the target's provides keys. Each delivery mechanism (env, file, arg, or custom) is authored as an array of {in, from} entries — explicit 'from' for provides references.",
+      "description": "Agnostic injection routing on a connection. Maps local variables to the target's provides keys. Each delivery mechanism (env, file, arg, or custom) is authored as an array of {in, from} entries — explicit 'from' for provides references. A custom mechanism may take any name except all: a template reads every mechanism merged into one view at .context.inject.all, so a mechanism of that name would be hidden by it, and naming one halts the build.",
       "properties": {
         "env": {
           "$ref": "#/$defs/inject_delivery"
@@ -432,6 +432,12 @@
         },
         "arg": {
           "$ref": "#/$defs/inject_delivery"
+        }
+      },
+      "propertyNames": {
+        "not": {
+          "const": "all",
+          "description": "\"all\" is the merged view of every delivery mechanism, read at .context.inject.all, so it cannot name a mechanism"
         }
       },
       "additionalProperties": {
