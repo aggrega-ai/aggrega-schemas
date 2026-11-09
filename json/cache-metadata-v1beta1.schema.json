@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/cache-metadata-v1beta1.schema.json",
+  "title": "Aggrega Cache-Slot Metadata",
+  "description": "The metadata.yaml file written into every source-artifact cache slot alongside blob.tgz. Records the {kind, url, version, digest, mediatype, pulled_at} identity tuple so cache inspection and build-time integrity verification have a single canonical record. The wire shape is closed (additionalProperties: false) and all six fields are required. Schema evolution discipline: adding a new optional field is SemVer-MINOR (additive); removing a field or tightening a constraint is SemVer-MAJOR.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "url", "version", "digest", "mediatype", "pulled_at"],
+  "properties": {
+    "kind": {
+      "enum": ["helm-oci-chart", "helm-https-chart", "compose-https-fragment", "git-repository", "terraform-module-oci"],
+      "description": "The source kind that produced this cache slot. Mirrors the lockfile's source_artifacts[].kind enum; the matching kind is what every build-time consumer reads to choose the right loader."
+    },
+    "url": {
+      "type": "string",
+      "description": "The authored URL — the identity URL as written in the Recipe's spec.source.url. For helm-https-chart this is the repo root (repo-root form) or the direct .tgz (direct form) exactly as authored. For git-repository, the cloneable repository URL. For helm-oci-chart, the registry reference. For compose-https-fragment, the fragment's HTTPS URL. The resolved artifact location for a repo-root helm source is recorded separately under `resolved_url:` as provenance."
+    },
+    "resolved_url": {
+      "type": "string",
+      "description": "Provenance only: the concrete artifact location the authored URL resolved to at pull time. For a repo-root helm source this is the direct .tgz URL the repository index resolved the chart+version to. Recorded for diagnostics; not part of any integrity contract. Absent when the resolved location equals the authored URL."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^([^/\\\\.]|\\.[^/\\\\.])*\\.?$",
+      "description": "The concrete version the resolver pinned at pull time. For helm-* kinds, the chart version. For git-repository, the commit the authored reference resolved to. Recorded as a single path segment, because it builds the cache slot this metadata sits in, so it carries no `/`, no `\\` and no `..`."
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "description": "Content digest of the cached .tar.gz archive in sha256:<hex> form. Build-time verification computes the SHA-256 of blob.tgz, compares it against this field AND the lockfile entry's digest, and halts the build, reporting a content digest mismatch, when either differs."
+    },
+    "mediatype": {
+      "type": "string",
+      "description": "Canonical media type the registry advertised (or the kind's default for kinds without registry metadata). Recorded for diagnostic provenance."
+    },
+    "pulled_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$",
+      "description": "RFC 3339 timestamp recording the pull-time wall clock. Diagnostic provenance only — not part of any integrity contract. The pattern holds the value to the RFC 3339 shape when the metadata is read."
+    }
+  }
+}

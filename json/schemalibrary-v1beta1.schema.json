@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/schemalibrary-v1beta1.schema.json",
+  "title": "Aggrega Catalog (SchemaLibrary)",
+  "description": "A reusable collection of JSON Schema 2020-12 definitions that catalog content (Components, Features, etc.) can $ref into via the bare-name identity reference <Library>#/schemas/<name> (the version is supplied by the per-Release lockfile; no registry host appears in the reference). Tier 3 — opt-in for catalogs that need cross-Component schema reuse.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "aggrega.ai/v1beta1"
+    },
+    "kind": {
+      "type": "string",
+      "const": "SchemaLibrary"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$",
+          "description": "PascalCase identifier for the library. It is the <Library> name in the bare-name identity reference <Library>#/schemas/<name>; the version is supplied by the per-Release lockfile and no registry host enters the reference or any derived identifier."
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+          "description": "Strict Semantic Versioning of the library (e.g., 1.0.0). The per-Release lockfile pins one version per library."
+        },
+        "description": {
+          "type": "string",
+          "description": "A concise summary of what the library covers."
+        },
+        "labels": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
+          "additionalProperties": { "type": "string" },
+          "description": "Author-declared labels. The compiler is content-neutral and does not interpret label values: they are opaque metadata, carried for whatever reads the library to match on."
+        },
+        "annotations": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
+          "additionalProperties": { "type": "string" },
+          "description": "Author-declared annotations. Same opaque-metadata posture as labels."
+        }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "required": [
+        "schemas"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schemas": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[SchemaEntry]",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^[A-Z][A-Za-z0-9]*$",
+            "description": "PascalCase identifier — `^[A-Z][A-Za-z0-9]*$`. Entry keys appear in bare-name identity references (`<Library>#/schemas/<name>`); the envelope-level constraint prevents non-PascalCase keys from propagating through the catalog ecosystem."
+          },
+          "additionalProperties": {
+            "description": "A single schema entry. Authored in compact form, JSON Schema 2020-12 YAML, or mixed (per-node dispatch via the compact-form compiler's content-shape detection). Entries may also use $instantiate: to reference a template declared under spec.templates with $args: bindings — substitution is literal-scalar-only.",
+            "type": "object"
+          },
+          "description": "Named map of reusable schema definitions. Each entry's content is validated by the compact-form compiler at parse time; the envelope-level validation only checks the structural wrapping."
+        },
+        "templates": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[TemplateEntry]",
+          "propertyNames": {
+            "pattern": "^[A-Z][A-Za-z0-9]*$",
+            "description": "PascalCase identifier — `^[A-Z][A-Za-z0-9]*$`. Same envelope-level discipline as schema entry keys; template names are referenced via $instantiate: at instantiation time."
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "$params"
+            ],
+            "minProperties": 2,
+            "additionalProperties": true,
+            "properties": {
+              "$params": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "description": "A single parameter declaration. Carries type + optional default + optional constraint. Used by $instantiate: bindings; literal-scalar-substitution semantic only — no Go templating, no conditionals, no loops."
+                },
+                "description": "Named map of template parameters. Each parameter's $args: binding is substituted as a literal scalar into the template body at instantiation."
+              }
+            },
+            "description": "A single template entry. Carries $params: declarations plus a body that references $params: placeholders by literal scalar substitution. Referenced from schema entries via $instantiate: + $args:."
+          },
+          "description": "Optional named map of parameterized helpers. Schema entries reference templates by name via $instantiate:; literal scalar substitution only — no embedded Go templates, no conditionals, no loops. The library substitution layer is intentionally narrower than full template evaluation so authoring stays in the schema language rather than introducing a separate templating surface."
+        }
+      },
+      "description": "The SchemaLibrary's content. spec.schemas is required and must declare at least one entry; spec.templates is optional and only present when the library uses parameterized helpers."
+    }
+  }
+}

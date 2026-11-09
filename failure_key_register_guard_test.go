@@ -14,7 +14,7 @@ import (
 // which one a value is drawn from.
 //
 // A host-function reply envelope carries `hostfunc_error_code`, whose value is a
-// member of the closed catalogue in wasm-hostfunc-error-v1alpha1.schema.json: a
+// member of the closed catalogue in wasm-hostfunc-error-v1beta1.schema.json: a
 // fixed list of ways a host function can fail.
 //
 // A socket output travelling the other way carries `condition_code` beside
@@ -39,7 +39,7 @@ import (
 // to write.
 var retiredFailureKeys = map[string]string{
 	"error_code": "a host-function reply envelope declares hostfunc_error_code and references " +
-		"wasm-hostfunc-error-v1alpha1.schema.json#/properties/code; a socket output reporting a " +
+		"wasm-hostfunc-error-v1beta1.schema.json#/properties/code; a socket output reporting a " +
 		"halting condition the guest raised declares condition_code",
 	"error_short_code": "the guest-reported condition pair is condition_code and condition_short_code",
 }

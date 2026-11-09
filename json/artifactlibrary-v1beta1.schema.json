@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/artifactlibrary-v1beta1.schema.json",
+  "title": "Aggrega Catalog (ArtifactLibrary)",
+  "description": "A reusable collection of named artifact bundles that Recipes and FeatureRecipes consume at render time via `artifacts.<name>: { $import: ... }`. Each bundle is a set of output files imported as one unit. Tier 3 — opt-in for catalogs that need cross-Recipe artifact reuse. Single authoring mode: Go templates only.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "aggrega.ai/v1beta1"
+    },
+    "kind": {
+      "type": "string",
+      "const": "ArtifactLibrary"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$",
+          "description": "PascalCase identifier for the library. It is the <Library> name in the bare-name identity reference <Library>#/artifacts/<name>; the version is supplied by the per-Release lockfile and no registry host enters the reference or any derived identifier."
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+          "description": "Strict Semantic Versioning of the library (e.g., 1.0.0). A consumer may assert this as an optional `:<version>` minimum-version floor in a bare-name reference (<Library>:<version>#/artifacts/<name>); the per-Release lockfile owns the resolved version."
+        },
+        "description": {
+          "type": "string",
+          "description": "A concise summary of what the library covers."
+        },
+        "labels": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
+          "additionalProperties": { "type": "string" },
+          "description": "Author-declared labels. The compiler is content-neutral and does not interpret label values: they are opaque metadata, carried for whatever reads the library to match on."
+        },
+        "annotations": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
+          "additionalProperties": { "type": "string" },
+          "description": "Author-declared annotations. Same opaque-metadata posture as labels."
+        }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "required": [
+        "artifacts"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "artifacts": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[ArtifactLibraryEntry]",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^[A-Z][A-Za-z0-9]*$",
+            "description": "PascalCase identifier. Entry keys appear in canonical reference URLs (`#/artifacts/<name>`); the envelope-level constraint prevents non-PascalCase keys from propagating through the catalog ecosystem. The <name> addresses the whole bundle, never an individual file within it."
+          },
+          "additionalProperties": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": {
+              "type": "string",
+              "description": "One file in the bundle. The value is a Go template fragment authored as a YAML string whose output is the artifact body emitted to that file. The compiler stores the fragment verbatim at ArtifactLibrary load; parsing happens at consumption time when the bundle is imported via `artifacts.<name>: { $import: ... }`."
+            },
+            "description": "A named bundle: a map of filename to Go-template file body. Importing the bundle at a single `artifacts.<name>` site expands into one output per file, each nested under the key the bundle was imported at as `<key>/<filename>`. Each filename names the bundle's own file within that key and is otherwise free-form, so it may carry a nested layout such as `rbac/role.yaml`; it must be an ordinary relative file name written plainly, and a build refuses one that names no file of its own beneath the key — `.`, `./`, a name that collapses back onto the key such as `x/..`, a trailing or doubled `/`, a `.` or `..` part, an absolute name or one that climbs out. At least one file is required."
+          },
+          "description": "Named map of reusable artifact bundles. Each bundle groups the output files that belong together (for example a CRD, its RBAC, and a ConfigMap). Each file body is opaque to the envelope validation — content semantics are handled by the Go template parser at consumption time."
+        }
+      },
+      "description": "The ArtifactLibrary's content. spec.artifacts is required and must declare at least one bundle. spec carries additionalProperties: false — no parallel authoring modes are accepted at the envelope level. The single-authoring-mode posture keeps rendering uniform (Go template throughout) and avoids forcing authors to switch evaluation models mid-render when consuming imported bundles."
+    }
+  }
+}

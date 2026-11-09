@@ -1,0 +1,232 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/feature-v1beta1.schema.json",
+  "title": "Aggrega Catalog (Feature)",
+  "description": "A modular operational feature that binds dynamically to components.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "aggrega.ai/v1beta1"
+    },
+    "kind": {
+      "type": "string",
+      "const": "Feature"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+          "description": "Strict Semantic Versioning of the feature (e.g., 1.0.0)."
+        },
+        "description": {
+          "type": "string",
+          "description": "What this entity is and what it is for, written for someone deciding whether to use it. Open with a sentence naming the thing, then add what a reader needs in order to choose it and use it correctly — what it expects from the Release that deploys it, and anything surprising about how it behaves. A short paragraph is the usual length."
+        },
+        "maintainers": {
+          "type": "array",
+          "description": "List of maintainers who own this entity.",
+          "items": {
+            "type": "object",
+            "x-aggrega-go-type": "Maintainer",
+            "properties": {
+              "name": { "type": "string" },
+              "email": { "type": "string" },
+              "url": { "type": "string" }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          }
+        },
+        "license": {
+          "type": "string",
+          "description": "SPDX identifier for the license of the software this entity describes, such as MIT or AGPL-3.0. It records the terms of that software, not the terms of this file."
+        },
+        "repository": {
+          "type": "string",
+          "description": "The URL to the Git repository where the source files live."
+        },
+        "home": {
+          "type": "string",
+          "description": "The URL of this entity's home page, wiki, or documentation."
+        },
+        "keywords": {
+          "type": "array",
+          "description": "A list of descriptive keywords for UI discoverability.",
+          "items": { "type": "string" }
+        },
+        "labels": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
+          "description": "Duck-typing labels for the Feature. The reserved label 'feature.aggrega.ai/kind' with value 'secret' marks this as a credential Feature for the author and for the tooling that surfaces it. A credential Feature and an ordinary Feature are attached the same way, under the same attachment surface; what an attachment produces is decided by the FeatureRecipe the Manifest maps its type to, not by the label.",
+          "properties": {
+            "feature.aggrega.ai/kind": {
+              "type": "string",
+              "description": "Feature kind label. Value 'secret' marks this as a credential Feature.",
+              "enum": ["secret"]
+            }
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "annotations": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
+          "description": "Immutable, intrinsic feature characteristics authored by the Platform Architect in Domain 2. Cascades down to the .context.annotations.catalog bucket.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "spec": {
+      "type": "object",
+      "description": "The validation, targeting, and interoperability contract for a catalog Feature: the free-form pillars (values, infra, provides) authored via schema, the fixed-shape pillars (usesSchema dependency sockets, featuresSchema attachment slots), component targeting (appliesTo and appliesToAnyOf), and interoperability controls.",
+      "properties": {
+        "extends": {
+          "type": "string",
+          "description": "Reference to a base Feature this Feature inherits from. It names the base by its `metadata.name` rather than by the registry coordinate the Feature publishes under, and takes the same three version forms every catalog reference takes: bare (`core/queue`) for the highest available release, exact (`core/queue:1.0.0`), or a caret range (`core/queue:^1.0.0`). What inherits is more than metadata: the base's `metadata.labels` and `metadata.annotations`, its `appliesTo` and `appliesToAnyOf` selectors, its `interoperability` block, its `usesSchema` and its `featuresSchema` all merge downward, and its JSON Schema 2020-12 declarations on `schema` are auto-merged. The child's own value wins on a shared key, and identity fields never inherit."
+        },
+        "featuresSchema": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[AttachmentSlot]",
+          "description": "Declarative attachment slot definitions: the named binding points at which this Feature expects a further Feature to be attached. A slot constrains which fill may bind it (selector) and how the fill's material may be delivered (inject); the fill's own Feature owns its values and infra contract. Declaring a slot never closes the attachment block — an author may attach a Feature under a name no slot declares. A slot is a binding point, not a dependency socket: usesSchema declares the separate topology surface.",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "required": {
+                "type": "boolean",
+                "default": false,
+                "description": "Declares that the slot must end up bound. On a Component's slot this halts the build when nothing binds the slot's name on an instance of that Component. A Feature's own slots have no surface to be bound from — an attachment declares type, description, values, uses and inject, and carries no nested attachment block — so on a Feature slot this field is a declaration only, read by the Workload cross-check that validates a resource-generating FeatureRecipe's container attachment references against the slots the implemented Feature declares."
+              },
+              "inject": {
+                "type": "array",
+                "items": { "type": "string", "enum": ["env", "file", "arg"] },
+                "description": "Allowed inject mechanisms for the slot's material. Empty array = blackbox (the FeatureRecipe controls delivery internally)."
+              },
+              "description": {
+                "type": "string",
+                "description": "Human documentation for this attachment slot."
+              },
+              "sensitive": {
+                "type": "boolean",
+                "default": false,
+                "description": "Declares that whatever fills this slot handles secret material. A marker, not a constraint: no fill is accepted or rejected because of it, and no rendered output changes. The declaration is carried onto the slot's generated validation schema, where tooling can read it, and is read when deriving whether the attachment filling this slot handles sensitive material."
+              },
+              "selector": {
+                "type": "string",
+                "description": "Optional Kubernetes-style label selector constraining which Feature may fill this slot — the slot analog of a usesSchema socket's selector, evaluated against the attached Feature's own labels, in the same grammar as a Feature's appliesTo. A fill whose labels do not satisfy it halts, and so does a selector outside that grammar, naming the requirement it could not read. Omit to place no constraint on the fill."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "appliesTo": {
+          "type": "string",
+          "description": "Kubernetes-style label-selector string matching Components. Comma-separated requirements all must hold (AND). Supported forms: key=value, key!=value, key in (v1, v2), key notin (v1, v2), bare key (label present), !key (label absent). Example: \"tier in (critical, production), !legacy\". An empty or absent selector declares no constraint. The selector is read against these forms each time an attachment of this Feature is evaluated, and a requirement outside them stops the build, naming it: an empty requirement (a leading, trailing or doubled comma), or a key carrying whitespace or any of = ! ( ) and the comma — so \"!tier=frontend\" is refused, and tier!=frontend is how a value is excluded. A value is the text after its operator, whatever characters it carries. The pattern on this field refuses only a few malformed shapes, before any attachment is evaluated.",
+          "pattern": "^(?:[^()]*[()][\\s\\S]*|[ \\t]*(?:![ \\t]*[^,]*[^ \\t,][^,]*|[^ \\t,!][^,]*)?(?:,[ \\t]*(?:![ \\t]*[^,]*[^ \\t,][^,]*|[^ \\t,!][^,]*)?)*)$"
+        },
+        "appliesToAnyOf": {
+          "type": "array",
+          "description": "A list of selectors; the Feature applies if ANY item matches (OR logic). Each item is either a label-selector string (same grammar as appliesTo; requirements inside the string AND together) or a flat key-value map where every pair must match (equality only).",
+          "items": {
+            "x-aggrega-go-type": "SelectorTerm",
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "A label-selector string; same grammar as appliesTo.",
+                "pattern": "^(?:[^()]*[()][\\s\\S]*|[ \\t]*(?:![ \\t]*[^,]*[^ \\t,][^,]*|[^ \\t,!][^,]*)?(?:,[ \\t]*(?:![ \\t]*[^,]*[^ \\t,][^,]*|[^ \\t,!][^,]*)?)*)$"
+              },
+              {
+                "type": "object",
+                "description": "A flat map of label key-value pairs; all pairs must match (equality only).",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            ]
+          }
+        },
+        "interoperability": {
+          "type": "object",
+          "x-aggrega-go-type": "*Interoperability",
+          "description": "Advanced operational safety and interoperability controls.",
+          "properties": {
+            "conflictsWith": {
+              "type": "array",
+              "description": "Names of the Features this Feature cannot reach a component alongside, each written the way an attachment's type names a Feature. The build halts before rendering when one component ends up carrying this Feature and a Feature named here — whether each was attached on the component, on a subsystem or boundary holding it, on a Release component entry, or by annotation-driven expansion. One declaration is enough: the halt does not need the other Feature to list this one. Names are compared with any version removed, so an entry matches every version of the Feature it names. Two Features attached to sibling boundaries that share no component never meet and do not halt.",
+              "items": {
+                "type": "string"
+              }
+             }
+          },
+          "additionalProperties": false
+         },
+         "usesSchema": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[UsesSchemaEntry]",
+          "description": "The dependency sockets this entity declares, keyed by socket name; each connection drawn through a socket is checked against that socket's declaration — its selector and the inject mechanisms it allows.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "type": "object",
+              "required": ["selector"],
+              "properties": {
+                "selector": { 
+                  "type": "string",
+                  "description": "Kubernetes-style label selector, in the same grammar as a Feature's appliesTo, that the target of every edge wired through this socket must satisfy. It is evaluated against the target's labels before anything renders: a target that does not satisfy it halts the build, and so does a selector outside that grammar, naming the requirement it could not read."
+                },
+                "inject": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "not": {
+                      "const": "all",
+                      "description": "\"all\" is the merged view of every delivery mechanism, read at .context.inject.all, so it cannot name a mechanism"
+                    }
+                  },
+                  "description": "Allowlisted delivery contracts (e.g., ['env', 'file']). If omitted, delivery dictation is banned (Black-Box pattern). Any mechanism name may be listed except all, which no inject block can name."
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "x-aggrega-go-type": "yaml.Node",
+          "description": "JSON Schema 2020-12 content covering the free-form pillars: values (the Developer's domain — application-shape parameters the Developer configures per Feature attachment in the Aggregate); infra (the Operator's domain — physical sizing knobs supplied by the Release); and provides (downstream context keys this Feature exposes to consumers via the topology pipe). Accepts three authoring modes via content-shape dispatch: (1) inline content (a YAML map carrying compact form, JSON Schema YAML, or mixed); (2) file replacement via {$import: <path>}, written at spec.schema to supply the whole contract from one file or at a single pillar to supply that pillar alone, with a relative path read against the directory holding the entity that declared it; (3) cross-document reference via {$ref: <Library>#/schemas/<name>} into a SchemaLibrary entry by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference). The companion fields usesSchema and featuresSchema cover the fixed-shape pillars (dependency sockets, attachment slots); the compiler composes the three into the one schema an instance is validated against."
+        },
+        "assertions": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
+          "description": "Build-time cross-field validation. Each entry is a named assertion: the key is a stable rule identifier surfaced in error messages; the value is a Go template string with `{{ fail \"message\" }}` halt semantics. Multiple named assertions per entity evaluate per-instance in author-declared order; the first failing assertion halts the build. Feature assertions evaluate after resolution and static analysis, before render, and express architectural invariants of the contract. Template context: .values / .infra / .uses / .features / .metadata. The evaluator uses missingkey=error: references to undefined keys halt with a no-such-key diagnostic. Because the bare reference halts before any fallback can run, a plain `default` does not supply an optional-field fallback on this surface — gate the reference with `hasKey`, or use the `optional` helper, which performs the presence check directly. Reading the key through `index` does not supply one either: `index` halts on a map key the map does not hold, naming the key.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

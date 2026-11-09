@@ -1,0 +1,515 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://aggrega.ai/schemas/template-context-v1beta1.schema.json",
+    "title": "Aggrega Template Context",
+    "description": "The view the compiler assembles and passes to Recipe and FeatureRecipe templates while it renders. When rendering an attachment FeatureRecipe the compiler additionally populates .attachment_name and .inject with the attachment-scoped context, .context.render_facts with what its host's provider reported about the host's render, and, on the templates that produce the attachment's own resources, .context.used_by with the components that use its host. For a boundary-scope FeatureRecipe (spec.executionScope: boundary), the templates it runs once for the boundary — its locals, provides, source, valuesMapping, artifacts and pipeline steps among them — find the .context, .workload, .attachment_name, .inject, and .inject_raw pillars absent and a .boundary.* pillar populated instead — see the boundary block at the bottom of properties; its injectMapping runs once for each component the attachment reaches, in that component's context, so it reads .context.* and .attachment_name, and .boundary is not set there. This is NOT persisted to disk; it exists only in compiler memory during rendering. This schema documents the contract between the compiler and Ops template authors.\n\nBase-rendering stage availability, in the order the stages run:\n  Provides evaluation (locals preamble, then provides): node-local pillars only. A locals entry reads the entries above it in its own block; a provides template reads the node's whole resolved .locals. Self-reference banned (no provides entry reads another).\n  Source resolution (locals publication + source eval): all pillars; .source and .workload absent. Those locals are published onto .locals here, then source: is evaluated against them.\n  Values mapping (valuesMapping): all pillars + .source; .workload absent.\n  Workload synthesis (workload eval): all pillars + .source; .workload being evaluated (absent from self-reference).\n  Artifact evaluation (artifacts): all pillars + .source + .workload (fullest context).",
+    "type": "object",
+    "required": [
+      "context",
+      "values",
+      "infra",
+      "locals"
+    ],
+    "properties": {
+      "context": {
+        "type": "object",
+        "description": "The compiler-assembled execution context providing identity, topology, and delivery data.",
+        "required": [
+          "instance_id",
+          "inject",
+          "uses",
+          "self_inject"
+        ],
+        "properties": {
+          "instance_id": {
+            "type": "string",
+            "description": "The absolute flattened ID of the current node (e.g., 'backend', or 'data-layer-zdmain-db' for the component main-db of the module instance data-layer), written into the alphabet every authored component name satisfies. Deterministic and stable across compilations for the same Aggregate. It is the name of the resources built for this node that no provider derives a name for — an artifact set placed from the Recipe, and a workload synthesized by a provider that names it after the identity — so an address published for one of those is built from this value."
+          },
+          "rendered_name": {
+            "type": "string",
+            "description": "The name the provider bound to this node gives the resources it renders for the node — for source the author supplied, the name the supplied templates themselves render against, such as the release name a chart reads; for a workload it synthesizes, the name it gives that workload's resources where it derives one rather than writing the node's identity, as the helm provider does with the same release name. Read it wherever this Recipe names a resource a supplied chart or module declared or such a provider synthesized, whether in a provides entry, a valuesMapping, a workload, an artifacts entry or a pipeline step's with or when, because the provider may spell that name in a poorer alphabet than an authored component name is written in and the two then differ. Empty when the bound provider derives no such name: the resources of a placed artifact set, and of a workload synthesized by a provider that names it after the identity, carry the node's identity, so read '{{ .context.instance_id }}' for those, and a Recipe that wrote its own resource names already knows them. Reading this key where the bound provider reports no name halts the build and says which to write instead. The refusal covers the templates a Recipe writes inline; a valuesMapping, a workload or an artifacts entry supplied through '$import' is resolved only when the render reaches it, so a reference inside one of those renders as an empty value rather than halting. On the templates of a FeatureRecipe bound to a component's attachment it is the HOST component's name as the host's own provider reports it — the value the host's own Recipe reads, just as instance_id there is the host's identity — so an attachment names a resource after its host from it and gets a name the host's platform accepts. Where the host's provider reports no name it is empty, and reading it from an inline template of the attachment other than its injectMapping halts the build; read '{{ .context.instance_id }}' there instead."
+          },
+          "labels": {
+            "type": "object",
+            "description": "The duck-typing and ontology labels of the current node, including any change a governance plugin attached in the label-transform role made at topology construction.",
+            "additionalProperties": { "type": "string" }
+          },
+          "annotations": {
+            "type": "object",
+            "description": "The three cascading annotation buckets for the current node, segregated by origin.",
+            "properties": {
+              "release": {
+                "type": "object",
+                "description": "Physical topology strings cascading from Release boundaries.",
+                "additionalProperties": { "type": "string" }
+              },
+              "catalog": {
+                "type": "object",
+                "description": "Immutable intrinsic traits authored by the Platform Architect in Domain 2.",
+                "additionalProperties": { "type": "string" }
+              },
+              "aggregate": {
+                "type": "object",
+                "description": "Cognitive metadata cascading from Aggregate subsystems.",
+                "additionalProperties": { "type": "string" }
+              }
+            },
+            "additionalProperties": false
+          },
+          "inject": {
+            "type": "object",
+            "description": "The pre-hydrated and intercepted delivery pipe. Starts as a compiler-generated map resolving Developer inject keys to Target provides values. Mutated in-place by the injectMapping deep-merges. By the time the Base Recipe renders, this contains the fully resolved physical strings.",
+            "properties": {
+              "env": {
+                "type": "object",
+                "description": "Environment variable delivery. Keys are the Developer's local variable names, values are the resolved target strings.",
+                "additionalProperties": { "type": "string" }
+              },
+              "file": {
+                "type": "object",
+                "description": "File mount delivery. Keys are local file paths, values are the resolved target strings.",
+                "additionalProperties": { "type": "string" }
+              },
+              "arg": {
+                "type": "object",
+                "description": "Command-line argument delivery. Keys are flag prefixes, values are the resolved target strings.",
+                "additionalProperties": { "type": "string" }
+              },
+              "all": {
+                "type": "object",
+                "description": "Pre-calculated flat merge of env + file + arg + custom mechanisms. Populated after uses-inject resolution and recalculated after inject mapping. Templates use {{ toJson .context.inject.all }} for universal serialization.",
+                "additionalProperties": { "type": "string" }
+              }
+            },
+            "additionalProperties": {
+              "type": "object",
+              "description": "Custom injection paradigms (e.g., 'ssm_param'). Open-ended per the inject schema's additionalProperties.",
+              "additionalProperties": { "type": "string" }
+            }
+          },
+          "uses": {
+            "type": "object",
+            "description": "The enriched topological edge map. Keyed by the Developer's alias (e.g., 'my_db', 'my_api'). Each entry is a compiler-assembled view of the target node's identity, resolved provides, injection mapping, and cascaded annotations, and of the attachments written on that connection — and, for a FeatureRecipe that declares readsTargetRenderFacts, of what the target's renders reported. This is NOT the raw IR edge — it is an enriched projection built by the compiler specifically for template consumption. A template that ranges this map sees the connections in key order — sorted by alias — not in the order they were written.",
+            "additionalProperties": {
+              "$ref": "#/$defs/enriched_edge"
+            }
+          },
+          "self_inject": {
+            "type": "object",
+            "description": "Which of the component's own values and provides the developer has already given a delivery name, read from the inject: block written on the component itself — the block .inject_raw holds as written, and .context.inject holds resolved. Each mechanism the block names (env, file, arg, or a custom one such as ssm_param) maps each name the developer wrote to the own key that entry delivers, the way .context.uses.<alias>.inject maps a connection's names to the keys they read: 'provides.<key>' for an entry written with from: <key>; 'values.<key>' for an entry whose value: template reads exactly one of the component's own values and nothing else, <key> being that value's top-level key whatever text or functions surround the read and however deeply it reads into the value — '{{ .values.config.port }}', '{{ index .values.config \"port\" }}' and '{{ (default dict .values.config).port }}' all map to 'values.config'; and an empty string for every other entry — a literal, a template reading two values, a template reading anything besides the values, or a template whose read of the values the text does not attribute to one top-level key, such as '{{ index .values \"role\" }}', the values read whole, or the whole context handed to a function. So a Recipe that delivers an own value under a default name tests whether some entry already maps to 'values.<key>' and skips its default when one does, e.g. {{ range $name, $key := .context.self_inject.env }}{{ if eq $key \"values.role\" }}…{{ end }}{{ end }}. Present and empty when the developer wrote no block; a mechanism appears only when the block names it, and a template meets the names sorted however it reads them. Read from the text the developer wrote, never from a resolved value.",
+            "properties": {
+              "env": { "type": "object", "description": "Environment variable delivery: keys are the developer's variable names, values are the own key each entry delivers.", "additionalProperties": { "type": "string" } },
+              "file": { "type": "object", "description": "File mount delivery: keys are the developer's file paths, values are the own key each entry delivers.", "additionalProperties": { "type": "string" } },
+              "arg": { "type": "object", "description": "Command-line argument delivery: keys are the developer's flag prefixes, values are the own key each entry delivers.", "additionalProperties": { "type": "string" } }
+            },
+            "additionalProperties": {
+              "type": "object",
+              "description": "A custom delivery mechanism the block names (e.g., 'ssm_param'): keys are the developer's names, values are the own key each entry delivers.",
+              "additionalProperties": { "type": "string" }
+            }
+          },
+          "used_by": {
+            "type": "array",
+            "description": "The components that use this one: one entry per uses connection another component makes to it, in the order the connecting components are written and then the order of each one's own uses entries. A component connecting twice appears twice. Read only by a FeatureRecipe attached to the component, and only in the templates that produce the attachment's own resources — its valuesMapping, workload and artifacts. It is absent from the component's own Recipe templates, from an injectMapping and from a pipeline step's with and when, because the output of each of those can land in the component's own rendered output, which stays the same whoever connects to it. Each entry is a list item rather than a key, so a template ranging it meets the callers in that order.",
+            "items": {
+              "$ref": "#/$defs/inbound_edge"
+            }
+          },
+          "render_facts": {
+            "$ref": "#/$defs/render_facts",
+            "description": "What the provider that rendered this component reported about the output it emitted — the render facts it reports — keyed by fact name. Which names a provider reports, and what each entry holds, is that provider's own documented contract. Every value is a list, even with one entry, so a template always ranges over it; where the component's render took more than one provider call and one name was reported by several of them, its lists are joined into one in the order the calls ran. Present on every template of a FeatureRecipe attached to the component — its valuesMapping, workload, artifacts and pipeline steps' with and when — once the component has rendered, and empty where its provider reports nothing, so a name nobody reported reads as an empty list. Absent from the component's own Recipe templates and from an injectMapping, which run before the component has rendered."
+          }
+        },
+        "additionalProperties": false
+      },
+      "values": {
+        "type": "object",
+        "description": "The opaque cognitive payload for this node, already validated by the schema validator at resolution. Passed through untouched.",
+        "additionalProperties": true
+      },
+      "infra": {
+        "type": "object",
+        "description": "The physical sizing payload injected from the Release for this node. Bypasses the Developer entirely.",
+        "additionalProperties": true
+      },
+      "locals": {
+        "type": "object",
+        "description": "The Recipe's own private state (e.g., primary_compute, volumes_path). Evaluated in the locals preamble — ahead of that node's provides — and published onto this pillar at source resolution. Each entry is a Go template evaluated against a self-contained node-local context carrying the entries of the same block resolved so far, so an entry MAY read a sibling defined ABOVE it and receives that sibling's resolved value. Author order is part of the contract wherever one entry reads another: moving a definition below its reader breaks the build. A '.locals.<key>' reference to a later entry, or to a key the block does not declare, halts. The check reads the path a reference RESOLVES to rather than the keystrokes, so it covers the direct form, a read inside a '{{ with .locals }}' block, a read through a variable bound directly to '.locals', and a key read off the block in parentheses, '(.locals).<key>' or '($.locals).<key>', alike. One spelling it does not cover: a reference whose path the template text does not decide — one reached through a function, such as 'index .locals' or '(default dict .locals).<key>', or through a 'with' block or a variable binding whose pipeline applies one. It is not analysed, and an absent key reached that way does not halt: it renders the literal text '<no value>' rather than nothing at all. The one exception is 'index' itself: on every template surface it halts, naming the key, when the map it reads does not hold the key it is asked for, so an absent key reached through 'index .locals' halts. A locals entry cannot read '.provides'. Available in provides (at provides evaluation, after the preamble), source, valuesMapping, workload, artifacts, assertions, and to downstream Wasm plugins via pipeline[].with (and pipeline[].when). Never exposed to callers.",
+        "additionalProperties": { "type": "string" }
+      },
+      "provides": {
+        "type": "object",
+        "description": "The Recipe's public API contract. Populated from provides evaluation. Available in base-rendering valuesMapping for self-reference (e.g., {{ .provides.host }}). NOT available within the provides template itself (the provides self-containment invariant). Callers resolve inject keys against these values.",
+        "additionalProperties": { "type": "string" }
+      },
+      "features": {
+        "type": "object",
+        "description": "Every attachment on this node, keyed by the instance name the author gave it. One pillar carries them all whatever they produce — an operational Feature, a credential Feature, an identity Feature — because what differs between attachments is what they produce, not how a template reads them. A Recipe reads them to adapt its rendering to the attached capabilities and to consume what an attachment publishes. An attachment written on one of the node's connections is not among them: it is read under that connection, at .context.uses.<alias>.features.<slot>, so a template ranging this pillar meets only the node's own attachments.",
+        "additionalProperties": { "$ref": "#/$defs/template_attachment" }
+      },
+      "metadata": {
+        "type": "object",
+        "description": "Release and compilation metadata providing global identity for deterministic naming. Available in all template blocks (valuesMapping, injectMapping, pipeline with).",
+        "properties": {
+          "release_name": {
+            "type": "string",
+            "description": "The name of the Release being built (e.g., 'prod-billing'). Used by Ops to construct globally unique cloud resource names (S3 buckets, IAM roles). Combined with .context.instance_id to guarantee uniqueness across environments."
+          },
+          "release_version": {
+            "type": "string",
+            "description": "The semantic version of the Release."
+          },
+          "environment": {
+            "type": "string",
+            "description": "The environment string from the Release metadata (e.g., 'production', 'local')."
+          },
+          "aggregate_name": {
+            "type": "string",
+            "description": "The name of the root Aggregate being compiled."
+          }
+        },
+        "additionalProperties": false
+      },
+      "attachment_name": {
+        "type": "string",
+        "description": "Only populated when rendering an attachment FeatureRecipe. Contains the attachment's instance name \u2014 the slot it fills in the owning entity's featuresSchema, or the free name the author gave it (e.g., 'admin_password', 'db_credentials'). Used to construct deterministic resource names that differ per attachment, composed after the host component's name: '{{ .context.rendered_name }}-{{ .attachment_name | replace \"_\" \"-\" }}' where the host's provider reports a rendered name, as helm does — the host's name spelled in the characters a Kubernetes name allows, with the attachment name's underscores folded to hyphens — and '{{ .context.instance_id }}-{{ .attachment_name }}' where the host's provider reports none."      },
+      "inject": {
+        "description": "Only populated when rendering an attachment FeatureRecipe that carries an authored inject block (e.g., { env: [ { in: 'OPENAI_API_KEY', from: 'api_token' } ] }). Distinct from .context.inject which is the base component's pre-hydrated delivery pipe from uses edges. Evaluates to null/absent for attachments with no authored inject and for base Recipes.",
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "object",
+            "description": "Attachment-scoped environment variable delivery.",
+            "additionalProperties": { "type": "string" }
+          },
+          "file": {
+            "type": "object",
+            "description": "Attachment-scoped file mount delivery.",
+            "additionalProperties": { "type": "string" }
+          },
+          "arg": {
+            "type": "object",
+            "description": "Attachment-scoped argument delivery.",
+            "additionalProperties": { "type": "string" }
+          },
+          "all": {
+            "type": "object",
+            "description": "Compiler-generated convenience merge of every attachment inject paradigm.",
+            "additionalProperties": { "type": "string" }
+          }
+        },
+        "additionalProperties": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "inject_raw": {
+        "description": "The immutable, unmutated Developer intent for the inject block. Every mechanism the block names — env, file, arg, or a custom one such as ssm_param — is under its own name, holding the entries exactly as written (in, with from or value), in the order written, so .inject_raw.ssm_param reads a custom mechanism the way .inject_raw.env reads a core one. Evaluates to null if the Developer omitted the inject block entirely. Used by Ops for logical checks (e.g., {{ if not .inject_raw }}) to detect omission before the mutations of inject mapping. Which of the component's own values or provides each entry delivers is read at .context.self_inject rather than out of the entries' text.",
+        "oneOf": [
+          { "type": "object", "additionalProperties": true },
+          { "type": "null" }
+        ]
+      },
+      "steps": {
+        "type": "object",
+        "description": "Pipeline inter-step communication. Only available inside Wasm pipeline 'with:' blocks. Each key is a pipeline step ID, containing the outputs exported by that step.",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "outputs": {
+              "type": "object",
+              "additionalProperties": { "type": "string" }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "source": {
+        "description": "Resolved source field content. On a Recipe's templates: populated at source resolution from the Recipe's source: field after Go-template evaluation, available from values mapping onward (valuesMapping, workload, artifacts), and null when the Recipe has no source:. On a FeatureRecipe's templates: the FeatureRecipe's own source: field after Go-template evaluation, evaluated before its valuesMapping and read there and on every template evaluated after it (omits, workload, artifacts, pipeline steps), never the host component's; null when the FeatureRecipe has no source:. A FeatureRecipe's injectMapping is evaluated before its source and reads the host component's. String form = URI path; object form = structured source (e.g., OCI descriptor with resolved version).",
+        "oneOf": [
+          { "type": "string" },
+          { "type": "object", "additionalProperties": true },
+          { "type": "null" }
+        ]
+      },
+      "workload": {
+        "description": "Parsed Workload spec for this node. Populated at workload synthesis from the Recipe's workload: field after Go-template evaluation + Workload JSON-schema validation (against workload-v1beta1.schema.json). Available from artifact evaluation onward (artifacts) so artifacts can reference workload fields without duplication (e.g., a ServiceMonitor reading .workload.services.metrics.ports.prom). Evaluates to null when the Recipe has no workload: block. Template attempts to dereference .workload.* on a null value fail with a clear error at template eval time.",
+        "oneOf": [
+          { "$ref": "workload-v1beta1.schema.json" },
+          { "type": "null" }
+        ]
+      },
+      "boundary": {
+        "type": "object",
+        "description": "Boundary-scope context — populated only when evaluating a template a FeatureRecipe whose spec.executionScope is 'boundary' runs once for the boundary. Component-scope FeatureRecipes do not receive this pillar; their context.instance_id, context.inject, context.uses, and the .workload pillar carry per-component data instead. A boundary-scope FeatureRecipe's templates run for the boundary receive .boundary.* in place of those per-component pillars; its injectMapping runs in each component's context the attachment reaches, reads those per-component pillars, and does not receive this one.",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The path of the Release boundary the FeatureRecipe is attached to: the boundary names from the outermost inward, joined with '/' (e.g. 'bridge', 'bridge/frontend'). It names the boundary, not the directory its output is written to, which the boundary's directory: sets."
+          },
+          "assembly_path": {
+            "type": "string",
+            "description": "The directory, relative to the build's output directory, that this attachment's own output is assembled into: its boundary's evaluated directory: and subDirectory:, the directory the build routes that output to (e.g. 'bridge/compose'). It equals a connection endpoint's source_assembly_path or target_assembly_path exactly when that endpoint renders into the same assembled file, so a FeatureRecipe compares them to tell a connection inside its own file from one in another file. Opaque data; the core does not interpret it."
+          },
+          "boundary_name": {
+            "type": "string",
+            "description": "The boundary's name (the map key in release.spec.boundaries)."
+          },
+          "components": {
+            "type": "object",
+            "description": "Map of instance_id to an entry for every component in the boundary's subtree (recursive, includes nested-boundary components). Each entry carries the component's resolved type URI, instance ID, and provided values from per-component provides evaluation.",
+            "additionalProperties": true
+          },
+          "internal_uses_edges": {
+            "type": "array",
+            "description": "Uses edges where source AND target are both in this boundary's subtree.",
+            "items": { "type": "object", "additionalProperties": true }
+          },
+          "outgoing_cross_boundary_uses_edges": {
+            "type": "array",
+            "description": "Uses edges whose source is in this boundary's subtree and whose target is outside it.",
+            "items": { "type": "object", "additionalProperties": true }
+          },
+          "incoming_cross_boundary_uses_edges": {
+            "type": "array",
+            "description": "Uses edges where target is in subtree, source is outside. Used by ingress-style aggregators that need to know who's calling in.",
+            "items": { "type": "object", "additionalProperties": true }
+          },
+          "cross_boundary_uses_edges": {
+            "type": "array",
+            "description": "Convenience union of outgoing and incoming cross-boundary edges.",
+            "items": { "type": "object", "additionalProperties": true }
+          },
+          "labels": {
+            "type": "object",
+            "description": "Union of components' labels in the subtree, with author-order preservation.",
+            "additionalProperties": { "type": "string" }
+          },
+          "annotations": {
+            "type": "object",
+            "description": "The boundary's own annotations after the cascade resolves.",
+            "additionalProperties": { "type": "string" }
+          },
+          "feature_attachments": {
+            "type": "array",
+            "description": "The attachments directly attached to this boundary (for cross-attachment reference within boundary scope), in the same attachment shape .features carries.",
+            "items": { "$ref": "#/$defs/template_attachment" }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false,
+    "$defs": {
+      "inbound_edge": {
+        "type": "object",
+        "description": "One connection another component makes to the component an attached FeatureRecipe renders for: who connects, through which socket, what the connecting component publishes, and the namespace and boundary it is placed in. Every value is a string the compiler carries without interpreting it.",
+        "required": [
+          "component_id",
+          "socket",
+          "provides"
+        ],
+        "properties": {
+          "component_id": {
+            "type": "string",
+            "description": "The flattened instance ID of the connecting component (e.g., 'frontend' or 'data-layer.etl') — the value a subDirectory path template reads as .component_id, spelled as .context.uses.<alias>.target spells the other end of a connection."
+          },
+          "socket": {
+            "type": "string",
+            "description": "The usesSchema category the connecting component draws this connection through (e.g., 'databases', 'apis')."
+          },
+          "provides": {
+            "type": "object",
+            "description": "The connecting component's resolved provides, narrowed to the keys its Component declares — the same values a consumer of that component reads at .context.uses.<alias>.provides. Empty when it publishes none.",
+            "additionalProperties": { "type": "string" }
+          },
+          "source_namespace": {
+            "type": "string",
+            "description": "The namespace the connecting component is placed in: the aggrega.ai/namespace annotation its own render receives — its boundaries' annotations, with its own Release entry's annotations applied last, so a component whose entry sets or clears the namespace carries its own setting rather than its boundary's. It is the value a boundary-scope FeatureRecipe reads as source_namespace on the same connection's entry in the .boundary uses-edge lists. Absent when no namespace applies to the connecting component; guard with `if` or `with` before printing it."
+          },
+          "source_boundary_path": {
+            "type": "string",
+            "description": "The slash-separated path of the Release boundary that holds the connecting component (e.g. 'edge' or 'aws-prod/payments') — the value a boundary-scope FeatureRecipe reads as source_boundary_path on the same connection's entry in the .boundary uses-edge lists."
+          },
+          "render_facts": {
+            "$ref": "#/$defs/render_facts",
+            "description": "What the connecting component's renders reported about the output they emitted, keyed by fact name: the facts its own provider calls reported, then those of each Feature attached to it that rendered with it, in the order they rendered, the lists one name gets from several of them joined into one in that order. Every value is a list, even with one entry, so a template always ranges over it. Present only for a FeatureRecipe that declares readsCallerRenderFacts — whose attachments render once every component has rendered, so every caller's render is complete — and then on every entry, empty for a caller whose providers report nothing. Absent for every other FeatureRecipe."
+          }
+        },
+        "additionalProperties": false
+      },
+      "render_facts": {
+        "type": "object",
+        "description": "Render facts keyed by name: what the providers that rendered a component reported about the output they emitted. Which names a provider reports, and what each entry holds, is that provider's own documented contract; the compiler learns nothing about either beyond that each value is a list. A list keeps the order of its entries. An object entry is carried with its keys in the order the provider wrote them, and a template that ranges one meets them in key order, as it does every keyed map on this context.",
+        "additionalProperties": {
+          "type": "array",
+          "items": {}
+        }
+      },
+      "template_attachment": {
+        "type": "object",
+        "description": "One attachment as a template reads it: the per-instance view of an attached Feature. Every attachment exposes the same fields regardless of what it produces, so .features.<name> reads the same way whether that name is a slot the entity declared or a free attachment.",
+        "properties": {
+          "type": { "type": "string", "description": "The Catalog Feature URI of the attached Feature." },
+          "resolved_version": {
+            "type": "string",
+            "description": "The attached Feature's version after Manifest resolution — the version actually bound for this build, read as .features.<name>.resolved_version. Mirrors .context.uses.<alias>.resolved_version, so an attachment and an edge report a bound version the same way. Empty when the attachment's type resolves to no Catalog entity."
+          },
+          "labels": {
+            "type": "object",
+            "description": "The attached Feature's Catalog labels, carried verbatim in the order the Feature declares them — nothing is filtered, renamed or prefix-stripped, so a template reads exactly what the Feature's author wrote. Lets a template branch on what the attached Feature is rather than on its name or its URI. Mirrors .context.uses.<alias>.labels. The key is absent altogether when the Feature declares no labels and when the attachment's type resolves to no Catalog entity, so guard with `if` or range over the map before addressing an individual label.",
+            "additionalProperties": { "type": "string" }
+          },
+          "values": {
+            "type": "object",
+            "description": "The attachment's own developer-intent pillar, carried verbatim from the attachment declaration.",
+            "additionalProperties": true
+          },
+          "infra": {
+            "type": "object",
+            "description": "The attachment's own operational-sizing pillar, carried verbatim from the attachment declaration.",
+            "additionalProperties": true
+          },
+          "provides": {
+            "type": "object",
+            "description": "The resolved public contract of the FeatureRecipe bound to this attachment — the emitted resource's name, its key, an identity, and any additional produced keys — exposed to the consumer as .features.<name>.provides.<key>. The consumer reads these values instead of re-deriving the attachment's physical identity. An attachment whose bound FeatureRecipe publishes nothing carries no provides key at all rather than an empty map, so a template guards before addressing an individual key.",
+            "additionalProperties": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      },
+      "enriched_edge": {
+        "type": "object",
+        "description": "A single enriched topological edge assembled by the compiler. Contains the target's resolved identity, provides, and cascaded annotations.",
+        "required": [
+          "target",
+          "socket",
+          "provides",
+          "inject"
+        ],
+        "properties": {
+          "target": {
+            "type": "string",
+            "description": "The absolute flattened ID of the target node (e.g., 'data-layer.main-db')."
+          },
+          "socket": {
+            "type": "string",
+            "description": "The usesSchema category this edge belongs to (e.g., 'databases', 'apis')."
+          },
+          "source": {
+            "type": "string",
+            "description": "The absolute flattened ID of the source (consumer) node. Populated for boundary-scope views that key per-consumer outputs by the consumer node."
+          },
+          "source_namespace": {
+            "type": "string",
+            "description": "Raw aggrega.ai/namespace annotation of the source endpoint (empty when absent). Populated for boundary-scope views only, as source is; a component's own .context.uses entry carries it empty. Opaque data for a provider's network-identity resolution; the core does not interpret it."
+          },
+          "source_boundary_path": {
+            "type": "string",
+            "description": "Boundary path of the source endpoint: the slash-separated path of the Release boundary that holds it (e.g. 'bridge/frontend'). Populated for boundary-scope views only, as source is; a component's own .context.uses entry carries it empty."
+          },
+          "source_assembly_path": {
+            "type": "string",
+            "description": "Assembly path of the source endpoint: the directory, relative to the build's output directory, that its output is assembled into, composed from its boundary's evaluated directory: and subDirectory: (e.g. 'bridge/compose'). Two endpoints with one assembly path render into one assembled file, and an endpoint whose assembly path equals .boundary.assembly_path renders into the file the reading FeatureRecipe's own output is assembled into. A boundary-scope FeatureRecipe that places endpoints on networks can read it as the source endpoint's network when no aggrega.ai/namespace applies. Populated for boundary-scope views only, as source is; a component's own .context.uses entry carries it empty. Opaque data; the core does not interpret it."
+          },
+          "target_namespace": {
+            "type": "string",
+            "description": "Raw aggrega.ai/namespace annotation of the target endpoint (empty when absent). Populated for boundary-scope views only, as source is; a component's own .context.uses entry carries it empty. Opaque data for a provider's network-identity resolution."
+          },
+          "target_boundary_path": {
+            "type": "string",
+            "description": "Boundary path of the target endpoint: the slash-separated path of the Release boundary that holds it (e.g. 'bridge/backend'). Populated for boundary-scope views only, as source is; a component's own .context.uses entry carries it empty."
+          },
+          "target_assembly_path": {
+            "type": "string",
+            "description": "Assembly path of the target endpoint: the directory, relative to the build's output directory, that its output is assembled into, composed from its boundary's evaluated directory: and subDirectory: (e.g. 'bridge/compose'). An endpoint whose assembly path equals .boundary.assembly_path renders into the file the reading FeatureRecipe's own output is assembled into. A boundary-scope FeatureRecipe that places endpoints on networks can read it as the target endpoint's network when no aggrega.ai/namespace applies. Populated for boundary-scope views only, as source is; a component's own .context.uses entry carries it empty. Opaque data; the core does not interpret it."
+          },
+          "provides": {
+            "type": "object",
+            "description": "The target node's fully resolved provides dictionary. Evaluated at provides evaluation, before inject hydration.",
+            "additionalProperties": { "type": "string" }
+          },
+          "inject": {
+            "type": "object",
+            "description": "The Developer's original inject mapping for this edge (keys = local variable names, values = target provides keys). This is the RAW mapping, not the resolved values.",
+            "properties": {
+              "env": { "type": "object", "description": "Environment variable delivery: keys are the consumer's local variable names, values are the target's provides keys.", "additionalProperties": { "type": "string" } },
+              "file": { "type": "object", "description": "File mount delivery: keys are the consumer's local file paths, values are the target's provides keys.", "additionalProperties": { "type": "string" } },
+              "arg": { "type": "object", "description": "Command-line argument delivery: keys are the consumer's flag prefixes, values are the target's provides keys.", "additionalProperties": { "type": "string" } }
+            },
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": { "type": "string" }
+            }
+          },
+          "labels": {
+            "type": "object",
+            "description": "The target node's duck-typing and ontology labels (post-mutation from topology construction).",
+            "additionalProperties": { "type": "string" }
+          },
+          "annotations": {
+            "type": "object",
+            "description": "The target node's three cascading annotation buckets.",
+            "properties": {
+              "release": {
+                "type": "object",
+                "description": "Physical topology strings from the target node's Release boundaries.",
+                "additionalProperties": { "type": "string" }
+              },
+              "catalog": {
+                "type": "object",
+                "description": "Immutable traits from the target node's Catalog entity.",
+                "additionalProperties": { "type": "string" }
+              },
+              "aggregate": {
+                "type": "object",
+                "description": "Cognitive metadata from the target node's Aggregate subsystems.",
+                "additionalProperties": { "type": "string" }
+              }
+            },
+            "additionalProperties": false
+          },
+          "component": {
+            "type": "string",
+            "description": "The target node's Catalog component type URI (e.g., 'core/postgres')."
+          },
+          "resolved_version": {
+            "type": "string",
+            "description": "The target node's resolved SemVer."
+          },
+          "boundary_path": {
+            "type": "string",
+            "description": "The target node's physical spatial hierarchy from the Release (e.g., 'aws-eks-cluster/backend-ns')."
+          },
+          "origin_feature": {
+            "type": "string",
+            "description": "If this edge was autonomously declared by a Feature (including credential Features labeled feature.aggrega.ai/kind: secret), the Feature instance name. Null/absent for Developer-declared edges."
+          },
+          "origin_release": {
+            "type": "boolean",
+            "description": "True when the Release wired this connection rather than the Aggregate declaring it. Absent for a connection the Aggregate declares."
+          },
+          "values": {
+            "type": "object",
+            "description": "The per-connection developer configuration authored on the Aggregate's uses entry for this connection, carried verbatim. Absent when the connection carries none. It reaches the consuming node's context only, never the target's.",
+            "additionalProperties": true
+          },
+          "infra": {
+            "type": "object",
+            "description": "The per-connection operational configuration authored on the Release's uses entry for this connection, carried verbatim. Absent when the connection carries none. It reaches the consuming node's context only, never the target's.",
+            "additionalProperties": true
+          },
+          "features": {
+            "type": "object",
+            "description": "The attachments written on this connection, keyed by the slot name the connection's socket declares for each, each in the attachment shape .features carries: its type, resolved version, labels, values, infra, and the resolved provides of the FeatureRecipe bound to it. A Recipe reads a connection's credential as .context.uses.<alias>.features.<slot>.provides.<key>, so a consumer reaching several targets reads each target's own credential. These attachments are never part of the consuming node's own .features, so a template that ranges .features to find the node's attachments by type does not meet a connection's. Ranged in a template, the slots arrive in key order. Absent when the connection carries none.",
+            "additionalProperties": { "$ref": "#/$defs/template_attachment" }
+          },
+          "render_facts": {
+            "$ref": "#/$defs/render_facts",
+            "description": "What the target's renders reported about the output they emitted, keyed by fact name, in the shape a caller's entry on .context.used_by carries: the facts its own provider calls reported, then those of each Feature attached to it that rendered with it, in the order they rendered, the lists one name gets from several of them joined into one in that order. Every value is a list, even with one entry, so a template always ranges over it. Present only on .context.uses for a FeatureRecipe that declares readsTargetRenderFacts — whose attachments render once every component has rendered, so every target's render is complete — and then on every entry, empty for a target whose providers report nothing. Absent for every other FeatureRecipe, from a pipeline step's with and when, from the component's own Recipe templates, and from the edge lists a boundary-scope FeatureRecipe reads."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }

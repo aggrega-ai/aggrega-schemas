@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/wasm-cli-v1beta1.schema.json",
+  "title": "Aggrega Wasm CLI Socket",
+  "description": "The wire shape a CLI plugin consumes (CLIRunInput). A CLI plugin extends the aggrega command-line tool's command surface: the host resolves a subcommand to a Wasm guest and hands it the invocation's argument vector; the guest executes and returns a process exit code as its integer return value. Standard output and standard error flow through host functions rather than a wire payload, so this socket declares an input shape only. The Go, Rust and TypeScript payload type is generated from this schema into the plugin-ABI packages, so the three languages read and write one wire; a guest imports it from those packages, or through its plugin kit, which re-exports it.",
+  "oneOf": [
+    { "$ref": "#/$defs/CLIRunInput" }
+  ],
+  "$defs": {
+    "CLIRunInput": {
+      "type": "object",
+      "description": "The payload the host hands a CLI plugin on each invocation: the argument vector following the resolved subcommand name. The guest parses these tokens as its own flags and positional arguments, exactly as a standalone command-line program reads the arguments after its name.",
+      "required": [
+        "command",
+        "args"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "The resolved subcommand name the host dispatched to this invocation. A plugin that contributes several commands routes on this name to select the behavior to run; a single-command plugin receives its own command name here. The host resolves the name from the command line before invoking the guest and carries it verbatim."
+        },
+        "args": {
+          "type": "array",
+          "description": "The argument vector the guest receives, in invocation order — the tokens that follow the resolved subcommand name on the command line. Order is preserved so the payload is byte-identical across runs of identical input.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

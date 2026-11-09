@@ -6,67 +6,67 @@
       "name": "Aggrega Component",
       "description": "Aggrega Component entity (developer/platform interface).",
       "fileMatch": ["**/component/**/*.yaml", "**/component.yaml"],
-      "url": "https://hub.aggrega.ai/schemas/component-v1alpha1.schema.json"
+      "url": "https://hub.aggrega.ai/schemas/component-v1beta1.schema.json"
     },
     {
       "name": "Aggrega Feature",
       "description": "Aggrega Feature entity.",
       "fileMatch": ["**/feature/**/*.yaml", "**/feature.yaml"],
-      "url": "https://hub.aggrega.ai/schemas/feature-v1alpha1.schema.json"
+      "url": "https://hub.aggrega.ai/schemas/feature-v1beta1.schema.json"
     },
     {
       "name": "Aggrega Recipe",
       "description": "Aggrega Recipe entity (provider-scoped implementation).",
       "fileMatch": ["**/recipe/**/recipe.yaml"],
-      "url": "https://hub.aggrega.ai/schemas/recipe-v1alpha1.schema.json"
+      "url": "https://hub.aggrega.ai/schemas/recipe-v1beta1.schema.json"
     },
     {
       "name": "Aggrega FeatureRecipe",
       "description": "Aggrega FeatureRecipe entity.",
       "fileMatch": ["**/feature-recipe/**/recipe.yaml"],
-      "url": "https://hub.aggrega.ai/schemas/featurerecipe-v1alpha1.schema.json"
+      "url": "https://hub.aggrega.ai/schemas/featurerecipe-v1beta1.schema.json"
     },
     {
       "name": "Aggrega SchemaLibrary",
       "description": "Aggrega SchemaLibrary entity (reusable JSON Schema definitions).",
       "fileMatch": ["**/schemalibrary/**/*.yaml"],
-      "url": "https://hub.aggrega.ai/schemas/schemalibrary-v1alpha1.schema.json"
+      "url": "https://hub.aggrega.ai/schemas/schemalibrary-v1beta1.schema.json"
     },
     {
       "name": "Aggrega MappingLibrary",
       "description": "Aggrega MappingLibrary entity (reusable Go-template fragments).",
       "fileMatch": ["**/mappinglibrary/**/*.yaml"],
-      "url": "https://hub.aggrega.ai/schemas/mappinglibrary-v1alpha1.schema.json"
+      "url": "https://hub.aggrega.ai/schemas/mappinglibrary-v1beta1.schema.json"
     },
     {
       "name": "Aggrega Aggregate",
       "description": "Aggrega Aggregate entity (developer intent — the authoring surface).",
       "fileMatch": ["**/aggregate.yaml", "**/*.aggregate.yaml"],
-      "url": "https://hub.aggrega.ai/schemas/aggregate-v1alpha1.schema.json"
+      "url": "https://hub.aggrega.ai/schemas/aggregate-v1beta1.schema.json"
     },
     {
       "name": "Aggrega Manifest",
       "description": "Aggrega Manifest entity (operator recipe/feature mappings).",
       "fileMatch": ["**/manifest.yaml", "**/*.manifest.yaml"],
-      "url": "https://hub.aggrega.ai/schemas/manifest-v1alpha1.schema.json"
+      "url": "https://hub.aggrega.ai/schemas/manifest-v1beta1.schema.json"
     },
     {
       "name": "Aggrega Release",
       "description": "Aggrega Release entity (operator environment binding).",
       "fileMatch": ["**/release.yaml", "**/*.release.yaml"],
-      "url": "https://hub.aggrega.ai/schemas/release-v1alpha1.schema.json"
+      "url": "https://hub.aggrega.ai/schemas/release-v1beta1.schema.json"
     },
     {
       "name": "Aggrega Workload",
       "description": "Aggrega Workload kind (consumed inside a Recipe's workload:).",
       "fileMatch": ["**/workload.yaml"],
-      "url": "https://hub.aggrega.ai/schemas/workload-v1alpha1.schema.json"
+      "url": "https://hub.aggrega.ai/schemas/workload-v1beta1.schema.json"
     },
     {
       "name": "Aggrega workspace config",
       "description": "Aggrega workspace configuration (.aggrega-config.yaml).",
       "fileMatch": [".aggrega-config.yaml", "**/.aggrega-config.yaml"],
-      "url": "https://hub.aggrega.ai/schemas/aggrega-config-v1alpha1.schema.json"
+      "url": "https://hub.aggrega.ai/schemas/aggrega-config-v1beta1.schema.json"
     }
   ]
 }

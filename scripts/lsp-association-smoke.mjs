@@ -119,7 +119,7 @@ async function main() {
   const validate = (uri, body) => ls.doValidation(doc(uri, body), false);
 
   // 4. Samples.
-  const GOOD = `apiVersion: aggrega.ai/v1alpha1
+  const GOOD = `apiVersion: aggrega.ai/v1beta1
 kind: Component
 metadata:
   name: demo/widget
@@ -133,7 +133,7 @@ spec:
         type: string
         default: "small"
 `;
-  const BAD = `apiVersion: aggrega.ai/v1alpha1
+  const BAD = `apiVersion: aggrega.ai/v1beta1
 kind: Component
 metadata:
   name: demo/widget

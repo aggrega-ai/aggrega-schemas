@@ -222,50 +222,50 @@ func collectDescriptions(node any, path string, sink *[]struct{ Pointer, Text st
 // key is for, and it must not be "corrected".
 var ruledBenign = map[string]string{
 	// A kind's name written as two English words in a list of entity kinds.
-	"AggregaConfigV1alpha1|/$defs/SigningConfig/properties/kinds/description|FeatureRecipe": "entity kind named in prose beside the kind token",
-	"LockfileV1alpha1|/properties/entities/description|FeatureRecipe":                       "entity kind named in prose beside the kind token",
-	"WasmFrpStepV1alpha1|/description|FeatureRecipe":                                        "entity kind named in prose beside the kind token",
-	"WasmLinterV1alpha1|/$defs/LinterInput/description|FeatureRecipe":                       "entity kind named in prose beside the kind token",
+	"AggregaConfigV1beta1|/$defs/SigningConfig/properties/kinds/description|FeatureRecipe": "entity kind named in prose beside the kind token",
+	"LockfileV1beta1|/properties/entities/description|FeatureRecipe":                       "entity kind named in prose beside the kind token",
+	"WasmFrpStepV1beta1|/description|FeatureRecipe":                                        "entity kind named in prose beside the kind token",
+	"WasmLinterV1beta1|/$defs/LinterInput/description|FeatureRecipe":                       "entity kind named in prose beside the kind token",
 
 	// The spec description lists the areas a FeatureRecipe spec covers as
 	// parallel English noun phrases — binding, mapping, pipeline, and inject
 	// mapping — and names the field itself in the following clause. Renaming
 	// the fourth to the field spelling would leave three English nouns beside
 	// one identifier and break the parallel the sentence is built on.
-	"FeatureRecipeV1alpha1|/properties/spec/description|injectMapping": "parallel English noun phrases naming the spec's content areas",
+	"FeatureRecipeV1beta1|/properties/spec/description|injectMapping": "parallel English noun phrases naming the spec's content areas",
 
 	// A field name introduced beside the concept it configures.
-	"IRSchemaV1alpha1|/$defs/IRNode/properties/sync_wave/description|syncWave":                                    "field name beside the concept it configures",
-	"PluginV1alpha1|/properties/spec/properties/provider/description|pluginType":                                  "field name beside the concept it configures",
-	"PluginV1alpha1|/properties/spec/properties/pipelineStep/description|pluginType":                              "field name beside the concept it configures",
-	"PluginV1alpha1|/properties/spec/properties/parser/description|pluginType":                                    "field name beside the concept it configures",
-	"PluginV1alpha1|/properties/spec/properties/importer/description|pluginType":                                  "field name beside the concept it configures",
-	"TemplateContextV1alpha1|/description|valuesMapping":                                                          "field name beside the concept it configures",
-	"TemplateContextV1alpha1|/properties/source/description|valuesMapping":                                        "field name beside the concept it configures",
-	"WasmProviderV1alpha1|/$defs/IRNodeProjection/properties/output_labels/description|outputLabels":              "field name beside the concept it configures",
-	"WorkloadV1alpha1|/properties/imagePullSecrets/description|imagePullSecrets":                                  "field name beside the concept it configures",
-	"WorkloadV1alpha1|/properties/runtimeClassName/description|RuntimeClass":                                      "field name beside the concept it configures",
-	"WorkloadV1alpha1|/properties/dnsPolicy/description|dnsPolicy":                                                "field name beside the concept it configures",
-	"WorkloadV1alpha1|/$defs/container/properties/imagePullPolicy/description|imagePullPolicy":                    "field name beside the concept it configures",
-	"WorkloadV1alpha1|/$defs/container/properties/envFrom/description|envFrom":                                    "field name beside the concept it configures",
-	"WorkloadV1alpha1|/$defs/container/properties/ports/description|containerPort":                                "field name beside the concept it configures",
-	"WorkloadV1alpha1|/$defs/volume/properties/persistent/properties/accessModes/description|accessModes":         "field name beside the concept it configures",
-	"WorkloadV1alpha1|/$defs/volume/properties/persistentTemplate/properties/accessModes/description|accessModes": "field name beside the concept it configures",
+	"IRSchemaV1beta1|/$defs/IRNode/properties/sync_wave/description|syncWave":                                    "field name beside the concept it configures",
+	"PluginV1beta1|/properties/spec/properties/provider/description|pluginType":                                  "field name beside the concept it configures",
+	"PluginV1beta1|/properties/spec/properties/pipelineStep/description|pluginType":                              "field name beside the concept it configures",
+	"PluginV1beta1|/properties/spec/properties/parser/description|pluginType":                                    "field name beside the concept it configures",
+	"PluginV1beta1|/properties/spec/properties/importer/description|pluginType":                                  "field name beside the concept it configures",
+	"TemplateContextV1beta1|/description|valuesMapping":                                                          "field name beside the concept it configures",
+	"TemplateContextV1beta1|/properties/source/description|valuesMapping":                                        "field name beside the concept it configures",
+	"WasmProviderV1beta1|/$defs/IRNodeProjection/properties/output_labels/description|outputLabels":              "field name beside the concept it configures",
+	"WorkloadV1beta1|/properties/imagePullSecrets/description|imagePullSecrets":                                  "field name beside the concept it configures",
+	"WorkloadV1beta1|/properties/runtimeClassName/description|RuntimeClass":                                      "field name beside the concept it configures",
+	"WorkloadV1beta1|/properties/dnsPolicy/description|dnsPolicy":                                                "field name beside the concept it configures",
+	"WorkloadV1beta1|/$defs/container/properties/imagePullPolicy/description|imagePullPolicy":                    "field name beside the concept it configures",
+	"WorkloadV1beta1|/$defs/container/properties/envFrom/description|envFrom":                                    "field name beside the concept it configures",
+	"WorkloadV1beta1|/$defs/container/properties/ports/description|containerPort":                                "field name beside the concept it configures",
+	"WorkloadV1beta1|/$defs/volume/properties/persistent/properties/accessModes/description|accessModes":         "field name beside the concept it configures",
+	"WorkloadV1beta1|/$defs/volume/properties/persistentTemplate/properties/accessModes/description|accessModes": "field name beside the concept it configures",
 
 	// A field name beside the English noun for what it claims:
 	// `contract.inputKinds` is the key an author types, and "an input kind" names
 	// the thing that key claims support for. Prose describing a key's subject in
 	// English is not a second spelling of the key.
-	"PluginV1alpha1|/properties/spec/properties/provider/properties/wellKnownAnnotations/description|inputKinds":                        "field name beside the English noun for the kinds it claims",
-	"PluginV1alpha1|/properties/spec/properties/provider/properties/wellKnownAnnotations/items/properties/scope/description|inputKinds": "field name beside the English noun for the kinds it claims",
+	"PluginV1beta1|/properties/spec/properties/provider/properties/wellKnownAnnotations/description|inputKinds":                        "field name beside the English noun for the kinds it claims",
+	"PluginV1beta1|/properties/spec/properties/provider/properties/wellKnownAnnotations/items/properties/scope/description|inputKinds": "field name beside the English noun for the kinds it claims",
 
 	// An enum value quoted, then read back as English.
-	"WorkloadV1alpha1|/$defs/container/properties/imagePullPolicy/description|IfNotPresent": "enum value quoted, then read back as English",
+	"WorkloadV1beta1|/$defs/container/properties/imagePullPolicy/description|IfNotPresent": "enum value quoted, then read back as English",
 
 	// Two identifiers on two surfaces the reader types, not one identifier
 	// written twice: `$dynamicRef` is the JSON Schema keyword, dynamic_refs is
 	// the lint rule this key suppresses.
-	"WasmLinterV1alpha1|/$defs/Policies/properties/allow_dynamic_refs/description|dynamicRef": "schema keyword beside the lint rule name that governs it",
+	"WasmLinterV1beta1|/$defs/Policies/properties/allow_dynamic_refs/description|dynamicRef": "schema keyword beside the lint rule name that governs it",
 
 	// The contrast IS the sentence. Each of these descriptions teaches that
 	// segment-wise matching over a dotted path covers `db.password` and does not
@@ -276,9 +276,9 @@ var ruledBenign = map[string]string{
 	// opposite of the rule. The detector reads the dotted path as the spaced
 	// spelling of the fused one, which is correct in general and is exactly why
 	// this deliberate near-miss needs a ruling rather than a rewrite.
-	"IRSchemaV1alpha1|/$defs/IRNode/properties/sensitive_payload_leaves/description|dbPassword":            "a dotted path contrasted with a differently-named sibling leaf",
-	"IRSchemaV1alpha1|/$defs/IRFeatureEntry/properties/sensitive_payload_leaves/description|dbPassword":    "a dotted path contrasted with a differently-named sibling leaf",
-	"IRSchemaV1alpha1|/$defs/IRBoundaryFeature/properties/sensitive_payload_leaves/description|dbPassword": "a dotted path contrasted with a differently-named sibling leaf",
+	"IRSchemaV1beta1|/$defs/IRNode/properties/sensitive_payload_leaves/description|dbPassword":            "a dotted path contrasted with a differently-named sibling leaf",
+	"IRSchemaV1beta1|/$defs/IRFeatureEntry/properties/sensitive_payload_leaves/description|dbPassword":    "a dotted path contrasted with a differently-named sibling leaf",
+	"IRSchemaV1beta1|/$defs/IRBoundaryFeature/properties/sensitive_payload_leaves/description|dbPassword": "a dotted path contrasted with a differently-named sibling leaf",
 }
 
 // TestNoIdentifierSpelledTwoWaysInOneDescription fails when a schema

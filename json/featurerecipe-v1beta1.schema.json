@@ -1,0 +1,312 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/featurerecipe-v1beta1.schema.json",
+  "title": "Aggrega Infrastructure Base (FeatureRecipe)",
+  "description": "Ops-authored definitions mapping an abstract catalog Feature to a concrete, versioned implementation for one provider capability. Strictly 1:1 with a physical provider and catalog feature.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "aggrega.ai/v1beta1"
+    },
+    "kind": {
+      "type": "string",
+      "const": "FeatureRecipe"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+          "description": "Strict Semantic Versioning of the FeatureRecipe (e.g., 1.2.5)."
+        },
+        "description": {
+          "type": "string",
+          "description": "What this entity is and what it is for, written for someone deciding whether to use it. Open with a sentence naming the thing, then add what a reader needs in order to choose it and use it correctly — what it expects from the Release that deploys it, and anything surprising about how it behaves. A short paragraph is the usual length."
+        },
+        "maintainers": {
+          "type": "array",
+          "description": "List of maintainers who own this entity.",
+          "items": {
+            "type": "object",
+            "x-aggrega-go-type": "Maintainer",
+            "properties": {
+              "name": { "type": "string" },
+              "email": { "type": "string" },
+              "url": { "type": "string" }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          }
+        },
+        "license": {
+          "type": "string",
+          "description": "SPDX identifier for the license of the software this entity describes, such as MIT or AGPL-3.0. It records the terms of that software, not the terms of this file."
+        },
+        "repository": {
+          "type": "string",
+          "description": "The URL to the Git repository where the source files live."
+        },
+        "home": {
+          "type": "string",
+          "description": "The URL of this entity's home page, wiki, or documentation."
+        },
+        "keywords": {
+          "type": "array",
+          "description": "A list of descriptive keywords for UI discoverability.",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "spec": {
+      "type": "object",
+      "description": "The provider capability binding, mapping, pipeline, and inject mapping for a FeatureRecipe. Carries the same three input kinds as a Recipe (sourced, synthesized, artifacts) plus the FeatureRecipe-only injectMapping; a pure-wiring FeatureRecipe declaring only capability and implements is valid and renders nothing.",
+      "required": [
+        "capability",
+        "implements"
+      ],
+      "dependentRequired": {
+        "omits": ["source"]
+      },
+      "properties": {
+        "capability": {
+          "type": "string",
+          "description": "The explicit provider capability this recipe binds to (e.g., 'helm', 'terraform', 'compose') — the provider kind that renders it."
+        },
+        "implements": {
+          "type": "string",
+          "description": "Declares which catalog Feature type this recipe is able to implement (including credential Features labeled feature.aggrega.ai/kind: secret; exact version, major-compatible range '^', or unversioned). The compiler uses it to verify Manifest mappings and to suggest candidates in diagnostics and editor completion; it never resolves a build. The Manifest mapping is the user's explicit choice of implementation, pinned in the Release's lockfile."
+        },
+        "locals": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
+          "description": "The Private Ops State. Internal computation results available only within this FeatureRecipe's templates as '.locals.*'. Each entry is itself a Go template, evaluated against a self-contained context: '.context.instance_id' (the HOST COMPONENT this attachment is resolving for, which is what that reference denotes on every template surface), '.attachment_name' (the attachment instance being resolved, and the only route to that name from a local), the attachment's own '.values' and '.infra', and the entries of this same block resolved so far. Entries resolve in the order they are written, and an entry MAY read a sibling defined ABOVE it, receiving that sibling's resolved value rather than its template text. Author order is part of the contract wherever one entry reads another: moving a definition below its reader breaks the build, and the block is never reordered to make a reference resolve. A '.locals.<key>' reference to an entry this block defines LATER halts naming the ordering fault; one naming a key the block does not declare at all halts naming the key. Both checks read the path a reference RESOLVES to rather than the keystrokes, so they cover the direct form, a read inside a '{{ with .locals }}' block, a read through a variable bound directly to '.locals', and a key read off the block in parentheses, '(.locals).<key>' or '($.locals).<key>', alike. One spelling they do not cover: a reference whose path the template text does not decide — one reached through a function, such as 'index .locals' or '(default dict .locals).<key>', or through a 'with' block or a variable binding whose pipeline applies one, since what such a pipeline yields is decided at evaluation rather than by its text. It is not analysed, and an absent key reached that way does not halt: it renders the literal text '<no value>' rather than nothing at all. The one exception is 'index' itself: on every template surface it halts, naming the key, when the map it reads does not hold the key it is asked for, so an absent key reached through 'index .locals' halts. This FeatureRecipe's locals resolve BEFORE its provides, so a provides template may read '.locals' and receives resolved values, while a provides template naming a key this block does not declare halts. The rules are the same ones a Recipe's locals block follows. Where executionScope is boundary, the block is evaluated once for the boundary attachment, against the boundary-scope template context rather than a component's, and every component the attachment reaches reads those resolved entries, the '.locals' its injectMapping reads included. Used to export physical realities (e.g., target containers, JSON paths) for downstream Wasm plugins. Never exposed to callers — use provides for the public API.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "provides": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
+          "description": "The Public Developer API. Contractual output variables available for downstream Caller inject resolution. Where executionScope is boundary, the provides are evaluated once for the boundary attachment, against the boundary-scope template context, and every component the attachment reaches reads that one evaluation at '.features.<attachment>.provides', as does a connection the attachment carries; the provides contract the implemented Feature declares is checked once, on that evaluation, naming the boundary attachment.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "source": {
+          "description": "Optional path to infrastructure code. Accepts a URI string or an open structured object. If provided alongside valuesMapping, the compiler renders it, and the rendered documents join the FeatureRecipe's output before its pipeline steps run.",
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "A URI string (e.g., './src', 'https://github.com/example/module.git', 'oci://...'). Used for local paths, OCI artifacts, and Git repositories. A URL ending in '.git', or written with 'git://' or 'ssh://', is fetched as a Git repository at its default branch; an 'https://' URL is a Helm chart where it ends in '.tgz' and a compose fragment where it ends in '.yaml' or '.yml', and one naming none of these is refused as ambiguous — write the structured form, whose 'kind' names the resolver, for it."
+            },
+            {
+              "type": "object",
+              "description": "Open Structured Object. The exact required keys (e.g., 'registry', 'chart' for Helm) are dictated and validated dynamically at compile-time by the Provider's Wasm socket.",
+              "additionalProperties": true
+            }
+          ]
+        },
+        "valuesMapping": {
+          "x-aggrega-go-type": "ValuesMapping",
+          "description": "Values mapping content with three authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar producing the provider's expected values format. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.tmpl`, pointing at a local Go-template file. Mode 3 (library import): a YAML map of exactly one key, `$import: <Library>#/mappings/<entry>`, referencing a MappingLibrary entry by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference).",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "required": ["$import"],
+              "properties": {
+                "$import": {
+                  "type": "string",
+                  "not": {
+                    "pattern": "^oci://"
+                  },
+                  "description": "A local file path, or a bare-name MappingLibrary reference `<Library>#/mappings/<entry>`. A registry host (`oci://…`) is rejected: a library is addressed by identity, and the version is supplied by the per-Release lockfile."
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "workload": {
+          "x-aggrega-go-type": "WorkloadTemplate",
+          "description": "Workload YAML producer with three authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output parses as 'aggrega.ai/v1beta1 Workload'. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Mode 3 (library import): a YAML map of exactly one key, `$import: <Library>#/workloads/<entry>`, referencing a WorkloadLibrary entry by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference). The target Provider must support workload synthesis; the standard-library catalog declares workloadSchema on such providers as the documented contract. A workload: FeatureRecipe bound to a provider that cannot synthesize halts loudly at render time. A synthesized FeatureRecipe workload emits its provider-native manifests under the feature's output directory.",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "required": ["$import"],
+              "properties": {
+                "$import": {
+                  "type": "string",
+                  "not": {
+                    "pattern": "^oci://"
+                  },
+                  "description": "A local file path, or a bare-name WorkloadLibrary reference `<Library>#/workloads/<entry>`. A registry host (`oci://…`) is rejected: a library is addressed by identity, and the version is supplied by the per-Release lockfile."
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "artifacts": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[ArtifactEntry]",
+          "description": "Map of entry name to artifact-content authoring. Each entry's value carries one of three modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output is the artifact body. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Mode 3 (library import): a YAML map of exactly one key, `$import: <Library>#/artifacts/<entry>`, referencing an ArtifactLibrary bundle by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference). A bundle expands into one output per file, each nested under the entry's key as `<key>/<filename>`. The key names the entry's output: a mode-1 or mode-2 entry's key is its output filename, used as written, and a mode-2 entry's imported file supplies the content without naming the output, so two entries importing different files that share a name are two distinct outputs. The auxiliary resources a resource-generating FeatureRecipe emits (ConfigMap, ServiceMonitor, NetworkPolicy, ExternalSecret CRD, etc.) are artifact-shaped; artifacts: is the primary resource-generation mechanism. Collisions across artifact entries, bundle files, source output, and workload synthesis halt the build when the node renders. The `artifacts` block is authored identically on a Recipe and on a FeatureRecipe — the same three modes, the same key-to-output rule and the same collision behaviour — which is why that part of this description reads the same on both kinds; an example written for one transfers to the other unchanged.",
+          "propertyNames": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+            "description": "The key names the entry's output, so it is bounded to a single filename: it begins with a letter or digit and continues with letters, digits, dots, hyphens or underscores. Dots after the first character keep the extensions artifact keys carry (`main.tf`, `template.yaml`, `serviceaccount.yaml`). A `/` would make one key name a path rather than a file, and a leading `.` would admit `..`, which names a location outside the output directory — the first character class refuses both. For a library import the key names the directory the bundle's files are nested under, so the same bound applies."
+          },
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "required": ["$import"],
+                "properties": {
+                  "$import": {
+                    "type": "string",
+                    "not": {
+                      "pattern": "^oci://"
+                    },
+                    "description": "A local file path, or a bare-name ArtifactLibrary reference `<Library>#/artifacts/<entry>` (the entry names a bundle). A registry host (`oci://…`) is rejected: a library is addressed by identity, and the version is supplied by the per-Release lockfile."
+                  }
+                },
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "omits": {
+          "type": "array",
+          "minItems": 1,
+          "description": "What to leave out of what this FeatureRecipe's source renders — for a source taken as it is that renders something the Release must not ship: a document a fetched chart renders, such as a Secret holding a key the chart generates afresh on every render, a service, a volume or a config a fetched compose file bundles, or a resource a fetched CloudFormation template declares. Most FeatureRecipes never need it. Each entry names one unit the source renders by its kind, its name and, where the entry gives them, its namespace and the subchart it came from, each in the vocabulary of the provider rendering the source — for a chart, a document by its own `kind` and `metadata.name`; for a compose file, a `service`, a `volume` or a `config` by its key under `services:`, `volumes:` or `configs:`; for a CloudFormation template, a resource by its `Type` and its logical ID. That provider leaves out every unit an entry matches, and what an entry matches, and what the provider refuses on an entry's account, is that provider's own documented contract. A provider that cannot leave anything out refuses a FeatureRecipe declaring this key before anything is rendered. Only what `source:` renders is filtered — a `workload:` or an `artifacts:` entry never is — so the key requires `source`. Every value is a template, evaluated against the context `valuesMapping` is evaluated against. An entry's `when` is evaluated first, and an entry whose `when` renders a falsy value is dropped. Every entry left active must leave something out: an active entry that matches nothing the source rendered halts the build, naming the entry. The source still renders in full — every template of a chart still runs, so a template that fails still fails the build — and only its output is left out. The key is authored identically on a Recipe and on a FeatureRecipe.",
+          "items": {
+            "type": "object",
+            "x-aggrega-go-type": "OmitEntry",
+            "required": [
+              "kind",
+              "name"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "description": "The kind of the unit to leave out, in the vocabulary of the provider rendering the source: for a chart, a rendered document's own `kind`, such as `Secret`; for a compose file, `service`, `volume` or `config`; for a CloudFormation template, a resource's `Type`, such as `AWS::S3::Bucket`. It names a kind the source renders, and is unrelated to the `kind:` a structured `source:` carries. A template."
+              },
+              "name": {
+                "type": "string",
+                "description": "The name of the unit to leave out, in the vocabulary of the provider rendering the source: for a chart, a rendered document's own `metadata.name`; for a compose file, the unit's key under `services:`, `volumes:` or `configs:`; for a CloudFormation template, the resource's logical ID, its key under `Resources`. A template."
+              },
+              "namespace": {
+                "type": "string",
+                "description": "The namespace the unit to leave out is in, when the entry should match only a unit in that namespace — for a provider whose output has namespaces, as a chart's rendered documents do. Absent, or rendering to the empty string, the entry matches a unit of its kind and name whatever its namespace. A compose file and a CloudFormation template have no namespaces, and their providers refuse an entry that names one. A template."
+              },
+              "subchart": {
+                "type": "string",
+                "description": "The subchart the unit to leave out came from, when the entry should match only the copy one subchart renders — for a source assembled from nested sources, as a chart is from its subcharts. For a chart, the subchart's own name, or the alias its parent's dependency gives it, with a nested subchart's names joined by `/` from the outermost: `operator`, or `operator/webhooks`. The entry then matches a document rendered from that subchart's own `templates/` or `crds/`, and neither one the chart renders itself nor one a subchart nested inside it renders. Absent, or rendering to the empty string, the entry matches a unit of its kind and name wherever it came from. A chart that renders no subchart of that name stops the build, naming the entry. A compose file and a CloudFormation template have no subcharts, and their providers refuse an entry that names one. A template."
+              },
+              "when": {
+                "type": "string",
+                "description": "Inline Go template evaluated before the entry's other fields. When it renders a falsy value the entry is dropped: its other fields are not evaluated, nothing is left out on its account, and it is not required to match. An empty or absent `when` keeps the entry. Truthiness follows the standard convention for boolean-like template output: the strings `true`/`True`/`TRUE`, any nonzero number, and any other non-empty string are true, while `false`/`False`/`FALSE`, the empty string, and zero are false. A `when` that fails to render halts the build."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "injectMapping": {
+          "type": "string",
+          "description": "Optional inline Go template evaluated during the Pre-Render Interception phase, once for each component the attachment reaches, against that component's template context: it reads the component's '.context', '.features' and the attachment's '.attachment_name', '.values', '.infra' and '.locals', whatever executionScope says, and a reference to '.boundary', which no component's context carries, halts the build. Outputs a JSON/YAML dictionary that the Go compiler natively deep-merges over the Caller's '.context.inject' memory pipe. Used for Wasm-free Caller-Side mutation of environment variables and delivery contracts."
+        },
+        "pipeline": {
+          "type": "array",
+          "description": "Sequential list of Wasm pipeline steps run after render over the rendered document set, each returning RFC 6902 patches and side effects.",
+          "items": {
+            "type": "object",
+            "x-aggrega-go-type": "PipelineStep",
+            "required": [
+              "id",
+              "plugin",
+              "function"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_]+$",
+                "description": "A programmatic identifier for this step, unique among the steps of this pipeline: a document declaring one id on two of its steps is refused when it is read. A later step of the same pipeline reads this step's outputs as `.steps.<id>.outputs`."
+              },
+              "plugin": {
+                "type": "string",
+                "description": "The reference to the Plugin entity this step runs, always scoped by the plugin's own socket type: `<pluginType>/<name>` with an optional version, as in `parser/yaml` or `parser/yaml:1.0.0`. The scope is mandatory rather than one form among several — an unscoped `name:version` is refused, because two sockets may hold a plugin of the same name and the scope is what makes the entity resolvable. The build resolves the entity to its content-addressed .wasm artifact — located from the plugin's identity and the configured registry, its digest pinned in the lockfile — and loads the bytes. A bare .wasm or artifact reference is not accepted here."
+              },
+              "function": {
+                "type": "string",
+                "description": "The exported Wasm function to invoke."
+              },
+              "with": {
+                "type": "string",
+                "description": "Inline Go template evaluating to a JSON/YAML map that strictly satisfies this plugin's explicit input schema."
+              },
+              "optional": {
+                "type": "boolean",
+                "description": "When true, a failure of this step (a guest trap, a patch targeting a document not present in the set, a malformed patch, or a halt-severity diagnostic) is downgraded to a loud warning: the pre-step document set is restored, this step's output is discarded, and the pipeline continues. When false or absent, any step failure halts the build after restoring the pre-step document set."
+              },
+              "when": {
+                "type": "string",
+                "description": "Inline Go template evaluated at pipeline-walk time. When it renders a falsy value the step is skipped — a pass-through: the document set flows to the next step unchanged, contributing no patches, side effects, or step record. An empty or absent `when` always runs the step. Truthiness follows the standard convention for boolean-like template output: the strings `true`/`True`/`TRUE`, any nonzero number, and any other non-empty string are true, while `false`/`False`/`FALSE`, the empty string, and zero are false. `when` and `optional` are independent: a step may declare both."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "executionScope": {
+          "type": "string",
+          "enum": ["component", "boundary"],
+          "default": "component",
+          "description": "Whether this FeatureRecipe's Resource Generation runs per-component (the default) or once per boundary attachment. Boundary-scope FeatureRecipes deduplicate by (boundary_path, FeatureRecipe instance) and every template but the injectMapping reads a boundary-scope template context: the .boundary.* pillars instead of the per-component .context.* pillars, a reference to which halts the build. The injectMapping runs once for each component the attachment reaches regardless of executionScope, so it reads that component's context and never .boundary."
+        },
+        "readsCallerRenderFacts": {
+          "type": "boolean",
+          "default": false,
+          "description": "Declares that this FeatureRecipe's templates read what the Components connecting to the one it is attached to rendered: the render facts each of those callers' providers reports about its own output. Where it is true and the FeatureRecipe renders per component, each attachment of it renders after every Component in the build has rendered, instead of right after the Component it is attached to, so each caller's render is complete before the attachment is evaluated. Where it is false or absent, no caller's entry on '.context.used_by' carries render facts, the attachment renders right after its Component unless readsTargetRenderFacts is true, and the build halts on a template written inline in this FeatureRecipe that reads a caller's render facts beneath '.context.used_by'."
+        },
+        "readsTargetRenderFacts": {
+          "type": "boolean",
+          "default": false,
+          "description": "Declares that this FeatureRecipe's templates read what the Components that the one it is attached to is wired to rendered: the render facts each of those targets' providers reports about its own output, on each entry of '.context.uses'. Where it is true and the FeatureRecipe renders per component, each attachment of it renders after every Component in the build has rendered, instead of right after the Component it is attached to, so each target's render is complete before the attachment is evaluated. This is the same later render readsCallerRenderFacts causes, so setting either key, or both, makes the attachment render then. Where it is false or absent, no entry on '.context.uses' carries render facts, the attachment renders right after its Component unless readsCallerRenderFacts is true, and the build halts on a template written inline in this FeatureRecipe that reads a target's render facts beneath '.context.uses'."
+        },
+        "assertions": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
+          "description": "Build-time cross-field validation. Each entry is a named assertion: the key is a stable rule identifier surfaced in error messages; the value is a Go template string with `{{ fail \"message\" }}` halt semantics. Multiple named assertions per entity evaluate per-instance in author-declared order; the first failing assertion halts the build. FeatureRecipe assertions evaluate after recipe binding and after the provides are evaluated, before render, and express implementation invariants of the specific chart or module the FeatureRecipe sources. Template context: .values / .infra / .uses / .features / .metadata plus .provides / .locals / .recipe. The evaluator uses missingkey=error: references to undefined keys halt with a no-such-key diagnostic. Because the bare reference halts before any fallback can run, a plain `default` does not supply an optional-field fallback on this surface — gate the reference with `hasKey`, or use the `optional` helper, which performs the presence check directly. Reading the key through `index` does not supply one either: `index` halts on a map key the map does not hold, naming the key.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

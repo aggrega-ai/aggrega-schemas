@@ -1,0 +1,357 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/recipe-v1beta1.schema.json",
+  "title": "Aggrega Infrastructure Base (Recipe)",
+  "description": "Ops-authored pointer and mapping layer connecting Dev intent to a specific infrastructure provider. Strictly 1:1 with a physical provider and catalog component.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "aggrega.ai/v1beta1"
+    },
+    "kind": {
+      "type": "string",
+      "const": "Recipe"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+          "description": "Strict Semantic Versioning of the implementation recipe (e.g., 2.1.0)."
+        },
+        "description": {
+          "type": "string",
+          "description": "What this entity is and what it is for, written for someone deciding whether to use it. Open with a sentence naming the thing, then add what a reader needs in order to choose it and use it correctly — what it expects from the Release that deploys it, and anything surprising about how it behaves. A short paragraph is the usual length."
+        },
+        "maintainers": {
+          "type": "array",
+          "description": "List of maintainers who own this entity.",
+          "items": {
+            "type": "object",
+            "x-aggrega-go-type": "Maintainer",
+            "properties": {
+              "name": { "type": "string" },
+              "email": { "type": "string" },
+              "url": { "type": "string" }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          }
+        },
+        "license": {
+          "type": "string",
+          "description": "SPDX identifier for the license of the software this entity describes, such as MIT or AGPL-3.0. It records the terms of that software, not the terms of this file."
+        },
+        "repository": {
+          "type": "string",
+          "description": "The URL to the Git repository where the source files live."
+        },
+        "home": {
+          "type": "string",
+          "description": "The URL of this entity's home page, wiki, or documentation."
+        },
+        "keywords": {
+          "type": "array",
+          "description": "A list of descriptive keywords for UI discoverability.",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "spec": {
+      "type": "object",
+      "description": "The provider binding, source, value mapping, and pipeline for a Recipe. Supports three input kinds composed by addition: sourced (source plus valuesMapping overlay), synthesized (workload), and artifacts (named output files). Separately from those, a Recipe may contribute files to the shared output of the boundary it renders in, under 'boundary'.",
+      "required": [
+        "capability",
+        "implements"
+      ],
+      "dependentRequired": {
+        "omits": ["source"]
+      },
+      "allOf": [
+        {
+          "description": "At least one input kind must be present: sourced (source + values overlay), synthesized (workload), or artifacts. Pairing rules apply: valuesMapping pairs with source; omits requires source; and a workload: block requires a provider that supports workload synthesis — a synthesized-mode Recipe bound to a non-synthesizing provider halts loudly at render time.",
+          "anyOf": [
+            { "required": ["source"] },
+            { "required": ["valuesMapping"] },
+            { "required": ["workload"] },
+            { "required": ["artifacts"] }
+          ]
+        }
+      ],
+      "properties": {
+        "capability": {
+          "type": "string",
+          "description": "The explicit provider capability this recipe binds to (e.g., 'helm', 'terraform', 'compose') — the provider kind that renders it. Accepts an optional version pin, in the same three forms as 'implements': unversioned ('helm'), exact ('helm:1.0.0'), or major-compatible range ('helm:^1.0.0'). The bare name selects the provider kind; the pin, when present, selects which version of the provider-rendering plugin serving that capability renders this recipe — highest available when unpinned, exact for an exact pin, highest-in-range for a caret. A pin that no serving plugin version satisfies halts the build loudly. Everything downstream of provider selection — output grouping, path segments, pipeline compatibility, and codec choice — keys on the bare capability, so two recipes pinning different plugin versions of the same capability coexist in one build."
+        },
+        "implements": {
+          "type": "string",
+          "description": "Declares which catalog component type this recipe is able to implement (exact version 'core/api-server:1.0.0', major-compatible range 'core/api-server:^1.0.0', or unversioned 'core/api-server'). The compiler uses it to verify Manifest mappings and to suggest candidates in diagnostics and editor completion; it never resolves a build. `aggrega lint` reads it as well, to locate the Component whose declared `provides` contract a Recipe's published keys are compared against. The Manifest mapping is the user's explicit choice of implementation, pinned in the Release's lockfile."
+        },
+        "source": {
+          "description": "The location of the infrastructure code. Accepts a URI string, or an open structured object whose provider-defined keys are exposed to the Recipe's templates as '.source.*'.",
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "A URI string (e.g., './src', 'https://github.com/example/module.git', 'oci://...'). Used for local paths, OCI artifacts, and Git repositories. A URL ending in '.git', or written with 'git://' or 'ssh://', is fetched as a Git repository at its default branch; an 'https://' URL is a Helm chart where it ends in '.tgz' and a compose fragment where it ends in '.yaml' or '.yml', and one naming none of these is refused as ambiguous — write the structured form, whose 'kind' names the resolver, for it."
+            },
+            {
+              "type": "object",
+              "description": "Open Structured Object (additionalProperties: true). Its keys are provider-defined and are exposed to the Recipe's templates as '.source.*' (for example '.source.chart'). By design the core is schema-agnostic: each provider's WebAssembly socket is intended to define and validate its own source shape (such as 'registry'/'chart' for Helm, or 'workspace' for Terraform). CURRENT SHIPPED BEHAVIOR: per-provider Wasm source validation is not yet implemented. The core resolves a FETCHED source by the { kind, url, version } form, where 'kind' selects a built-in resolver (today: helm-oci-chart, helm-https-chart, compose-https-fragment, git-repository). A fetch-intended source must therefore use { kind, url, version }; a structured source without 'kind'/'url' is not fetched, and if a fetch was intended it fails loudly at lock-time source descent rather than silently resolving to nothing. When the per-provider Wasm socket ships it will validate provider-specific shapes and translate them ahead-of-time into a deterministic { kind, url, version } fetch identity.",
+              "additionalProperties": true
+            }
+          ]
+        },
+        "locals": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
+          "description": "The Private Ops State. Internal computation results available within this Recipe's templates as '.locals.*'. Each entry is itself a Go template, evaluated against a self-contained node-local context: '.context.instance_id', '.values', '.infra', and the entries of this same block resolved so far. Entries resolve in the order they are written, and an entry MAY read a sibling defined ABOVE it, receiving that sibling's resolved value rather than its template text. Author order is part of the contract wherever one entry reads another: moving a definition below its reader breaks the build, and the block is never reordered to make a reference resolve. A '.locals.<key>' reference to an entry this block defines LATER halts naming the ordering fault; one naming a key the block does not declare at all halts naming the key. Both checks read the path a reference RESOLVES to rather than the keystrokes, so they cover the direct form, a read inside a '{{ with .locals }}' block, a read through a variable bound directly to '.locals', and a key read off the block in parentheses, '(.locals).<key>' or '($.locals).<key>', alike. One spelling they do not cover: a reference whose path the template text does not decide — one reached through a function, such as 'index .locals' or '(default dict .locals).<key>', or through a 'with' block or a variable binding whose pipeline applies one, since what such a pipeline yields is decided at evaluation rather than by its text. It is not analysed, and an absent key reached that way does not halt: it renders the literal text '<no value>' rather than nothing at all. The one exception is 'index' itself: on every template surface it halts, naming the key, when the map it reads does not hold the key it is asked for, so an absent key reached through 'index .locals' halts. A local cannot read '.provides': that pillar is not part of this context, and an entry reaching for it halts. The resolved values reach provides, source, valuesMapping, workload, artifacts, assertions, and pipeline[].with (and pipeline[].when) — this Recipe's locals resolve BEFORE its provides, so a provides template may read '.locals' and receives resolved values, while a provides template naming a key this block does not declare halts. Used to export physical realities (e.g., target containers, JSON paths) for downstream Wasm plugins. Never exposed to callers — use provides for the public API.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "provides": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
+          "description": "The Public Developer API. Contractual output variables available for downstream Caller inject resolution. The compiler evaluates provides templates against a self-contained context, in any order among themselves — no provides entry reads another. The node's locals resolve in the locals preamble, ahead of its provides, so a provides template may read '.locals' and receives resolved values; naming a key the locals block does not declare halts. Callers resolve inject keys against these values at inject hydration. Values are scalars — the pipe carries them verbatim and stringifies deterministically at the injection boundary.",
+          "additionalProperties": {
+            "type": ["string", "number", "boolean"]
+          }
+        },
+        "valuesMapping": {
+          "x-aggrega-go-type": "ValuesMapping",
+          "description": "Values mapping content with three authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar (typically block-scalar YAML `|`) producing the provider's expected values format from Aggrega context (.values, .features, .infra). Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.tmpl`, pointing at a local Go-template file. Mode 3 (library import): a YAML map of exactly one key, `$import: <Library>#/mappings/<entry>`, referencing a MappingLibrary entry by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference).",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "required": ["$import"],
+              "properties": {
+                "$import": {
+                  "type": "string",
+                  "not": {
+                    "pattern": "^oci://"
+                  },
+                  "description": "A local file path, or a bare-name MappingLibrary reference `<Library>#/mappings/<entry>`. A registry host (`oci://…`) is rejected: a library is addressed by identity, and the version is supplied by the per-Release lockfile."
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "workload": {
+          "x-aggrega-go-type": "WorkloadTemplate",
+          "description": "Workload YAML producer with three authoring modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output parses as 'aggrega.ai/v1beta1 Workload'. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Mode 3 (library import): a YAML map of exactly one key, `$import: <Library>#/workloads/<entry>`, referencing a WorkloadLibrary entry by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference). The target Provider must support workload synthesis; the standard-library catalog declares workloadSchema on such providers as the documented contract. A workload: Recipe bound to a provider that cannot synthesize halts loudly at render time.",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "required": ["$import"],
+              "properties": {
+                "$import": {
+                  "type": "string",
+                  "not": {
+                    "pattern": "^oci://"
+                  },
+                  "description": "A local file path, or a bare-name WorkloadLibrary reference `<Library>#/workloads/<entry>`. A registry host (`oci://…`) is rejected: a library is addressed by identity, and the version is supplied by the per-Release lockfile."
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "artifacts": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[ArtifactEntry]",
+          "description": "Map of entry name to artifact-content authoring. Each entry's value carries one of three modes via content-shape dispatch. Mode 1 (inline): a Go template string scalar whose output is the artifact body. Mode 2 (file import): a YAML map of exactly one key, `$import: ./relative/path.yaml`, pointing at a local Go-template file. Mode 3 (library import): a YAML map of exactly one key, `$import: <Library>#/artifacts/<entry>`, referencing an ArtifactLibrary bundle by bare-name identity (the version is supplied by the per-Release lockfile; no registry host appears in the reference). A bundle expands into one output per file, each nested under the entry's key as `<key>/<filename>`. The key names the entry's output: a mode-1 or mode-2 entry's key is its output filename, used as written, and a mode-2 entry's imported file supplies the content without naming the output, so two entries importing different files that share a name are two distinct outputs. Collisions across artifact entries, bundle files, source output, and workload synthesis halt the build when the node renders. The `artifacts` block is authored identically on a Recipe and on a FeatureRecipe — the same three modes, the same key-to-output rule and the same collision behaviour — which is why that part of this description reads the same on both kinds; an example written for one transfers to the other unchanged.",
+          "propertyNames": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+            "description": "The key names the entry's output, so it is bounded to a single filename: it begins with a letter or digit and continues with letters, digits, dots, hyphens or underscores. Dots after the first character keep the extensions artifact keys carry (`main.tf`, `template.yaml`, `serviceaccount.yaml`). A `/` would make one key name a path rather than a file, and a leading `.` would admit `..`, which names a location outside the output directory — the first character class refuses both. For a library import the key names the directory the bundle's files are nested under, so the same bound applies."
+          },
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "required": ["$import"],
+                "properties": {
+                  "$import": {
+                    "type": "string",
+                    "not": {
+                      "pattern": "^oci://"
+                    },
+                    "description": "A local file path, or a bare-name ArtifactLibrary reference `<Library>#/artifacts/<entry>` (the entry names a bundle). A registry host (`oci://…`) is rejected: a library is addressed by identity, and the version is supplied by the per-Release lockfile."
+                  }
+                },
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "omits": {
+          "type": "array",
+          "minItems": 1,
+          "description": "What to leave out of what this Recipe's source renders — for a source taken as it is that renders something the Release must not ship: a document a fetched chart renders, such as a Secret holding a key the chart generates afresh on every render, a service, a volume or a config a fetched compose file bundles, or a resource a fetched CloudFormation template declares. Most Recipes never need it. Each entry names one unit the source renders by its kind, its name and, where the entry gives them, its namespace and the subchart it came from, each in the vocabulary of the provider rendering the source — for a chart, a document by its own `kind` and `metadata.name`; for a compose file, a `service`, a `volume` or a `config` by its key under `services:`, `volumes:` or `configs:`; for a CloudFormation template, a resource by its `Type` and its logical ID. That provider leaves out every unit an entry matches, and what an entry matches, and what the provider refuses on an entry's account, is that provider's own documented contract. A provider that cannot leave anything out refuses a Recipe declaring this key before anything is rendered. Only what `source:` renders is filtered — a `workload:` or an `artifacts:` entry never is — so the key requires `source`. Every value is a template, evaluated against the context `valuesMapping` is evaluated against. An entry's `when` is evaluated first, and an entry whose `when` renders a falsy value is dropped. Every entry left active must leave something out: an active entry that matches nothing the source rendered halts the build, naming the entry. The source still renders in full — every template of a chart still runs, so a template that fails still fails the build — and only its output is left out.",
+          "items": {
+            "type": "object",
+            "x-aggrega-go-type": "OmitEntry",
+            "required": [
+              "kind",
+              "name"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "description": "The kind of the unit to leave out, in the vocabulary of the provider rendering the source: for a chart, a rendered document's own `kind`, such as `Secret`; for a compose file, `service`, `volume` or `config`; for a CloudFormation template, a resource's `Type`, such as `AWS::S3::Bucket`. It names a kind the source renders, and is unrelated to the `kind:` a structured `source:` carries. A template."
+              },
+              "name": {
+                "type": "string",
+                "description": "The name of the unit to leave out, in the vocabulary of the provider rendering the source: for a chart, a rendered document's own `metadata.name`; for a compose file, the unit's key under `services:`, `volumes:` or `configs:`; for a CloudFormation template, the resource's logical ID, its key under `Resources`. A template."
+              },
+              "namespace": {
+                "type": "string",
+                "description": "The namespace the unit to leave out is in, when the entry should match only a unit in that namespace — for a provider whose output has namespaces, as a chart's rendered documents do. Absent, or rendering to the empty string, the entry matches a unit of its kind and name whatever its namespace. A compose file and a CloudFormation template have no namespaces, and their providers refuse an entry that names one. A template."
+              },
+              "subchart": {
+                "type": "string",
+                "description": "The subchart the unit to leave out came from, when the entry should match only the copy one subchart renders — for a source assembled from nested sources, as a chart is from its subcharts. For a chart, the subchart's own name, or the alias its parent's dependency gives it, with a nested subchart's names joined by `/` from the outermost: `operator`, or `operator/webhooks`. The entry then matches a document rendered from that subchart's own `templates/` or `crds/`, and neither one the chart renders itself nor one a subchart nested inside it renders. Absent, or rendering to the empty string, the entry matches a unit of its kind and name wherever it came from. A chart that renders no subchart of that name stops the build, naming the entry. A compose file and a CloudFormation template have no subcharts, and their providers refuse an entry that names one. A template."
+              },
+              "when": {
+                "type": "string",
+                "description": "Inline Go template evaluated before the entry's other fields. When it renders a falsy value the entry is dropped: its other fields are not evaluated, nothing is left out on its account, and it is not required to match. An empty or absent `when` keeps the entry. Truthiness follows the standard convention for boolean-like template output: the strings `true`/`True`/`TRUE`, any nonzero number, and any other non-empty string are true, while `false`/`False`/`FALSE`, the empty string, and zero are false. A `when` that fails to render halts the build."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "boundary": {
+          "type": "object",
+          "required": ["artifacts"],
+          "additionalProperties": false,
+          "description": "What this Recipe contributes to the shared output of the boundary it renders in, rather than to its own component's output. Most Recipes never need it: it is for a file the target reads once for the whole boundary — a Terraform provider configuration, say, which Terraform accepts only in the root configuration of a boundary and never inside one component's module. A provider accepts such files only where its contract declares `boundaryArtifacts`, and a Recipe declaring this block for a provider that does not is refused before anything renders. A FeatureRecipe carries no such block.",
+          "properties": {
+            "artifacts": {
+              "type": "object",
+              "x-aggrega-go-type": "OrderedMap[ArtifactEntry]",
+              "minProperties": 1,
+              "description": "Map of file name to file-content authoring, shaped exactly as this Recipe's own `artifacts`: the same three modes — an inline Go template string, a `$import:` of a local Go-template file, or a `$import:` of an ArtifactLibrary bundle, whose files nest under the entry's key as `<key>/<filename>` — the same key-to-filename rule, and the same template context, so an entry may read `.values`, `.infra`, `.locals` and the rest exactly as an `artifacts` entry does. What differs is where each file is written: once, in the directory holding the boundary's assembled output, beside the files the provider's own assembly writes there, rather than in this component's own directory. Every entry is evaluated for each component this Recipe renders in the boundary, and the files those evaluations produce are merged by name: one name evaluated to identical bytes by several components, or by several Recipes, is one file, while one name evaluated to different bytes halts the build naming the file and every contributor, as does a name the provider's own assembly already writes. Nothing is stamped into such a file to say which component wrote it, because it belongs to every component that declared it. An entry whose template renders to nothing writes no file. The entries are not handed to the provider, which writes the rest of the boundary's output without reading them.",
+              "propertyNames": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+                "description": "The key names the file, so it is bounded to a single filename, under the rule an `artifacts` key follows: it begins with a letter or digit and continues with letters, digits, dots, hyphens or underscores. A `/` would make one key name a path rather than a file, and a leading `.` would admit `..`, which names a location outside the boundary's output directory — the first character class refuses both. For a library import the key names the directory the bundle's files are nested under, so the same bound applies."
+              },
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "required": ["$import"],
+                    "properties": {
+                      "$import": {
+                        "type": "string",
+                        "not": {
+                          "pattern": "^oci://"
+                        },
+                        "description": "A local file path, or a bare-name ArtifactLibrary reference `<Library>#/artifacts/<entry>` (the entry names a bundle). A registry host (`oci://…`) is rejected: a library is addressed by identity, and the version is supplied by the per-Release lockfile."
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "outputLabels": {
+          "type": "object",
+          "x-aggrega-go-type": "map[string]string",
+          "description": "Recipe-author-declared labels stamped onto every object this recipe's rendered output produces, provider-translated onto each provider's label surface (Kubernetes metadata.labels for helm synthesis, source-render, and artifacts; Compose service labels; per-resource tags on Terraform .tf.json artifact bodies). They ride the same rail as the fixed provenance labels but are author-owned rather than compiler-owned. The aggrega.ai/ and app.kubernetes.io/ namespaces are reserved for platform-native provenance and are rejected at load. A key or value that is not a valid label for the target provider is the recipe author's responsibility; the core does not police label charset beyond the reserved-namespace rule.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "outputComponentLabels": {
+          "type": "array",
+          "description": "Component identity-label keys this recipe promotes onto its rendered output. Each entry names a label key; the value is taken from the labels of the component instance this recipe renders, so the stamped label carries that component's declared value rather than one repeated here. Promoted labels reach the same label surface as outputLabels, which instead carries literal key-value pairs authored in place. A key declared in both blocks is rejected at load, so each stamped key has a single source. The aggrega.ai/ and app.kubernetes.io/ namespaces are reserved for platform-native provenance and are rejected at load; a scoped key such as component.aggrega.ai/hosting lies outside those reserved roots and may be promoted.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "pipeline": {
+          "type": "array",
+          "description": "Sequential list of Wasm pipeline steps run after render over the rendered document set, each returning RFC 6902 patches and side effects.",
+          "items": {
+            "type": "object",
+            "x-aggrega-go-type": "PipelineStep",
+            "required": [
+              "id",
+              "plugin",
+              "function"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_]+$",
+                "description": "A programmatic identifier for this step, unique among the steps of this pipeline: a document declaring one id on two of its steps is refused when it is read. A later step of the same pipeline reads this step's outputs as `.steps.<id>.outputs`."
+              },
+              "plugin": {
+                "type": "string",
+                "description": "The reference to the Plugin entity this step runs, always scoped by the plugin's own socket type: `<pluginType>/<name>` with an optional version, as in `parser/yaml` or `parser/yaml:1.0.0`. The scope is mandatory rather than one form among several — an unscoped `name:version` is refused, because two sockets may hold a plugin of the same name and the scope is what makes the entity resolvable. The build resolves the entity to its content-addressed .wasm artifact — located from the plugin's identity and the configured registry, its digest pinned in the lockfile — and loads the bytes. A bare .wasm or artifact reference is not accepted here."
+              },
+              "function": {
+                "type": "string",
+                "description": "The exported Wasm function to invoke."
+              },
+              "with": {
+                "type": "string",
+                "description": "Inline Go template evaluating to a JSON/YAML map that strictly satisfies this plugin's explicit input schema."
+              },
+              "optional": {
+                "type": "boolean",
+                "description": "When true, a failure of this step (a guest trap, a patch targeting a document not present in the set, a malformed patch, or a halt-severity diagnostic) is downgraded to a loud warning: the pre-step document set is restored, this step's output is discarded, and the pipeline continues. When false or absent, any step failure halts the build after restoring the pre-step document set."
+              },
+              "when": {
+                "type": "string",
+                "description": "Inline Go template evaluated at pipeline-walk time. When it renders a falsy value the step is skipped — a pass-through: the document set flows to the next step unchanged, contributing no patches, side effects, or step record. An empty or absent `when` always runs the step. Truthiness follows the standard convention for boolean-like template output: the strings `true`/`True`/`TRUE`, any nonzero number, and any other non-empty string are true, while `false`/`False`/`FALSE`, the empty string, and zero are false. `when` and `optional` are independent: a step may declare both."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "assertions": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
+          "description": "Build-time cross-field validation. Each entry is a named assertion: the key is a stable rule identifier surfaced in error messages; the value is a Go template string with `{{ fail \"message\" }}` halt semantics. Multiple named assertions per entity evaluate per-instance in author-declared order; the first failing assertion halts the build. Recipe assertions evaluate after recipe binding and after the provides are evaluated, before render, and express implementation invariants of the specific chart or module the Recipe sources. Template context: .values / .infra / .uses / .features / .metadata plus .provides / .locals / .recipe. The evaluator uses missingkey=error: references to undefined keys halt with a no-such-key diagnostic. Because the bare reference halts before any fallback can run, a plain `default` does not supply an optional-field fallback on this surface — gate the reference with `hasKey`, or use the `optional` helper, which performs the presence check directly. Reading the key through `index` does not supply one either: `index` halts on a map key the map does not hold, naming the key.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

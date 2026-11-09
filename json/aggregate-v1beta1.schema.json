@@ -1,0 +1,461 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aggrega.ai/schemas/aggregate-v1beta1.schema.json",
+  "title": "Aggrega Developer Intent (Aggregate)",
+  "description": "The recursive, parameterized AI architecture. Acts as both the root of a build and a reusable module.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "aggrega.ai/v1beta1"
+    },
+    "kind": {
+      "type": "string",
+      "const": "Aggregate"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+          "description": "Strict Semantic Versioning of the aggregate module."
+        },
+        "description": {
+          "type": "string"
+        },
+        "maintainers": {
+          "type": "array",
+          "description": "List of maintainers who own this entity.",
+          "items": {
+            "type": "object",
+            "x-aggrega-go-type": "Maintainer",
+            "properties": {
+              "name": { "type": "string" },
+              "email": { "type": "string" },
+              "url": { "type": "string" }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          }
+        },
+        "license": {
+          "type": "string",
+          "description": "SPDX identifier for the license of the software this entity describes, such as MIT or AGPL-3.0. It records the terms of that software, not the terms of this file."
+        },
+        "repository": {
+          "type": "string",
+          "description": "The URL to the Git repository where the source files live."
+        },
+        "home": {
+          "type": "string",
+          "description": "The URL of this entity's home page, wiki, or documentation."
+        },
+        "keywords": {
+          "type": "array",
+          "description": "A list of descriptive keywords for UI discoverability.",
+          "items": { "type": "string" }
+        },
+        "labels": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
+          "description": "Module-level duck-typing labels for catalog discovery, policy evaluation, and Studio/IDE filtering. These labels describe the Aggregate's identity as a reusable module (e.g., aggregate.aggrega.ai/tier: infrastructure, aggregate.aggrega.ai/compliance: pci-dss). They do NOT cascade to child component nodes — component labels come exclusively from the Component catalog entity in Domain 2.",
+          "additionalProperties": {
+             "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "defs": {
+      "type": "array",
+      "description": "Optional block for standard YAML anchors (& and *) to keep the Aggregate DRY while maintaining a flat O(1) dictionary for the compiler. Mirrors the equivalent block on Manifest.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "spec": {
+      "type": "object",
+      "description": "The Developer Intent surface: the global parameter contract, nested aggregate imports, the exported-component public API, subsystem groupings, and the component instances that make up the module.",
+      "not": {
+        "allOf": [
+          { "required": ["components"], "properties": { "components": { "minProperties": 1 } } },
+          { "required": ["subsystems"], "properties": { "subsystems": { "minProperties": 1 } } }
+        ]
+      },
+      "properties": {
+        "parameters": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[any]",
+          "description": "Global environment contract. Each entry is a typed-contract object authoring the compact-form vocabulary subset (type, description, default, enum, min/max, minLength/maxLength, pattern, format, validate, validateMessage, required, items, valuesType, properties). Nested structure is expressed via the typed-form properties: sub-field. Release fulfillment may be inline (parameters: {...}) or single-source file import (parameters: {$import: <path>}); the parameter-contract layer validates the merged map against this contract before parameter interpolation. The Aggregate page of the language reference teaches the full vocabulary.",
+          "additionalProperties": {
+            "type": "object",
+            "description": "Typed contract authoring the compact-form vocabulary subset.",
+            "properties": {
+              "type":            { "type": "string", "enum": ["string", "integer", "number", "boolean", "object", "array"] },
+              "description":     { "type": "string" },
+              "default":         {},
+              "enum":            { "type": "array" },
+              "min":             {},
+              "max":             {},
+              "minLength":       { "type": "integer", "minimum": 0 },
+              "maxLength":       { "type": "integer", "minimum": 0 },
+              "pattern":         { "type": "string" },
+              "format":          { "type": "string", "enum": ["email", "uri", "hostname", "ipv4", "ipv6", "uuid", "date-time", "date"] },
+              "validate":        { "type": "string" },
+              "validateMessage": { "type": "string" },
+              "required":        { "type": "boolean" },
+              "items":           {},
+              "valuesType":      {},
+              "properties":      { "type": "object" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "aggregates": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[SubAggregate]",
+          "description": "Nested aggregates acting as imported modules.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "type": "object",
+              "required": ["type"],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "The abstract Aggregate requested, as a reference: its metadata.name plus an optional :version (e.g., publisher/name:version), never a file path. Resolved via the Three-Tier Entity Resolution Model (workspace catalog directories → cache → registry): an Aggregate authored locally is placed under catalog/ at the workspace root or in a directory listed under workspace.catalog_dirs, and a type written as a relative file path halts the build as an entity no catalog holds."
+                },
+                "active": {
+                  "anyOf": [{ "type": "boolean" }, { "type": "string" }],
+                  "default": true,
+                  "description": "Whether this imported module is present in the compiled topology. A boolean, or a string template over .parameters that must resolve to a boolean. When it resolves to false the entire module is pruned — none of its components, edges, or attachments are flattened. Driving the value from a parameter lets a Release toggle the module's presence by fulfilling that parameter. Defaults to true when omitted."
+                },
+                "parameters": {
+                  "type": "object",
+                  "description": "Parameters passed down to fulfill the nested aggregate's contract.",
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "exportedComponents": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[string]",
+          "description": "The Public API Interface. Maps an exposed public name to an internal component ID. Parent Aggregates importing this module reference components by these public names.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "subsystems": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[Subsystem]",
+          "description": "Named logical groupings of an Aggregate's components into subsystems. Mutually exclusive with top-level components — declaring both is rejected. A subsystem the author names default is an ordinary declared subsystem, distinct from the synthesized default the compiler creates for a components-only Aggregate.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "$ref": "#/$defs/subsystem"
+            }
+          },
+          "additionalProperties": false
+        },
+        "components": {
+          "type": "object",
+          "x-aggrega-go-type": "OrderedMap[ComponentInstance]",
+          "description": "The map of logical atomic components that make up this Aggregate, authored directly at the top level. Top-level components and subsystems are mutually exclusive — declaring both is rejected. When components are authored here (without subsystems), the compiler folds them into a synthesized default subsystem at load, and the IR marks that subsystem as synthesized.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "$ref": "#/$defs/component_instance"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "inject_delivery": {
+      "type": "array",
+      "description": "A single delivery mechanism, authored as an array of entries. Each entry carries an 'in' (local identifier — env var name, file path, arg flag, or custom mechanism-specific key) plus exactly one of 'from' (a provides key to resolve) or 'value' (a literal string, optionally containing Go template expressions evaluated at self-inject resolution). 'from' resolves against the target's provides in uses[].inject context, against the provides the attachment's FeatureRecipe publishes in an attachment's features.<name>.inject context, or against the component's own provides in component.inject context. In an attachment's features.<name>.inject a 'from' naming a key the FeatureRecipe does not publish halts the build, unless that FeatureRecipe reads the attachment's entries itself at .inject in a template it evaluates against the attachment's render context (its valuesMapping, workload, artifacts, omits, or a pipeline step's with or when — not its injectMapping), in which case the key is one it consumes rather than one delivered through the component's .context.inject. 'value' is delivered only in component.inject: an entry carrying it in uses[].inject or in an attachment's features.<name>.inject halts the build, because those blocks deliver only keys another entity publishes.",
+      "items": {
+        "type": "object",
+        "required": ["in"],
+        "oneOf": [
+          { "required": ["from"] },
+          { "required": ["value"] }
+        ],
+        "properties": {
+          "in": { "type": "string", "description": "The local identifier to inject into. Semantics determined by the parent mechanism (env → variable name, file → mount path, arg → flag prefix, custom → mechanism-specific key)." },
+          "from": { "type": "string", "description": "A provides key to resolve. In uses[].inject, resolves against the target node's provides. In an attachment's features.<name>.inject, resolves against the provides the attachment's FeatureRecipe publishes. In component.inject, resolves against the component's own provides." },
+          "value": { "type": "string", "description": "A literal string value. Supports Go template expressions evaluated at self-inject resolution with access to .values, .infra, .context.instance_id, .context.labels, .context.annotations.*, and .metadata.*. The Aggregate's own text is evaluated against .parameters before it is read, so each '{{' of a self-inject template is written escaped, as '{{\"{{\"}}': '{{\"{{\"}} .values.app_token }}' delivers the component's own app_token value, while '{{ .values.app_token }}' halts the build as an invalid parameter reference." }
+        },
+        "additionalProperties": false
+      }
+    },
+    "inject_block": {
+      "type": "object",
+      "description": "Agnostic injection routing. Maps local variables to target provides keys (uses[].inject), to the provides keys an attachment's FeatureRecipe publishes (features.<name>.inject), or to literal strings / template expressions and the component's own provides keys (component.inject). Each delivery mechanism (env, file, arg, or custom) is authored as an array of {in, from?, value?} entries — explicit 'from' for provides references and 'value' for literals. A custom mechanism may take any name except all: a template reads every mechanism merged into one view at .context.inject.all, so a mechanism of that name would be hidden by it, and naming one halts the build.",
+      "properties": {
+        "env": { "$ref": "#/$defs/inject_delivery" },
+        "file": { "$ref": "#/$defs/inject_delivery" },
+        "arg": { "$ref": "#/$defs/inject_delivery" }
+      },
+      "propertyNames": {
+        "not": {
+          "const": "all",
+          "description": "\"all\" is the merged view of every delivery mechanism, read at .context.inject.all, so it cannot name a mechanism"
+        }
+      },
+      "additionalProperties": { "$ref": "#/$defs/inject_delivery" }
+    },
+    "component_uses_block": {
+      "type": "object",
+      "description": "The connections a component draws to the components it depends on, keyed by socket. Each socket lists its targets, or names each connection under an alias. A connection named under an alias may carry the developer's per-connection values and the attachments filling the slots the socket declares.",
+      "patternProperties": {
+        "^[a-zA-Z0-9_-]+$": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            {
+              "type": "object",
+              "patternProperties": {
+                "^[a-zA-Z0-9_-]+$": {
+                  "type": "object",
+                  "required": ["target"],
+                  "properties": {
+                    "target": { "type": "string" },
+                    "inject": { "$ref": "#/$defs/inject_block" },
+                    "values": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Per-connection developer values for this edge, validated when the build resolves the Aggregate (not structurally here) against the valueSchema declared by the source socket — the socket on this component, the one whose uses block carries this entry. Projected into the consuming node's render context at .context.uses.<alias>.values. Per-connection infra is the operator's surface and is authored on a Release edge entry, not here."
+                    },
+                    "features": {
+                      "type": "object",
+                      "description": "The attachments this connection carries, keyed by the slot each fills. A name must be a slot the socket declares in its featuresSchema on the consuming Component; any other name, and any attachment on a socket the Component declares no slots for, is refused when the build loads. Each attachment becomes an attachment of the consuming component under the name <alias>.<slot> — the alias this connection is written under, a dot, and the slot — and that is the name a Manifest's per-instance mapping keys it by. An attachment on a connection does not nest, so it carries no uses or inject block of its own.",
+                      "patternProperties": {
+                        "^[a-zA-Z0-9_-]+$": { "$ref": "#/$defs/connection_attachment" }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "feature_uses_block": {
+      "type": "object",
+      "description": "The connections an attached Feature draws, keyed by a socket the Feature declares in its usesSchema. Each socket lists its targets, or names each connection under an alias. A connection a Feature draws carries no attachments of its own: a credential it needs fills a slot the Feature declares in its own featuresSchema and is attached beside the Feature.",
+      "patternProperties": {
+        "^[a-zA-Z0-9_-]+$": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            {
+              "type": "object",
+              "patternProperties": {
+                "^[a-zA-Z0-9_-]+$": {
+                  "type": "object",
+                  "required": ["target"],
+                  "properties": {
+                    "target": { "type": "string" },
+                    "inject": { "$ref": "#/$defs/inject_block" },
+                    "values": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Per-connection developer values for this edge. A Feature's socket declares no contract for them, so they are not validated: they are carried verbatim onto the connection in the IR graph and into the render context at .context.uses.<alias>.values, where the attached Feature's FeatureRecipe templates read them. Per-connection infra is the operator's surface and is authored on a Release edge entry, not here."
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "connection_attachment": {
+      "type": "object",
+      "description": "One attachment a connection carries: the Feature filling a slot the connection's socket declares, with the developer's configuration for it.",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The URI of the Feature interface this attachment requests (e.g. core/referenced-secret:1.0.0)."
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional documentation explaining why this connection carries the attachment."
+        },
+        "values": {
+          "type": "object",
+          "description": "Developer-provided configuration for the Feature, validated by its schema declaration.",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "subsystem": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Optional documentation describing this subsystem's purpose and the logical grouping it represents."
+        },
+        "annotations": {
+          "type": "object",
+          "description": "Developer-authored annotations on this subsystem. Values are strings, structured objects (a map of subkey to value, merged per subkey with an inherited structured value), or null; explicit null on a key inherited from a parent subsystem removes the inherited binding from this subsystem (annotation-driven Feature opt-out). Annotations declared here are inherited by nested subsystems and by contained components; closer-level wins per-key. Cascades down to the .context.annotations.aggregate bucket on each derived IR node.",
+          "additionalProperties": {
+            "type": ["string", "object", "null"]
+          }
+        },
+        "features": {
+          "type": "object",
+          "description": "Cross-cutting features attached to all components in this subsystem. Same schema as component-level features (type, values, uses, inject). Flattened into each component at graph finalization, positioned after component-level features in execution order.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "type": "object",
+              "required": ["type"],
+              "properties": {
+                "type": { "type": "string" },
+                "description": {
+                  "type": "string",
+                  "description": "Optional documentation explaining why this cross-cutting feature is applied to the subsystem."
+                },
+                "values": {
+                  "type": "object",
+                  "description": "Developer-provided configuration for the Feature.",
+                  "additionalProperties": true
+                },
+                "uses": { "$ref": "#/$defs/feature_uses_block" },
+                "inject": { "$ref": "#/$defs/inject_block" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "subsystems": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "$ref": "#/$defs/subsystem"
+            }
+          },
+          "additionalProperties": false
+        },
+        "components": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "$ref": "#/$defs/component_instance"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "component_instance": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The abstract Component requested, as a reference: its metadata.name plus an optional :version (e.g., core/api-server:1.0.0), never a file path. Resolved via the Three-Tier Entity Resolution Model (workspace catalog directories → cache → registry): a Component authored locally is placed under catalog/ at the workspace root or in a directory listed under workspace.catalog_dirs, and a type written as a relative file path halts the build as an entity no catalog holds."
+        },
+        "active": {
+          "anyOf": [{ "type": "boolean" }, { "type": "string" }],
+          "default": true,
+          "description": "Whether this component is present in the compiled topology. A boolean, or a string template over .parameters that must resolve to a boolean. When it resolves to false the component is pruned from the topology, cascading to its uses edges and its attachments. Driving the value from a parameter lets a Release toggle the component's presence by fulfilling that parameter. Defaults to true when omitted."
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional documentation describing this component instance's role in the application. Carried through to the IR graph."
+        },
+        "annotations": {
+          "type": "object",
+          "description": "Developer-authored annotations on this component. Values are strings, structured objects (a map of subkey to value, merged per subkey with an inherited structured value), or null; explicit null on a key inherited from a parent subsystem removes the inherited binding from this component (annotation-driven Feature opt-out). Component-level annotations override inherited subsystem-level annotations per key; sibling components in the same subsystem retain their own annotation maps independently.",
+          "additionalProperties": {
+            "type": ["string", "object", "null"]
+          }
+        },
+        "values": {
+          "type": "object",
+          "description": "Opaque cognitive properties passed to the Component, validated by its schema.",
+          "additionalProperties": true
+        },
+        "uses": {
+          "$ref": "#/$defs/component_uses_block"
+        },
+        "inject": {
+          "$ref": "#/$defs/inject_block",
+          "description": "Component-level self-inject. Injects the component's own values (via 'value:') or own provides keys (via 'from:') directly into the delivery pipe (.context.inject). Only allowed if the Component catalog entity declares 'spec.inject' with the corresponding mechanisms. An inject key that collides with a key declared in uses[].inject halts the build as a duplicate delivery key across inject sources."
+        },
+        "features": {
+          "type": "object",
+          "description": "The Features attached to this component, keyed by the instance name the author gives each attachment. This is the single attachment surface: an operational Feature, a credential Feature (one labeled feature.aggrega.ai/kind: secret) and an identity Feature are all attached here, under the same keyword and the same shape. What differs between them is what the attachment produces, not how it is declared. An attachment whose instance name matches a slot the Component declares in featuresSchema fills that slot; any other instance name is a free attachment.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "type": "object",
+              "required": ["type"],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "The URI of the Feature interface this attachment requests (e.g. core/observability/prometheus-scrape:1.0.0)."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Optional documentation explaining why this feature is attached to the component."
+                },
+                "values": {
+                  "type": "object",
+                  "description": "Developer-provided configuration for the Feature, validated by its schema declaration.",
+                  "additionalProperties": true
+                },
+                "uses": {
+                  "$ref": "#/$defs/feature_uses_block"
+                },
+                "inject": {
+                  "$ref": "#/$defs/inject_block"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

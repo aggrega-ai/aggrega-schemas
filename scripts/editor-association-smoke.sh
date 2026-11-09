@@ -28,8 +28,8 @@ set -euo pipefail
 
 DIR="$(cd "$(dirname "$0")/.." && pwd)"
 JSON="$DIR/json"
-SCHEMA_FILE="$JSON/component-v1alpha1.schema.json"
-SCHEMA_NAME="component-v1alpha1.schema.json"
+SCHEMA_FILE="$JSON/component-v1beta1.schema.json"
+SCHEMA_NAME="component-v1beta1.schema.json"
 PORT="${SMOKE_PORT:-8731}"
 AGGREGA="${AGGREGA_BIN:-aggrega}"
 
@@ -61,7 +61,7 @@ echo "OK: $url serves the schema byte-identical to source"
 
 # good / bad samples (BAD carries an unknown spec key the envelope forbids)
 cat > "$tmp/good.yaml" <<'YAML'
-apiVersion: aggrega.ai/v1alpha1
+apiVersion: aggrega.ai/v1beta1
 kind: Component
 metadata:
   name: demo/widget
@@ -76,7 +76,7 @@ spec:
         default: "small"
 YAML
 cat > "$tmp/bad.yaml" <<'YAML'
-apiVersion: aggrega.ai/v1alpha1
+apiVersion: aggrega.ai/v1beta1
 kind: Component
 metadata:
   name: demo/widget
