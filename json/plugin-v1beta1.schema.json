@@ -91,8 +91,8 @@
       "properties": {
         "abiVersion": {
           "type": "string",
-          "enum": ["v1alpha1"],
-          "description": "The host/guest ABI version the plugin targets. `v1alpha1` is the accepted value; a new ABI revision adds one."
+          "enum": ["v1beta1"],
+          "description": "The host/guest ABI version the plugin targets. `v1beta1` is the one value accepted; a Plugin declaring an ABI version this compiler no longer speaks is refused, naming the version to rebuild the plugin against."
         },
         "signature": {
           "type": "object",

@@ -19,7 +19,7 @@
       "properties": {
         "abi_version": {
           "type": "string",
-          "const": "v1alpha1",
+          "const": "v1beta1",
           "description": "The plugin ABI the guest binds against. The host accepts exactly this version; a guest built against any other ABI is refused at load rather than mis-invoked at dispatch."
         },
         "plugin_type": {
