@@ -16,6 +16,45 @@ schema is served from, so a YAML language server in an editor can associate a
 document with its schema; [PUBLISHING.md](PUBLISHING.md) describes how the
 schemas are served.
 
+## Changing a schema
+
+Within one API version a schema changes only additively: a description may
+change and an optional property may be added. Removing or renaming a property,
+making one required, narrowing a type or an enum, or changing what a value means
+needs a new API version.
+
+`cmd/schemagate` holds the schemas to that rule, and runs from a clone of this
+repository alone:
+
+```sh
+go run ./cmd/schemagate compat
+```
+
+compares every schema in `json/` with the same schema at the newest release tag
+carrying its API version. It refuses a removed or renamed property, a property
+added to `required`, a narrowed type, a removed enum member, an added or changed
+`const` or `pattern`, a tightened `minimum`, `maximum` or `additionalProperties`,
+a removed `$defs` entry, and any other change it does not classify as additive,
+naming the schema file, the JSON pointer and the kind of change. It passes a
+changed description and an added optional property — including one added where
+an object accepted any extra property before, so a document that already used
+that name with a different kind of value can stop validating. A schema whose API
+version no release carries yet is compared with nothing and passes, saying so; a
+clone with no release tag at all is not judged. Development happens on `dev`,
+where this check runs on every push and pull request.
+
+```sh
+go run ./cmd/schemagate freeze -head main -dev origin/dev
+```
+
+refuses any change `main` carries to a schema file since the newest commit it
+shares with `dev`. `main` holds what was last released and moves only by a
+release, which fast-forwards it to `dev`; this check runs on every push to it.
+Both commands need the repository's full history and tags, and refuse to judge a
+shallow clone. `go run ./cmd/schemagate -h` prints their flags. Built with
+`go build ./cmd/schemagate`, the command exits 0 when the check passes, 1 when it
+refuses, and 2 when it could not judge; `go run` reports any failure as 1.
+
 ## License
 
 The Aggrega JSON Schemas are released under the Apache License, Version 2.0; the full text is in the

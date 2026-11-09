@@ -1,0 +1,102 @@
+name: Schema gates
+
+# Holds the published schemas to their compatibility rule on the two release
+# branches, with this repository's own check, cmd/schemagate, whose usage text is
+# the contract.
+#
+# Within one API version a schema changes only additively: a description may
+# change and an optional property may be added. On dev, every push and every pull
+# request into dev compares each schema with the same schema at the newest release
+# tag carrying its API version, and fails on a change the check does not accept
+# within one API version. While no release carries the schemas' API version, the
+# check says it has no baseline and passes.
+#
+# On main, a push fails when it changes a schema file since the newest commit main
+# shares with dev: a release fast-forwards main to dev and passes, an edit made on
+# main does not. The comparison reads dev from this repository's remote, so dev is
+# pushed before main.
+#
+# The check that judges a change is never built from that change: on dev it is
+# built from the revision the change is judged against (the pull request's base,
+# or the commit the push moved dev from), and on main from dev. So a change that
+# also edits the check is judged by the check it started from. Only where that
+# revision does not carry the check yet is it built from the change itself, and the
+# run says so.
+#
+# Both jobs fetch the full history and every tag; the check refuses to judge a
+# shallow clone rather than pass it.
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [dev]
+
+permissions:
+  contents: read
+
+jobs:
+  compat:
+    name: Compare with the last release (dev)
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/dev'
+    runs-on: ${{ vars.AGGREGA_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 10
+    steps:
+      - name: Check out with history and tags
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Build the check from the revision the change is judged against
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          rev="$BASE"
+          if [ -z "$rev" ] || [ "$rev" = 0000000000000000000000000000000000000000 ] \
+            || ! git cat-file -e "$rev:cmd/schemagate/main.go" 2>/dev/null; then
+            echo "::notice::the revision this change is judged against does not carry the check; building it from the change itself"
+            rev=HEAD
+          fi
+          mkdir -p "$RUNNER_TEMP/check"
+          git archive "$rev" go.mod cmd/schemagate | tar -x -C "$RUNNER_TEMP/check"
+          cd "$RUNNER_TEMP/check"
+          go build -buildvcs=false -o "$RUNNER_TEMP/schemagate" ./cmd/schemagate
+
+      - name: Compare the schemas with the last release
+        run: '"$RUNNER_TEMP/schemagate" compat'
+
+  freeze:
+    name: Refuse a schema change (main)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ${{ vars.AGGREGA_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 10
+    steps:
+      - name: Check out with history and tags
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Build the check from dev
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/check"
+          git archive origin/dev go.mod cmd/schemagate | tar -x -C "$RUNNER_TEMP/check"
+          cd "$RUNNER_TEMP/check"
+          go build -buildvcs=false -o "$RUNNER_TEMP/schemagate" ./cmd/schemagate
+
+      - name: Refuse a schema change not brought in from dev
+        run: '"$RUNNER_TEMP/schemagate" freeze -head "$GITHUB_SHA" -dev origin/dev'
