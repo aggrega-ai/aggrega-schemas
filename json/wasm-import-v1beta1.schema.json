@@ -28,7 +28,7 @@
         },
         "name": {
           "type": "string",
-          "description": "The name of the file the primary bytes were read from: its base name, with no directory, so an importer can name the file in what it reports about it. The primary bytes arrive as no named source, so this is the one name they carry. Absent where the import's source is a directory, whose files arrive as named sources, each under its own name."
+          "description": "The name of the import's source, with no directory before it, so an importer can name the source in what it reports and in what it drafts. Where the source is one file, it is the file's base name: the primary bytes arrive as no named source, so this is the one name they carry. Where the source is a directory, it is the directory's base name, and the directory's files still arrive as named sources, each under its own name, with the primary bytes empty. Absent where the source has no name to give."
         },
         "sources": {
           "type": "array",
