@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2026 Cognitio S.r.l.
+// Copyright 2026 Cognitio s.r.l.
 
 // Command schemagate holds the published schemas to their compatibility rule
 // on the two release branches.

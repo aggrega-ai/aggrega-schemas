@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2026 Cognitio S.r.l.
+// Copyright 2026 Cognitio s.r.l.
 
 // Package schemas exposes the canonical JSON Schema bytes for every
 // Aggrega entity kind via package-local //go:embed. Consumers import
