@@ -10,7 +10,7 @@
   "$defs": {
     "ImportInput": {
       "type": "object",
-      "description": "The payload an importer guest receives: the source format that selects how to read the bytes, the primary source bytes and the name of the file they were read from, any named sources for a multi-file import, an optional opaque options document the consumer supplies for importer-specific behavior, and a view of the Components the workspace's catalog holds.",
+      "description": "The payload an importer guest receives: the source format that selects how to read the bytes, the primary source bytes and the name of the file they were read from, any named sources for a multi-file import, an optional opaque options document the consumer supplies for importer-specific behavior, a view of the Components the workspace's catalog holds, and the target the import drafts for.",
       "required": [
         "format",
         "bytes"
@@ -45,6 +45,10 @@
           "$ref": "#/$defs/CatalogProjection",
           "x-aggrega-go-type": "*CatalogProjection",
           "description": "A view of the Components the workspace's own catalog holds — the catalog the importer itself was selected from — so the importer can weigh them as candidates when it maps a source node to a catalog entity. The host builds it from that local catalog alone, and it carries names, versions, labels and declared structure only: never a value, a default or a secret. Its order is fixed, so one catalog yields one byte sequence. Absent when the catalog holds no Component."
+        },
+        "target": {
+          "type": "string",
+          "description": "The provider capability the import drafts for, such as compose or helm: the target the import was given, or, for an import refreshing an earlier one that names none, the target that earlier import recorded. An importer writes what only that target needs into the drafts as declarations, and leaves out what only another target needs. The host pipes it through as given, once it has checked that a Recipe of the workspace's catalog binds to it. Absent where the import names no target."
         }
       }
     },
