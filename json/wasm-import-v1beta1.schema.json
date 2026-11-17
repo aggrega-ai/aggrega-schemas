@@ -208,7 +208,7 @@
       "properties": {
         "kind": {
           "type": "string",
-          "description": "The kind of entity emitted. The core importers emit Component, Aggregate and Release; a reader tolerates any other kind."
+          "description": "The kind of the emitted entity, as its document declares it; a reader tolerates any kind."
         },
         "name": {
           "type": "string",

@@ -1215,7 +1215,7 @@
     },
     "ImportParams": {
       "type": "object",
-      "description": "Converts a foreign source description into draft authoring documents, and writes beside them `.aggrega-import.json`, the record of what the import wrote — the target it was given, where it was given one, the catalog snapshot it read, where it read one, each drafted file, and each key of a drafted Aggregate or Release at every depth — which a later sync reads. A source it could not fully convert is an answer rather than a failure: the drafts it did produce are written and the findings say what it could not convert — except under sync, which writes nothing from a conversion that stopped.",
+      "description": "Converts a foreign source description into draft authoring documents, and writes its entry in `.aggrega-import.json`, the record of what each import into that directory wrote — the target it was given, where it was given one, the catalog snapshot it read, where it read one, each drafted file, and each key of a drafted Aggregate or Release at every depth — which a later sync reads. A source it could not fully convert is an answer rather than a failure: the drafts it did produce are written and the findings say what it could not convert — except under sync, which writes nothing from a conversion that stopped.",
       "required": ["workspaceRoot"],
       "additionalProperties": false,
       "properties": {
