@@ -279,6 +279,11 @@ var ruledBenign = map[string]string{
 	"IRSchemaV1beta1|/$defs/IRNode/properties/sensitive_payload_leaves/description|dbPassword":            "a dotted path contrasted with a differently-named sibling leaf",
 	"IRSchemaV1beta1|/$defs/IRFeatureEntry/properties/sensitive_payload_leaves/description|dbPassword":    "a dotted path contrasted with a differently-named sibling leaf",
 	"IRSchemaV1beta1|/$defs/IRBoundaryFeature/properties/sensitive_payload_leaves/description|dbPassword": "a dotted path contrasted with a differently-named sibling leaf",
+
+	// An ARM template's dependsOn property named beside the English verb in the sync-wave descriptions.
+	"ReleaseV1beta1|/$defs/boundary/properties/syncWave/description|dependsOn":               "the arm provider's dependsOn property, written as ARM spells it, beside the English verb 'depend on'",
+	"WasmProviderV1beta1|/$defs/IRNodeProjection/properties/sync_wave/description|dependsOn": "the arm provider's dependsOn property, written as ARM spells it, beside the English verb 'depend on'",
+	"IRSchemaV1beta1|/$defs/IRNode/properties/sync_wave/description|dependsOn":               "the arm provider's dependsOn property, written as ARM spells it, beside the English verb 'depend on'",
 }
 
 // TestNoIdentifierSpelledTwoWaysInOneDescription fails when a schema
