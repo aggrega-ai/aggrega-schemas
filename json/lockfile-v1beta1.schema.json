@@ -220,7 +220,7 @@
     "source_artifacts": {
       "type": "array",
       "default": [],
-      "description": "Source artifacts pulled from Recipe / FeatureRecipe `spec.source` fields at pull time. Each entry identifies a unique `{kind, url, chart, pinned_version}` identity with content digest, mediatype, and the structured `referenced_by:` back-pointers naming every catalog entity that resolved to this artifact. `url` is the authored identity URL; the resolved artifact location for a repo-root helm source is recorded separately under `resolved_url:` as provenance. Multiple Recipes pinning the same chart at the same version dedupe to a single entry with multiple `referenced_by:` records. The kind enum covers the four source kinds that resolve, and `terraform-module-oci`, which no source adapter serves: a Recipe or FeatureRecipe naming it is refused as it is read, so no pull records an entry of that kind.",
+      "description": "Source artifacts pulled from Recipe / FeatureRecipe `spec.source` fields at pull time. Each entry identifies a unique `{kind, url, chart, pinned_version}` identity with content digest, mediatype, and the structured `referenced_by:` back-pointers naming every catalog entity that resolved to this artifact. `url` is the authored identity URL; the resolved artifact location for a repo-root helm source is recorded separately under `resolved_url:` as provenance. Multiple Recipes pinning the same chart at the same version dedupe to a single entry with multiple `referenced_by:` records. The kind enum is one closed set, shared with the entity lock's source digests and the cache slot's metadata: `helm-oci-chart`, `helm-https-chart`, `compose-https-fragment`, `git-repository`, `terraform-module-oci` and `bicep-module-oci`.",
       "items": { "$ref": "#/$defs/SourceArtifactEntry" }
     },
     "toolchain": {
@@ -432,12 +432,12 @@
       "description": "A single source artifact pin: the {kind, url, chart, module_subdir, pinned_version} identity, the content digest verifying the pull, the canonical mediatype, and the structured back-pointers to every catalog entity that resolved to this artifact. `chart` and `module_subdir` are the two selector terms — each names whatever the URL alone does not, for the kinds that need one.",
       "properties": {
         "kind": {
-          "enum": ["helm-oci-chart", "helm-https-chart", "compose-https-fragment", "git-repository", "terraform-module-oci"],
-          "description": "The source kind. Determines which adapter resolved the artifact and which mediatype is expected. `terraform-module-oci` belongs to the set, and no source adapter serves it: a Recipe or FeatureRecipe naming it is refused as it is read."
+          "enum": ["helm-oci-chart", "helm-https-chart", "compose-https-fragment", "git-repository", "terraform-module-oci", "bicep-module-oci"],
+          "description": "The source kind. Determines which adapter resolved the artifact and which mediatype is expected. `terraform-module-oci` and `bicep-module-oci` each resolve one artifact of an OCI registry repository, selected by a tag or a manifest digest. The set is closed and shared with the entity lock's source digests and the cache slot's metadata."
         },
         "url": {
           "type": "string",
-          "description": "The authored URL — the identity URL as written in the Recipe's spec.source.url. For helm-https-chart this is the repo root (repo-root form) or the direct .tgz (direct form) exactly as authored; build reconstructs this same URL offline, so it is the stable identity the pin is keyed on. For git-repository, the cloneable repository URL. For helm-oci-chart, the registry reference. For compose-https-fragment, the fragment's HTTPS URL. The resolved artifact location for a repo-root helm source is recorded separately under `resolved_url:` as provenance."
+          "description": "The authored URL — the identity URL as written in the Recipe's spec.source.url. For helm-https-chart this is the repo root (repo-root form) or the direct .tgz (direct form) exactly as authored; build reconstructs this same URL offline, so it is the stable identity the pin is keyed on. For git-repository, the cloneable repository URL. For helm-oci-chart, the registry reference. For an OCI module kind, `oci://<registry>/<repository>`. For compose-https-fragment, the fragment's HTTPS URL. The resolved artifact location for a repo-root helm source is recorded separately under `resolved_url:` as provenance."
         },
         "chart": {
           "type": "string",
@@ -445,12 +445,12 @@
         },
         "module_subdir": {
           "type": "string",
-          "description": "The directory within a git-sourced repository that is the artifact (the Recipe's spec.source.module_subdir), part of the {kind, url, chart, module_subdir, pinned_version} identity so two directories of one repository at the same commit pin to distinct entries. Absent when the whole repository is the artifact, and for every kind that reaches its artifact by URL rather than by descending into a clone."
+          "description": "The directory that is the artifact (the Recipe's spec.source.module_subdir), part of the {kind, url, chart, module_subdir, pinned_version} identity so two directories of one repository at the same commit, or of one module package at the same version, pin to distinct entries. Names a directory within a git-sourced repository, or within a `terraform-module-oci` module package. Absent when the whole repository or package is the artifact, and for every other kind."
         },
         "pinned_version": {
           "type": "string",
           "pattern": "^([^/\\\\.]|\\.[^/\\\\.])*\\.?$",
-          "description": "The concrete version pinned at pull time. For helm-* kinds, the chart version. For git-repository, the commit the authored reference resolved to (NOT the original tag/branch ref — that is recorded under `requested_ref:` on each `referenced_by:` entry, whenever the Recipe authored a `spec.source.ref:`). A build finds this entry by what the Recipe wrote: the authored `ref:` where there is one, matched against the recorded `requested_ref:`, and this pinned value otherwise — so a Recipe that names a tag resolves to the commit that tag was pinned at, without the commit ever appearing in the Recipe. Recorded as a single path segment, because it builds the cache slot the build reads the artifact back from, so it carries no `/`, no `\\` and no `..`."
+          "description": "The concrete version pinned at pull time. For helm-* kinds, the chart version. For git-repository, the commit the authored reference resolved to (NOT the original tag/branch ref — that is recorded under `requested_ref:` on each `referenced_by:` entry, whenever the Recipe authored a `spec.source.ref:`). A build finds this entry by what the Recipe wrote: the authored `ref:` where there is one, matched against the recorded `requested_ref:`, and this pinned value otherwise — so a Recipe that names a tag resolves to the commit that tag was pinned at, without the commit ever appearing in the Recipe. For an OCI module kind, the tag or the manifest digest (`sha256:` followed by 64 lowercase hex characters) the Recipe wrote. Recorded as a single path segment, because it builds the cache slot the build reads the artifact back from, so it carries no `/`, no `\\` and no `..`."
         },
         "resolved_url": {
           "type": "string",
@@ -459,16 +459,16 @@
         "digest": {
           "type": "string",
           "pattern": "^sha256:[a-f0-9]{64}$",
-          "description": "Content digest of the resolved .tar.gz archive, in `sha256:` followed by 64 lowercase hex characters. Build-time verification reads the cache slot's bytes, recomputes the digest, and compares it against this field; a mismatch halts the build, reporting a content digest mismatch."
+          "description": "Content digest of the resolved artifact, in `sha256:` followed by 64 lowercase hex characters: the `.tar.gz` archive for a chart, fragment or git kind, and the selected layer's bytes as published for an OCI module kind. Build-time verification reads the cache slot's bytes, recomputes the digest, and compares it against this field; a mismatch halts the build, reporting a content digest mismatch."
         },
         "manifest_digest": {
           "type": "string",
           "pattern": "^sha256:[a-f0-9]{64}$",
-          "description": "OCI manifest digest of the resolved artifact, in `sha256:` followed by 64 lowercase hex characters. The manifest is the independent root of trust the cached archive is verified against; the content `digest` above is the portable identity used for the cache pin and integrity check. Present only for an OCI-distributed source (a helm-oci-chart)."
+          "description": "OCI manifest digest of the resolved artifact, in `sha256:` followed by 64 lowercase hex characters. The manifest is the independent root of trust the cached archive is verified against; the content `digest` above is the portable identity used for the cache pin and integrity check. Present for every OCI-distributed kind (`helm-oci-chart`, `bicep-module-oci`, `terraform-module-oci`)."
         },
         "mediatype": {
           "type": "string",
-          "description": "Canonical media type the registry advertised (or the kind's default for kinds without registry metadata). Recorded for diagnostic provenance."
+          "description": "Canonical media type the registry advertised (or the kind's default for kinds without registry metadata). For an OCI module kind, the media type of the selected layer. Recorded for diagnostic provenance."
         },
         "referenced_by": {
           "type": "array",

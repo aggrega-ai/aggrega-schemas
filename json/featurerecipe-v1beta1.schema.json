@@ -115,7 +115,7 @@
           "oneOf": [
             {
               "type": "string",
-              "description": "A URI string (e.g., './src', 'https://github.com/example/module.git', 'oci://...'). Used for local paths, OCI artifacts, and Git repositories. A URL ending in '.git', or written with 'git://' or 'ssh://', is fetched as a Git repository at its default branch; an 'https://' URL is a Helm chart where it ends in '.tgz' and a compose fragment where it ends in '.yaml' or '.yml', and one naming none of these is refused as ambiguous — write the structured form, whose 'kind' names the resolver, for it."
+              "description": "A URI string (e.g., './src', 'https://github.com/example/module.git', 'oci://...'). Used for local paths, OCI artifacts, and Git repositories. An 'oci://' URI is fetched as a Helm chart; an OCI module is named by the structured form, whose 'kind' selects it. A URL ending in '.git', or written with 'git://' or 'ssh://', is fetched as a Git repository at its default branch; an 'https://' URL is a Helm chart where it ends in '.tgz' and a compose fragment where it ends in '.yaml' or '.yml', and one naming none of these is refused as ambiguous — write the structured form, whose 'kind' names the resolver, for it."
             },
             {
               "type": "object",

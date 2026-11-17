@@ -22,8 +22,8 @@
         "additionalProperties": false,
         "properties": {
           "kind": {
-            "enum": ["helm-oci-chart", "helm-https-chart", "compose-https-fragment", "git-repository", "terraform-module-oci"],
-            "description": "The resolved source kind. One of a closed set — the same set the lockfile's source-artifact `kind` and the cache metadata's `kind` carry — because all three record the same resolved-source identities and a build reads the kind to choose the loader. `terraform-module-oci` belongs to the set, and no source adapter serves it: a Recipe or FeatureRecipe naming it is refused as it is read."
+            "enum": ["helm-oci-chart", "helm-https-chart", "compose-https-fragment", "git-repository", "terraform-module-oci", "bicep-module-oci"],
+            "description": "The resolved source kind. One of a closed set — the same set the lockfile's source-artifact `kind` and the cache metadata's `kind` carry — because all three record the same resolved-source identities and a build reads the kind to choose the loader. `terraform-module-oci` and `bicep-module-oci` are OCI module kinds: each is one artifact of an OCI registry repository, selected by a tag or a manifest digest."
           },
           "url": {
             "type": "string",
@@ -35,22 +35,22 @@
           },
           "moduleSubdir": {
             "type": "string",
-            "description": "The directory within a git-sourced repository that is the artifact (spec.source.module_subdir), part of the resolved-source identity so two directories of one repository at the same commit pin distinctly. Absent when the whole repository is the artifact, and for every kind that reaches its artifact by URL rather than by descending into a clone."
+            "description": "The directory that is the artifact (spec.source.module_subdir), part of the resolved-source identity so two directories of one repository at the same commit, or of one module package at the same version, pin distinctly. Names a directory within a git-sourced repository, or within a `terraform-module-oci` module package. Absent when the whole repository or package is the artifact, and for every other kind."
           },
           "version": {
             "type": "string",
             "pattern": "^([^/\\\\.]|\\.[^/\\\\.])*\\.?$",
-            "description": "The concrete pinned version the source resolved to — a chart version for a helm-* kind, the commit a git-repository reference resolved to. Recorded as a single path segment, because it builds the cache slot the build reads the source back from, so it carries no `/`, no `\\` and no `..`."
+            "description": "The concrete pinned version the source resolved to — a chart version for a helm-* kind, the commit a git-repository reference resolved to, a tag or a manifest digest (`sha256:` followed by 64 lowercase hex characters) for an OCI module kind. Recorded as a single path segment, because it builds the cache slot the build reads the source back from, so it carries no `/`, no `\\` and no `..`."
           },
           "digest": {
             "type": "string",
             "pattern": "^sha256:[a-f0-9]{64}$",
-            "description": "The content digest of the fetched source archive, in `sha256:` followed by 64 lowercase hex characters, verified against the cached bytes at build."
+            "description": "The content digest of the fetched source, in `sha256:` followed by 64 lowercase hex characters, verified against the cached bytes at build. For a chart, fragment or git kind it digests the `.tar.gz` archive; for an OCI module kind it digests the selected layer's bytes as published."
           },
           "manifestDigest": {
             "type": "string",
             "pattern": "^sha256:[a-f0-9]{64}$",
-            "description": "The OCI manifest digest for an OCI-distributed source — the independent root of trust — in `sha256:` followed by 64 lowercase hex characters. Present only for an OCI source (a helm-oci-chart); absent for an https or git source, which carries no manifest by construction."
+            "description": "The OCI manifest digest for an OCI-distributed source — the independent root of trust — in `sha256:` followed by 64 lowercase hex characters. Present for every OCI-distributed kind (`helm-oci-chart`, `bicep-module-oci`, `terraform-module-oci`); absent for an https or git source, which carries no manifest by construction."
           }
         }
       }
