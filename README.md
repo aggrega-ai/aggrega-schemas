@@ -66,8 +66,11 @@ nothing needs admitting:
 
 Each entry names the schema file in `json/` by its file name, the JSON pointer of
 the object and the property as the refusal prints them, and a reason. An entry
-that matches no refusal is refused too, so the file keeps no admission nothing
-needs; a malformed file leaves nothing judged. `-exceptions FILE` reads another
+that matches no refusal is refused too, unless the schema and the release it is
+compared with both declare that property at that pointer, as they do once a
+release carries the admission, which a comparison with an earlier release still
+needs. So the file keeps no admission nothing needs; a malformed file leaves
+nothing judged. `-exceptions FILE` reads another
 file, and `-staged` reads both the schemas and this file from the index.
 
 ```sh

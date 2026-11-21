@@ -234,6 +234,7 @@ func runCompat(opts compatOptions, w io.Writer) (bool, error) {
 	fmt.Fprintf(w, "schemagate compat: %d schema files in %s, in %s\n", len(candidates), source, opts.repo)
 	var found []finding
 	compared := 0
+	read := map[string]comparedSchema{}
 	for _, v := range versions {
 		files := byVersion[v]
 		base := opts.baseline
@@ -282,6 +283,7 @@ func runCompat(opts compatOptions, w io.Writer) (bool, error) {
 				return false, fmt.Errorf("%s in %s: %v", p, source, err)
 			}
 			found = append(found, compareSchemas(p, oldDoc, newDoc)...)
+			read[path.Base(p)] = comparedSchema{old: oldDoc, updated: newDoc}
 			compared++
 		}
 		for _, f := range baseFiles {
@@ -291,7 +293,7 @@ func runCompat(opts compatOptions, w io.Writer) (bool, error) {
 		}
 	}
 
-	found, admitted := applyExceptions(found, exceptions, exceptionsSource)
+	found, admitted := applyExceptions(found, exceptions, exceptionsSource, read)
 	if len(admitted) > 0 {
 		fmt.Fprintf(w, "admitted by %s:\n", exceptionsSource)
 		for _, a := range admitted {

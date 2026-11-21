@@ -13,6 +13,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -129,11 +130,21 @@ type admission struct {
 	reason  string
 }
 
+// comparedSchema is one schema file a comparison read at both ends: old at the
+// baseline, updated in the judged tree.
+type comparedSchema struct {
+	old, updated any
+}
+
 // applyExceptions removes from found every property addition an entry names,
 // returning what remains and what was admitted. An entry that names no finding
-// is itself refused, so the file cannot keep an admission nothing needs.
-// source names the exceptions file in that refusal.
-func applyExceptions(found []finding, exs []exception, source string) ([]finding, []admission) {
+// is itself refused, so the file cannot keep an admission nothing needs, unless
+// the property it names is declared at that pointer by both the judged schema
+// and its baseline: that is an admission a published release already carries,
+// which a comparison with an earlier release still needs. compared holds the
+// schemas this comparison read, keyed by file name; a schema it did not read
+// declares nothing. source names the exceptions file in a refusal.
+func applyExceptions(found []finding, exs []exception, source string, compared map[string]comparedSchema) ([]finding, []admission) {
 	used := make([]bool, len(exs))
 	var kept []finding
 	var admitted []admission
@@ -158,12 +169,42 @@ func applyExceptions(found []finding, exs []exception, source string) ([]finding
 		if used[i] {
 			continue
 		}
+		if doc, ok := compared[e.Schema]; ok &&
+			declaresProperty(doc.updated, e.Pointer, e.Property) && declaresProperty(doc.old, e.Pointer, e.Property) {
+			continue
+		}
 		kept = append(kept, finding{
 			schema:  schemaDir + "/" + e.Schema,
 			pointer: e.Pointer,
-			kind: fmt.Sprintf("%s excepts property %q, but this comparison finds no such property added where any extra property was accepted; remove the entry",
+			kind: fmt.Sprintf("%s excepts property %q, but no addition of it is refused here and the schema and its baseline do not both declare it at this pointer; remove the entry",
 				source, e.Property),
 		})
 	}
 	return kept, admitted
+}
+
+// declaresProperty reports whether the node at pointer, a fragment such as
+// #/properties/spec, lists name under its properties. A pointer that leads
+// nowhere declares nothing.
+func declaresProperty(doc any, pointer, name string) bool {
+	node := doc
+	if pointer != "#" {
+		for _, token := range strings.Split(strings.TrimPrefix(pointer, "#/"), "/") {
+			token = strings.ReplaceAll(strings.ReplaceAll(token, "~1", "/"), "~0", "~")
+			switch n := node.(type) {
+			case map[string]any:
+				node = n[token]
+			case []any:
+				i, err := strconv.Atoi(token)
+				if err != nil || i < 0 || i >= len(n) {
+					return false
+				}
+				node = n[i]
+			default:
+				return false
+			}
+		}
+	}
+	_, ok := asMap(asMap(node)["properties"])[name]
+	return ok
 }
