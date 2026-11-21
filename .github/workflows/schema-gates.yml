@@ -5,11 +5,13 @@ name: Schema gates
 # the contract.
 #
 # Within one API version a schema changes only additively: a description may
-# change and an optional property may be added. On dev, every push and every pull
-# request into dev compares each schema with the same schema at the newest release
-# tag carrying its API version, and fails on a change the check does not accept
-# within one API version. While no release carries the schemas' API version, the
-# check says it has no baseline and passes.
+# change and an optional property may be added where the object accepted no extra
+# property under its name, or where the repository's compat-exceptions.json says
+# why no document can have used it. On dev, every push and every pull request into
+# dev compares each schema with the same schema at the newest release tag carrying
+# its API version, and fails on a change the check does not accept within one API
+# version. While no release carries the schemas' API version, the check says it has
+# no baseline and passes.
 #
 # On main, a push fails when it changes a schema file since the newest commit main
 # shares with dev: a release fast-forwards main to dev and passes, an edit made on

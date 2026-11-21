@@ -112,24 +112,25 @@ func versionsIn(files []string) []string {
 
 // compatOptions is what one compatibility check reads.
 type compatOptions struct {
-	repo     string // the schemas repository
-	baseline string // a revision to compare with; empty selects the newest release per API version
-	staged   bool   // read the schemas from the index rather than the working tree
+	repo       string // the schemas repository
+	baseline   string // a revision to compare with; empty selects the newest release per API version
+	staged     bool   // read the schemas and the exceptions file from the index rather than the working tree
+	exceptions string // an exceptions file to read instead of the one at the root of the judged schemas
 }
 
 // candidateSchemas returns the schemas being checked, keyed by repository-relative
-// path. With staged it returns nil and no error when the index changes no schema,
-// which leaves nothing to check.
+// path. With staged it returns nil and no error when the index changes neither a
+// schema nor the exceptions file, which leaves nothing to check.
 func candidateSchemas(opts compatOptions) (map[string][]byte, error) {
 	out := map[string][]byte{}
 	if opts.staged {
-		changed, err := gitIndexLines(opts.repo, "diff", "--cached", "--name-only", "-z", "--no-renames", "--", schemaDir+"/")
+		changed, err := gitIndexLines(opts.repo, "diff", "--cached", "--name-only", "-z", "--no-renames", "--", schemaDir+"/", exceptionsFile)
 		if err != nil {
 			return nil, err
 		}
 		touched := false
 		for _, p := range changed {
-			if isSchemaPath(p) {
+			if isSchemaPath(p) || p == exceptionsFile {
 				touched = true
 			}
 		}
@@ -185,9 +186,13 @@ func runCompat(opts compatOptions, w io.Writer) (bool, error) {
 	if opts.staged {
 		source = "the index"
 		if candidates == nil {
-			fmt.Fprintln(w, "schemagate compat: the index changes no schema file; nothing to compare.")
+			fmt.Fprintf(w, "schemagate compat: the index changes no schema file and not %s; nothing to compare.\n", exceptionsFile)
 			return false, nil
 		}
+	}
+	exceptions, exceptionsSource, err := compatExceptions(opts)
+	if err != nil {
+		return false, err
 	}
 	byVersion := map[string][]string{}
 	for p := range candidates {
@@ -286,6 +291,13 @@ func runCompat(opts compatOptions, w io.Writer) (bool, error) {
 		}
 	}
 
+	found, admitted := applyExceptions(found, exceptions, exceptionsSource)
+	if len(admitted) > 0 {
+		fmt.Fprintf(w, "admitted by %s:\n", exceptionsSource)
+		for _, a := range admitted {
+			fmt.Fprintf(w, "  %s — %s\n", a.finding, a.reason)
+		}
+	}
 	if len(found) == 0 {
 		if compared == 0 {
 			fmt.Fprintln(w, "passed: no schema has a released baseline to compare with.")
@@ -302,9 +314,10 @@ func runCompat(opts compatOptions, w io.Writer) (bool, error) {
 		}
 		fmt.Fprintln(w, line)
 	}
-	fmt.Fprintln(w, "Within one API version a schema may only change its descriptions and add optional properties.")
-	fmt.Fprintln(w, "Removing or renaming a property, making one required, or narrowing a type, an enum or a value")
-	fmt.Fprintln(w, "needs a new API version.")
+	fmt.Fprintln(w, "Within one API version a schema may only change its descriptions and add optional properties")
+	fmt.Fprintln(w, "where the object accepted no extra property under their name, or where "+exceptionsFile)
+	fmt.Fprintln(w, "says why no document can have used it. Removing or renaming a property, making one required,")
+	fmt.Fprintln(w, "or narrowing a type, an enum or a value needs a new API version.")
 	return true, nil
 }
 

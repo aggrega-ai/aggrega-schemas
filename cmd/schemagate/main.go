@@ -5,23 +5,41 @@
 // on the two release branches.
 //
 // Within one API version a schema changes only additively: a description may
-// change and an optional property may be added. Removing or renaming a
-// property, making one required, and narrowing what a value may be each need a
-// new API version.
+// change and an optional property may be added where the object accepted no
+// extra property under its name, or where the repository's compat-exceptions.json
+// says why no document can have used it. Removing or renaming a property, making
+// one required, and narrowing what a value may be each need a new API version.
 //
-//	schemagate compat [-repo DIR] [-baseline REV] [-staged]
+//	schemagate compat [-repo DIR] [-baseline REV] [-staged] [-exceptions FILE]
 //
 // compares every schema in json/ with the same schema at the newest release tag
 // carrying that API version, and refuses a removed or renamed property, a
 // property added to required, a narrowed type, a removed enum member, an added
 // or changed const or pattern, a tightened minimum, maximum or
 // additionalProperties, a removed $defs entry, and any other change it does not
-// classify as additive. It passes a changed description and an added optional
-// property — including one added where an object accepted any extra property
-// before, so a document that already used that name with a different kind of
-// value can stop validating. A schema whose API version no release carries yet
-// is compared with nothing and passes, saying so; a repository with no release
-// tag at all is not judged. It is the check for the development branch.
+// classify as additive. It passes a changed description and an optional
+// property added where the object accepted no extra property under that name.
+// It refuses an optional property added where the object accepted one before —
+// its additionalProperties absent, true or a schema, or the name matching one of
+// its patternProperties — because a document written before may already carry
+// that name with a value the new property refuses. A schema whose API version
+// no release carries yet is compared with nothing and passes, saying so; a
+// repository with no release tag at all is not judged. It is the check for the
+// development branch.
+//
+// compat-exceptions.json, at the root of the judged schemas (read from the index
+// under -staged, from the working tree otherwise, or from the file -exceptions
+// names), admits such an addition:
+//
+//	{"exceptions": [{"schema": "component-v1beta1.schema.json",
+//	  "pointer": "#/properties/spec/properties/labels", "property": "example",
+//	  "reason": "Why no document written before can have used this name with another kind of value."}]}
+//
+// Each entry names the schema file in json/ by its file name, the JSON pointer
+// of the object and the property as the refusal prints them, and a reason that
+// is not blank. An entry that matches no refusal is refused itself, so the file
+// holds only the admissions a comparison needs. An absent file admits nothing;
+// an unreadable or malformed one leaves nothing judged.
 //
 //	schemagate freeze [-repo DIR] [-registry FILE]... (-staged | -head REV -dev REV) [-list]
 //
@@ -34,8 +52,9 @@
 // made on the release branch does not. It is the check for the release branch.
 //
 // Exit status: 0 passed, 1 refused, 2 nothing was judged (a usage error, an
-// unreadable repository, a shallow clone, a repository with no release tag, or
-// registries that cannot be read).
+// unreadable repository, a shallow clone, a repository with no release tag, an
+// exceptions file that cannot be read or is malformed, or registries that cannot
+// be read).
 package main
 
 import (
@@ -47,7 +66,7 @@ import (
 )
 
 const usage = `usage:
-  schemagate compat [-repo DIR] [-baseline REV] [-staged]
+  schemagate compat [-repo DIR] [-baseline REV] [-staged] [-exceptions FILE]
   schemagate freeze [-repo DIR] [-registry FILE]... (-staged | -head REV -dev REV) [-list]
 
 compat  compares the schemas with the last release carrying their API version and
@@ -78,7 +97,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		var opts compatOptions
 		fs.StringVar(&opts.repo, "repo", ".", "the schemas repository")
 		fs.StringVar(&opts.baseline, "baseline", "", "compare with this revision instead of the newest release carrying each API version")
-		fs.BoolVar(&opts.staged, "staged", false, "check the schemas in the index, and only when it changes one")
+		fs.BoolVar(&opts.staged, "staged", false, "check the schemas and compat-exceptions.json in the index, and only when it changes one of them")
+		fs.StringVar(&opts.exceptions, "exceptions", "", "read the exceptions from this file instead of compat-exceptions.json at the root of the judged schemas")
 		if err := fs.Parse(args[1:]); err != nil {
 			return parseStatus(err)
 		}

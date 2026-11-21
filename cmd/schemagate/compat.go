@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -17,12 +18,15 @@ import (
 // pointer of the node that changed, and the kind of change in words.
 // unclassified marks a change to a keyword this check does not classify as
 // additive or breaking; such a change is refused too, so that only the kinds
-// known to be additive pass.
+// known to be additive pass. added names the property of a property added to
+// an object that accepted any extra property under its name before, the one
+// kind an exceptions entry can admit.
 type finding struct {
 	schema       string
 	pointer      string
 	kind         string
 	unclassified bool
+	added        string
 }
 
 func (f finding) String() string {
@@ -128,7 +132,7 @@ func (c *comparer) node(pointer string, old, updated any) {
 		case isAnnotation(kw):
 			// Validates nothing.
 		case kw == "properties":
-			c.properties(at, asMap(ov), asMap(nv))
+			c.properties(pointer, oldMap, asMap(ov), asMap(nv))
 		case kw == "$defs":
 			c.defs(at, asMap(ov), asMap(nv))
 		case kw == "required":
@@ -167,7 +171,14 @@ func (c *comparer) node(pointer string, old, updated any) {
 	}
 }
 
-func (c *comparer) properties(pointer string, old, updated map[string]any) {
+// properties compares the properties keyword of the object at pointer, whose
+// old node is oldObject. A property only in updated is an added property; when
+// it is also added to required, the required comparison refuses it. When the
+// old object accepted an extra property under its name, a document written
+// before may already carry that name with a value the added property refuses,
+// so the addition is refused, at the object's pointer.
+func (c *comparer) properties(object string, oldObject, old, updated map[string]any) {
+	pointer := object + "/properties"
 	for _, name := range sortedKeys(old) {
 		nv, ok := updated[name]
 		at := pointer + "/" + escapePointer(name)
@@ -177,8 +188,35 @@ func (c *comparer) properties(pointer string, old, updated map[string]any) {
 		}
 		c.node(at, old[name], nv)
 	}
-	// A property only in updated is an added property; when it is also added
-	// to required, the required comparison refuses it.
+	for _, name := range sortedKeys(updated) {
+		if _, ok := old[name]; ok || !acceptedExtra(oldObject, name) {
+			continue
+		}
+		c.found = append(c.found, finding{
+			schema:  c.schema,
+			pointer: object,
+			kind:    fmt.Sprintf("property %q added where any extra property was accepted before", name),
+			added:   name,
+		})
+	}
+}
+
+// acceptedExtra reports whether an object accepted a property it did not
+// declare under name: its additionalProperties is absent, true or a schema, or
+// name matches one of its patternProperties. A pattern Go's regular
+// expressions cannot compile is taken to match, since whether it does is not
+// decided here.
+func acceptedExtra(object map[string]any, name string) bool {
+	if b, ok := object["additionalProperties"].(bool); !ok || b {
+		return true
+	}
+	for pattern := range asMap(object["patternProperties"]) {
+		re, err := regexp.Compile(pattern)
+		if err != nil || re.MatchString(name) {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *comparer) defs(pointer string, old, updated map[string]any) {
