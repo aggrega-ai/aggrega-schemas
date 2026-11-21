@@ -283,7 +283,7 @@ func runCompat(opts compatOptions, w io.Writer) (bool, error) {
 				return false, fmt.Errorf("%s in %s: %v", p, source, err)
 			}
 			found = append(found, compareSchemas(p, oldDoc, newDoc)...)
-			read[path.Base(p)] = comparedSchema{old: oldDoc, updated: newDoc}
+			read[path.Base(p)] = comparedSchema{old: oldDoc, updated: newDoc, based: true}
 			compared++
 		}
 		for _, f := range baseFiles {
@@ -293,6 +293,20 @@ func runCompat(opts compatOptions, w io.Writer) (bool, error) {
 		}
 	}
 
+	// A schema an entry names that no baseline was compared with is read from
+	// the judged tree alone, so the entry can be held to what it declares.
+	for _, e := range exceptions {
+		p := schemaDir + "/" + e.Schema
+		data, judged := candidates[p]
+		if _, done := read[e.Schema]; done || !judged {
+			continue
+		}
+		doc, err := decodeSchema(data)
+		if err != nil {
+			return false, fmt.Errorf("%s in %s: %v", p, source, err)
+		}
+		read[e.Schema] = comparedSchema{updated: doc}
+	}
 	found, admitted := applyExceptions(found, exceptions, exceptionsSource, read)
 	if len(admitted) > 0 {
 		fmt.Fprintf(w, "admitted by %s:\n", exceptionsSource)

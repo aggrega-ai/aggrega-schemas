@@ -37,12 +37,14 @@
 //
 // Each entry names the schema file in json/ by its file name, the JSON pointer
 // of the object and the property as the refusal prints them, and a reason that
-// is not blank. An entry that matches no refusal is refused itself, unless the
-// judged schema and its baseline both declare that property at that pointer: an
-// admission a published release already carries, which a comparison with an
-// earlier release still needs. So the file keeps no admission nothing needs. An
-// absent file admits nothing; an unreadable or malformed one leaves nothing
-// judged.
+// is not blank. An entry that matches no refusal is refused itself when the
+// judged schema does not declare that property at that pointer, or when the
+// baseline has a node there that does not declare it. It is kept when the
+// baseline already declares the property there, as once a release carries the
+// admission, or lacks that object or schema file, as for one added after the
+// first release of its API version: a comparison with an earlier release still
+// needs it. An absent file admits nothing; an unreadable or malformed one leaves
+// nothing judged.
 //
 //	schemagate freeze [-repo DIR] [-registry FILE]... (-staged | -head REV -dev REV) [-list]
 //

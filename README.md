@@ -66,12 +66,13 @@ nothing needs admitting:
 
 Each entry names the schema file in `json/` by its file name, the JSON pointer of
 the object and the property as the refusal prints them, and a reason. An entry
-that matches no refusal is refused too, unless the schema and the release it is
-compared with both declare that property at that pointer, as they do once a
-release carries the admission, which a comparison with an earlier release still
-needs. So the file keeps no admission nothing needs; a malformed file leaves
-nothing judged. `-exceptions FILE` reads another
-file, and `-staged` reads both the schemas and this file from the index.
+that matches no refusal is refused too when the schema does not declare that
+property at that pointer, or when the release it is compared with has that
+object without the property. It is kept when that release already declares the
+property there, or lacks the object or the schema file, since a comparison with
+an earlier release may still need it. A malformed file leaves nothing judged.
+`-exceptions FILE` reads another file, and `-staged` reads both the schemas and
+this file from the index.
 
 ```sh
 go run ./cmd/schemagate freeze -head main -dev origin/dev

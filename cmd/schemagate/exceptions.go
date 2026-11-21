@@ -130,20 +130,26 @@ type admission struct {
 	reason  string
 }
 
-// comparedSchema is one schema file a comparison read at both ends: old at the
-// baseline, updated in the judged tree.
+// comparedSchema is one schema file a comparison read: updated in the judged
+// tree, and old at the baseline when based, that is when the comparison had a
+// baseline for it.
 type comparedSchema struct {
 	old, updated any
+	based        bool
 }
 
 // applyExceptions removes from found every property addition an entry names,
 // returning what remains and what was admitted. An entry that names no finding
-// is itself refused, so the file cannot keep an admission nothing needs, unless
-// the property it names is declared at that pointer by both the judged schema
-// and its baseline: that is an admission a published release already carries,
-// which a comparison with an earlier release still needs. compared holds the
-// schemas this comparison read, keyed by file name; a schema it did not read
-// declares nothing. source names the exceptions file in a refusal.
+// is itself refused when the judged schema does not declare that property at
+// that pointer, or when the baseline has a node at that pointer that does not
+// declare it, since there the addition is one this comparison does not refuse.
+// An entry for a property the baseline already declares there, or for an object
+// or a schema file the baseline lacks, is kept: a release that carries the
+// admission makes the first case, an object or file added after the first
+// release the second, and a comparison with an earlier release still needs the
+// entry in both. compared holds the schemas this comparison read, keyed by file
+// name; a schema it did not read declares nothing. source names the exceptions
+// file in a refusal.
 func applyExceptions(found []finding, exs []exception, source string, compared map[string]comparedSchema) ([]finding, []admission) {
 	used := make([]bool, len(exs))
 	var kept []finding
@@ -169,42 +175,64 @@ func applyExceptions(found []finding, exs []exception, source string, compared m
 		if used[i] {
 			continue
 		}
-		if doc, ok := compared[e.Schema]; ok &&
-			declaresProperty(doc.updated, e.Pointer, e.Property) && declaresProperty(doc.old, e.Pointer, e.Property) {
+		doc := compared[e.Schema]
+		var why string
+		if !declaresProperty(doc.updated, e.Pointer, e.Property) {
+			why = "which the schema does not declare at this pointer"
+		} else if _, inBase := nodeAt(doc.old, e.Pointer); doc.based && inBase && !declaresProperty(doc.old, e.Pointer, e.Property) {
+			why = "but this comparison refuses no addition of it at this pointer"
+		} else {
 			continue
 		}
 		kept = append(kept, finding{
 			schema:  schemaDir + "/" + e.Schema,
 			pointer: e.Pointer,
-			kind: fmt.Sprintf("%s excepts property %q, but no addition of it is refused here and the schema and its baseline do not both declare it at this pointer; remove the entry",
-				source, e.Property),
+			kind:    fmt.Sprintf("%s excepts property %q, %s; remove the entry", source, e.Property, why),
 		})
 	}
 	return kept, admitted
 }
 
-// declaresProperty reports whether the node at pointer, a fragment such as
-// #/properties/spec, lists name under its properties. A pointer that leads
-// nowhere declares nothing.
-func declaresProperty(doc any, pointer, name string) bool {
+// nodeAt returns the node at pointer, a fragment such as #/properties/spec, its
+// tokens unescaped and its list positions read as indices, and whether the
+// pointer leads to one.
+func nodeAt(doc any, pointer string) (any, bool) {
+	if doc == nil {
+		return nil, false
+	}
 	node := doc
-	if pointer != "#" {
-		for _, token := range strings.Split(strings.TrimPrefix(pointer, "#/"), "/") {
-			token = strings.ReplaceAll(strings.ReplaceAll(token, "~1", "/"), "~0", "~")
-			switch n := node.(type) {
-			case map[string]any:
-				node = n[token]
-			case []any:
-				i, err := strconv.Atoi(token)
-				if err != nil || i < 0 || i >= len(n) {
-					return false
-				}
-				node = n[i]
-			default:
-				return false
+	if pointer == "#" {
+		return node, true
+	}
+	for _, token := range strings.Split(strings.TrimPrefix(pointer, "#/"), "/") {
+		token = strings.ReplaceAll(strings.ReplaceAll(token, "~1", "/"), "~0", "~")
+		switch n := node.(type) {
+		case map[string]any:
+			next, ok := n[token]
+			if !ok {
+				return nil, false
 			}
+			node = next
+		case []any:
+			i, err := strconv.Atoi(token)
+			if err != nil || i < 0 || i >= len(n) {
+				return nil, false
+			}
+			node = n[i]
+		default:
+			return nil, false
 		}
 	}
-	_, ok := asMap(asMap(node)["properties"])[name]
+	return node, true
+}
+
+// declaresProperty reports whether the node at pointer lists name under its
+// properties. A pointer that leads nowhere declares nothing.
+func declaresProperty(doc any, pointer, name string) bool {
+	node, ok := nodeAt(doc, pointer)
+	if !ok {
+		return false
+	}
+	_, ok = asMap(asMap(node)["properties"])[name]
 	return ok
 }

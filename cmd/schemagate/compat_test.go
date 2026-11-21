@@ -240,9 +240,11 @@ func openObjectRepo(t *testing.T) *gitRepo {
 // property to an open object: with no exceptions file it is refused; an entry
 // naming it admits it; once a release carries the addition and its entry, the
 // entry passes against that release and still admits the addition against the
-// first release; an entry matching no finding is refused as stale when its
-// property is declared by neither tree, or was added where the object accepted
-// no extra property; a malformed file, or a named file that does not exist,
+// first release; an entry for an object or a schema file added after the first
+// release passes against both releases; an entry matching no finding is refused
+// as stale when its property is declared by neither tree, when it names a schema
+// file the judged tree lacks, or when its property was added where the object
+// accepted no extra property; a malformed file, or a named file that does not exist,
 // leaves nothing judged; -exceptions reads another file; and under -staged the
 // file is read from the index, a change to it alone being enough to judge.
 func TestExceptionsFile(t *testing.T) {
@@ -280,6 +282,46 @@ func TestExceptionsFile(t *testing.T) {
 			t.Fatalf("against the first release: want exit 0 admitting the addition; got %d\n%s", code, out)
 		}
 	})
+	// bothRuns judges r against its newest release, which must admit the
+	// addition named by admitted, and against the first release, v0.1.0, which
+	// must pass without refusing the entry as stale.
+	bothRuns := func(t *testing.T, r *gitRepo, admitted string) {
+		t.Helper()
+		if code, out := compat(t, "-repo", r.dir); code != 0 || !strings.Contains(out, "admitted by compat-exceptions.json:\n  "+admitted+" — ") {
+			t.Fatalf("against the newest release: want exit 0 admitting %q; got %d\n%s", admitted, code, out)
+		}
+		if code, out := compat(t, "-repo", r.dir, "-baseline", "v0.1.0"); code != 0 || strings.Contains(out, "excepts property") {
+			t.Fatalf("against the first release: want exit 0 with no stale entry; got %d\n%s", code, out)
+		}
+	}
+	t.Run("admission for an object added after the first release passes both runs", func(t *testing.T) {
+		r := newGitRepo(t)
+		writeFile(t, r.dir, "json/thing-v1beta1.schema.json", baseSchema)
+		r.commit("schema")
+		r.git("tag", "v0.1.0")
+		withNew := strings.Replace(baseSchema, `"Spec": {`, `"New": {"type": "object", "properties": {"a": {"type": "string"}}}, "Spec": {`, 1)
+		if withNew == baseSchema {
+			t.Fatal("the plant did not apply")
+		}
+		writeFile(t, r.dir, "json/thing-v1beta1.schema.json", withNew)
+		r.commit("add an open object")
+		r.git("tag", "v0.2.0")
+		writeFile(t, r.dir, "json/thing-v1beta1.schema.json", strings.Replace(withNew, `"properties": {"a": {"type": "string"}}`, `"properties": {"a": {"type": "string"}, "b": {"type": "integer"}}`, 1))
+		writeFile(t, r.dir, "compat-exceptions.json", `{"exceptions": [{"schema": "thing-v1beta1.schema.json", "pointer": "#/$defs/New", "property": "b", "reason": "No document can carry a New yet."}]}`)
+		bothRuns(t, r, `json/thing-v1beta1.schema.json #/$defs/New: property "b" added where any extra property was accepted before`)
+	})
+	t.Run("admission in a schema file added after the first release passes both runs", func(t *testing.T) {
+		r := newGitRepo(t)
+		writeFile(t, r.dir, "json/thing-v1beta1.schema.json", baseSchema)
+		r.commit("schema")
+		r.git("tag", "v0.1.0")
+		writeFile(t, r.dir, "json/other-v1beta1.schema.json", `{"type": "object", "properties": {"a": {"type": "string"}}}`)
+		r.commit("add a schema file")
+		r.git("tag", "v0.2.0")
+		writeFile(t, r.dir, "json/other-v1beta1.schema.json", `{"type": "object", "properties": {"a": {"type": "string"}, "b": {"type": "integer"}}}`)
+		writeFile(t, r.dir, "compat-exceptions.json", `{"exceptions": [{"schema": "other-v1beta1.schema.json", "pointer": "#", "property": "b", "reason": "No document can carry an Other yet."}]}`)
+		bothRuns(t, r, `json/other-v1beta1.schema.json #: property "b" added where any extra property was accepted before`)
+	})
 	t.Run("entry for a property added to a closed object refused as stale", func(t *testing.T) {
 		r := newGitRepo(t)
 		writeFile(t, r.dir, "json/thing-v1beta1.schema.json", baseSchema)
@@ -294,6 +336,15 @@ func TestExceptionsFile(t *testing.T) {
 		code, out := compat(t, "-repo", r.dir)
 		if code != 1 || !strings.Contains(out, "refused: 1 change ") || !strings.Contains(out, `json/thing-v1beta1.schema.json #: compat-exceptions.json excepts property "note"`) {
 			t.Fatalf("want exit 1 refusing only the stale entry for \"note\"; got %d\n%s", code, out)
+		}
+	})
+	t.Run("entry naming a schema file the tree lacks refused as stale", func(t *testing.T) {
+		r := openObjectRepo(t)
+		missing := strings.Replace(admitY, `]}`, `, {"schema": "missing-v1beta1.schema.json", "pointer": "#", "property": "x", "reason": "No such file."}]}`, 1)
+		writeFile(t, r.dir, "compat-exceptions.json", missing)
+		code, out := compat(t, "-repo", r.dir)
+		if code != 1 || !strings.Contains(out, "refused: 1 change ") || !strings.Contains(out, `json/missing-v1beta1.schema.json #: compat-exceptions.json excepts property "x", which the schema does not declare at this pointer`) {
+			t.Fatalf("want exit 1 refusing only the entry for the missing schema file; got %d\n%s", code, out)
 		}
 	})
 	t.Run("entry naming a property neither tree declares refused as stale", func(t *testing.T) {
@@ -396,8 +447,9 @@ func TestExceptionsLoad(t *testing.T) {
 }
 
 // TestExceptionsDeclaresProperty resolves an entry's pointer in a schema, its
-// tokens unescaped and its list positions read as indices, and finds the
-// property only under the properties of the node the pointer leads to.
+// tokens unescaped and its list positions read as indices, finds the property
+// only under the properties of the node the pointer leads to, and tells a
+// pointer that leads to a node from one that leads nowhere.
 func TestExceptionsDeclaresProperty(t *testing.T) {
 	doc := mustDecode(t, `{"properties": {"a": {}}, "oneOf": [{"properties": {"b": {}}}], "$defs": {"x/y~z": {"properties": {"c": {}}}}}`)
 	for _, tc := range []struct {
@@ -416,5 +468,13 @@ func TestExceptionsDeclaresProperty(t *testing.T) {
 		if got := declaresProperty(doc, tc.pointer, tc.name); got != tc.want {
 			t.Errorf("declaresProperty(%s, %q) = %v; want %v", tc.pointer, tc.name, got, tc.want)
 		}
+	}
+	for pointer, want := range map[string]bool{"#": true, "#/oneOf/0": true, "#/$defs/x~1y~0z": true, "#/$defs/missing": false, "#/oneOf/2": false} {
+		if _, got := nodeAt(doc, pointer); got != want {
+			t.Errorf("nodeAt(%s) found = %v; want %v", pointer, got, want)
+		}
+	}
+	if _, got := nodeAt(nil, "#"); got {
+		t.Error("nodeAt(nil, #) must find nothing: a schema the comparison did not read has no node")
 	}
 }
