@@ -478,3 +478,35 @@ func TestExceptionsDeclaresProperty(t *testing.T) {
 		t.Error("nodeAt(nil, #) must find nothing: a schema the comparison did not read has no node")
 	}
 }
+
+// TestRunCompatEndToEnd drives compat through run against a real repository: a
+// repository with no release tag is not judged (exit 2), an API version no
+// release carries passes with no baseline (exit 0), and a planted required
+// addition is refused against a release tag (exit 1).
+func TestRunCompatEndToEnd(t *testing.T) {
+	r := newGitRepo(t)
+	writeFile(t, r.dir, "json/thing-v1alpha1.schema.json", baseSchema)
+	r.commit("schema")
+
+	var out, errOut bytes.Buffer
+	if code := run([]string{"compat", "-repo", r.dir}, &out, &errOut); code != 2 || !strings.Contains(errOut.String(), "no release tag") {
+		t.Fatalf("no release tag at all: want exit 2 saying so; got %d\n%s%s", code, out.String(), errOut.String())
+	}
+
+	r.git("tag", "v0.0.1")
+	r.git("mv", "json/thing-v1alpha1.schema.json", "json/thing-v1beta1.schema.json")
+	r.commit("move to v1beta1")
+	out.Reset()
+	errOut.Reset()
+	if code := run([]string{"compat", "-repo", r.dir}, &out, &errOut); code != 0 || !strings.Contains(out.String(), "no baseline") {
+		t.Fatalf("no release carries v1beta1: want exit 0 saying no baseline; got %d\n%s%s", code, out.String(), errOut.String())
+	}
+
+	r.git("tag", "v0.1.0")
+	writeFile(t, r.dir, "json/thing-v1beta1.schema.json", strings.Replace(baseSchema, `"required": ["kind"]`, `"required": ["kind", "name"]`, 1))
+	out.Reset()
+	errOut.Reset()
+	if code := run([]string{"compat", "-repo", r.dir}, &out, &errOut); code != 1 || !strings.Contains(out.String(), `#/required: "name" added to required`) {
+		t.Fatalf("planted required addition: want exit 1 naming it; got %d\n%s%s", code, out.String(), errOut.String())
+	}
+}

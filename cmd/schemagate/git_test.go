@@ -56,11 +56,9 @@ func (r *gitRepo) commit(msg string) {
 	r.git("commit", "-q", "-m", msg)
 }
 
-// TestRunEndToEnd drives both commands through run against a real repository:
-// a repository with no release tag is not judged, an API version no release
-// carries passes with no baseline, a planted required addition is refused
-// against a release tag, an edit on main is refused, and a fast-forward to dev
-
+// TestGitIgnoresInheritedLocators requires a git command aimed at one repository
+// to act on it even when the environment names another, as a git hook's does,
+// and an index read to keep the inherited index file.
 func TestGitIgnoresInheritedLocators(t *testing.T) {
 	a, b := newGitRepo(t), newGitRepo(t)
 	t.Setenv("GIT_DIR", filepath.Join(a.dir, ".git"))
