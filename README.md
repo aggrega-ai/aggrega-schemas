@@ -45,7 +45,9 @@ schema, or the name matching one of its `patternProperties` — because a docume
 written before may already carry that name with a value the new property refuses.
 A schema whose API version no release carries yet is compared with nothing and
 passes, saying so; a clone with no release tag at all is not judged. Development
-happens on `dev`, where this check runs on every push and pull request.
+happens on `main`, and a fix to a released version on a `release/vX.Y` branch cut
+from its tag; this check runs on every push to either and on every pull request
+into `main`.
 
 `compat-exceptions.json`, at the root of this repository, admits such an addition
 when no document written before can have used the name. It is absent while
@@ -74,15 +76,8 @@ an earlier release may still need it. A malformed file leaves nothing judged.
 `-exceptions FILE` reads another file, and `-staged` reads both the schemas and
 this file from the index.
 
-```sh
-go run ./cmd/schemagate freeze -head main -dev origin/dev
-```
-
-refuses any change `main` carries to a schema file since the newest commit it
-shares with `dev`. `main` holds what was last released and moves only by a
-release, which fast-forwards it to `dev`; this check runs on every push to it.
-Both commands need the repository's full history and tags, and refuse to judge a
-shallow clone. `go run ./cmd/schemagate -h` prints their flags. Built with
+The check needs the repository's full history and tags, and refuses to judge a
+shallow clone. `go run ./cmd/schemagate compat -h` prints its flags. Built with
 `go build ./cmd/schemagate`, the command exits 0 when the check passes, 1 when it
 refuses, and 2 when it could not judge; `go run` reports any failure as 1.
 
