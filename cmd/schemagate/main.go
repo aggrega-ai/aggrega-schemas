@@ -2,7 +2,7 @@
 // Copyright 2026 Cognitio s.r.l.
 
 // Command schemagate holds the published schemas to their compatibility rule
-// on the two release branches.
+// on main and on each release branch.
 //
 // Within one API version a schema changes only additively: a description may
 // change and an optional property may be added where the object accepted no
@@ -24,8 +24,7 @@
 // its patternProperties — because a document written before may already carry
 // that name with a value the new property refuses. A schema whose API version
 // no release carries yet is compared with nothing and passes, saying so; a
-// repository with no release tag at all is not judged. It is the check for the
-// development branch.
+// repository with no release tag at all is not judged.
 //
 // compat-exceptions.json, at the root of the judged schemas (read from the index
 // under -staged, from the working tree otherwise, or from the file -exceptions
@@ -46,20 +45,9 @@
 // needs it. An absent file admits nothing; an unreadable or malformed one leaves
 // nothing judged.
 //
-//	schemagate freeze [-repo DIR] [-registry FILE]... (-staged | -head REV -dev REV) [-list]
-//
-// refuses any change to a schema file or to a codec generated from one. The
-// codecs are named by the codec generator's registries, read from its source
-// file at run time. A source inside the judged repository is read at both ends
-// of the judged change, so the change cannot remove its own protection. With
-// -head and -dev it judges what -head changes since the newest commit it shares
-// with -dev, so a fast-forward to the development branch passes and an edit
-// made on the release branch does not. It is the check for the release branch.
-//
 // Exit status: 0 passed, 1 refused, 2 nothing was judged (a usage error, an
 // unreadable repository, a shallow clone, a repository with no release tag, an
-// exceptions file that cannot be read or is malformed, or registries that cannot
-// be read).
+// exceptions file that cannot be read or is malformed).
 package main
 
 import (
@@ -72,13 +60,11 @@ import (
 
 const usage = `usage:
   schemagate compat [-repo DIR] [-baseline REV] [-staged] [-exceptions FILE]
-  schemagate freeze [-repo DIR] [-registry FILE]... (-staged | -head REV -dev REV) [-list]
 
 compat  compares the schemas with the last release carrying their API version and
         refuses a change it does not accept within one API version.
-freeze  refuses any change to a schema file or to a codec generated from one.
 
-Run "schemagate compat -h" or "schemagate freeze -h" for each command's flags.
+Run "schemagate compat -h" for the command's flags.
 Exit status: 0 passed, 1 refused, 2 nothing was judged.
 `
 
@@ -112,36 +98,6 @@ func run(args []string, stdout, stderr io.Writer) int {
 			return 2
 		}
 		refused, err = runCompat(opts, stdout)
-	case "freeze":
-		fs := flag.NewFlagSet("schemagate freeze", flag.ContinueOnError)
-		fs.SetOutput(stderr)
-		var opts freezeOptions
-		fs.StringVar(&opts.repo, "repo", ".", "the repository whose change is judged")
-		fs.Var(&opts.registries, "registry", "the codec generator's source file, whose registries name the generated codecs; repeat it to read several, and without it only schema files are protected")
-		fs.BoolVar(&opts.staged, "staged", false, "judge the change the index stages")
-		fs.StringVar(&opts.head, "head", "", "judge the change this revision carries ...")
-		fs.StringVar(&opts.dev, "dev", "", "... since the newest commit it shares with this revision")
-		fs.BoolVar(&opts.list, "list", false, "print the protected files the repository tracks, and judge nothing")
-		if err := fs.Parse(args[1:]); err != nil {
-			return parseStatus(err)
-		}
-		if fs.NArg() != 0 {
-			fmt.Fprintf(stderr, "schemagate freeze: unexpected argument %q\n", fs.Arg(0))
-			return 2
-		}
-		ranged := opts.head != "" || opts.dev != ""
-		switch {
-		case opts.list && (opts.staged || ranged):
-			fmt.Fprintln(stderr, "schemagate freeze: -list judges nothing, so it takes neither -staged nor -head and -dev")
-			return 2
-		case !opts.list && opts.staged == ranged:
-			fmt.Fprintln(stderr, "schemagate freeze: give either -staged, or -head and -dev")
-			return 2
-		case ranged && (opts.head == "" || opts.dev == ""):
-			fmt.Fprintln(stderr, "schemagate freeze: -head and -dev go together")
-			return 2
-		}
-		refused, err = runFreeze(opts, stdout)
 	case "-h", "-help", "--help", "help":
 		fmt.Fprint(stdout, usage)
 		return 0
