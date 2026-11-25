@@ -1,0 +1,82 @@
+name: Checks
+
+# The checks every push to main or to a release branch, and every pull request
+# into main, runs on a GitHub-hosted runner, beside schema-gates.yml. A newer
+# push to the same branch or pull request cancels the run it supersedes.
+#
+#   go  builds and vets the module, refuses a file gofmt would change, and runs
+#       its tests: every schema is non-empty JSON carrying its expected $id,
+#       no schema declares a retired failure key, spells an identifier two ways
+#       in one description or names a host in a $ref, and cmd/schemagate's own
+#       tests of the compatibility rule pass.
+#   editor-association
+#       scripts/editor-association-smoke.sh: serves json/ locally by file name,
+#       confirms a served schema is byte-identical to its source, and drives
+#       the yaml-language-server language service (the release
+#       scripts/lsp-association-smoke.mjs pins, installed into a throwaway
+#       prefix) over catalog.json's associations: a good sample validates clean,
+#       a bad one is rejected at the offending field, and an excluded kind is
+#       not associated. A server it cannot install fails the job.
+on:
+  push:
+    branches: [main, 'release/**']
+  pull_request:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  go:
+    name: Build, vet and test the module
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the schemas
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Build, vet and test
+        run: |
+          set -euo pipefail
+          go build ./...
+          go vet ./...
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            echo "::error::not formatted with gofmt: $unformatted"
+            exit 1
+          fi
+          go test -count=1 ./...
+
+  editor-association:
+    name: Drive the editor association over the served schemas
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the schemas
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+
+      - name: Install Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '22'
+          package-manager-cache: false
+
+      - name: Run the editor-association smoke
+        run: scripts/editor-association-smoke.sh

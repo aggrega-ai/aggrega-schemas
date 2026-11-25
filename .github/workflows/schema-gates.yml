@@ -31,6 +31,15 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # A newer run of a pull request replaces the older, which judged a state the
+  # pull request no longer has. A push's run is never cancelled: each push is
+  # judged by the check as it stood at the commit that push moved the branch
+  # from, so a push whose run another push cancelled would leave its change,
+  # an edit of the check included, judged by nothing but the check it edited.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   compat:
     name: Compare with the last release
