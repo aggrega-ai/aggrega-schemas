@@ -486,6 +486,12 @@
                   }
                 }
               }
+            },
+            "defaultTarget": {
+              "type": "string",
+              "minLength": 1,
+              "readOnly": true,
+              "description": "Machine-owned, do not author: derived from the plugin's `.wasm` self-report when the entity is generated from it. The target an import of this importer's formats drafts for when the import names none and no earlier import's record names one, applied where a Recipe of the import's catalog binds to it. Where present, it must equal what the self-report declares, and the load and the publication refuse a plugin whose report differs, naming this field. Absent makes no claim and is not compared."
             }
           }
         }

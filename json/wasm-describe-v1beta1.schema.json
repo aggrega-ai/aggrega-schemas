@@ -355,7 +355,7 @@
     },
     "ImporterContract": {
       "type": "object",
-      "description": "What an importer declares about its formats beyond advertising them: the signatures a source of those formats is recognised by. When an import names no format, the host reads the signatures recorded by every importer the import selects among — the importers in the workspace's catalog and the compiler's core importers, whose Plugin entities the binary carries — matches each against the source without knowing what any format is, and reads the source as the format of the one importer whose signature matches. A source no signature matches is refused asking for the format, and a source signatures of more than one format match is refused naming them. The Plugin entity records the same list, and the host refuses an importer whose describe() report differs from the record.",
+      "description": "What an importer declares about its formats beyond advertising them: the signatures a source of those formats is recognised by, and the target its drafts default to. When an import names no format, the host reads the signatures recorded by every importer the import selects among — the importers in the workspace's catalog and the compiler's core importers, whose Plugin entities the binary carries — matches each against the source without knowing what any format is, and reads the source as the format of the one importer whose signature matches. A source no signature matches is refused asking for the format, and a source signatures of more than one format match is refused naming them. The Plugin entity records the same list, and the host refuses an importer whose describe() report differs from the record.",
       "additionalProperties": false,
       "properties": {
         "detect": {
@@ -364,6 +364,11 @@
           "items": {
             "$ref": "#/$defs/DetectSignature"
           }
+        },
+        "default_target": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The target an import of this importer's formats drafts for when the import names none and no earlier import's record names one: the provider capability its drafted Manifest maps to, written as a Recipe's spec.capability is. The host applies it only where a Recipe of the import's catalog binds to it, and otherwise drafts no Manifest and says why; an import naming a target drafts for that one. Absent declares none."
         }
       }
     },
